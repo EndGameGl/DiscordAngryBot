@@ -18,6 +18,7 @@ namespace DiscordAngryBot
 {
     public class Program
     {
+        public bool isGroupStateLoaded = false;
         static void Main(string[] args) 
             => new Program().MainAsync().GetAwaiter().GetResult();
 
@@ -56,11 +57,14 @@ namespace DiscordAngryBot
             _client.ReactionAdded += ReactionAdded;
             _client.ReactionRemoved += ReactionRemoved;
             _client.Ready += CollectServerInfo;
+            _client.Disconnected += ManageDisconnect;
+
             //_client.UserJoined
             //_client.UserLeft
             string token = File.ReadAllText(@"F:\Programming Stuff\DToken\Token.txt");
             await _client.LoginAsync(TokenType.Bot, token);
             await _client.StartAsync();
+            
             await Task.Delay(Timeout.Infinite);
         }
 
@@ -103,8 +107,14 @@ namespace DiscordAngryBot
             // Проверка, от бота ли сообщение
             if (!message.Author.IsBot)
             {
-                // Логгирование сообщения
-                Console.WriteLine($"[{message.CreatedAt}]-[#{message.Channel}] {message.Author}: {message.Content}");
+                if (message.Content.Count() > 0)
+                {
+                    Console.WriteLine($"[{message.CreatedAt}]-[#{message.Channel}] {message.Author}: {message.Content}");
+                }
+                else 
+                {
+                    Console.WriteLine($"[{message.CreatedAt}]-[#{message.Channel}] {message.Author}: Message is empty");
+                }
 
                 // Проверка сообщения на запрещенные команды 
                 if (message.Channel.Name != "команды-ботам" && settings.forbiddenCommands.Contains(message.Content))
@@ -115,7 +125,7 @@ namespace DiscordAngryBot
                 }
 
                 // Проверка, не пустое ли сообщение
-                if (message.Content != "" || message.Content != null) 
+                if (message.Content.Count() > 0) 
                 {
                     // Проверка наличия команды в сообщении
                     if (message.Content[0] == settings.commandPrefix)
@@ -290,22 +300,34 @@ namespace DiscordAngryBot
         /// <returns></returns>
         public async Task LoadGroups()
         {
-            var partyFiles = Directory.GetFiles("GroupCache\\Parties");
-            var raidFiles = Directory.GetFiles("GroupCache\\Raids");
-            foreach (var partyFile in partyFiles)
+                var partyFiles = Directory.GetFiles("GroupCache\\Parties");
+                var raidFiles = Directory.GetFiles("GroupCache\\Raids");
+                foreach (var partyFile in partyFiles)
+                {
+                    string partyText = File.ReadAllText(partyFile);
+                    Party party = new Party();
+                    systemData.parties.Add((Party)party.Load(partyText).Result);
+                }
+                Console.WriteLine($"Loaded {systemData.parties.Count()} parties");
+                foreach (var raidFile in raidFiles)
+                {
+                    string raidText = File.ReadAllText(raidFile);
+                    Raid raid = new Raid();
+                    systemData.raids.Add((Raid)raid.Load(raidText).Result);
+                }
+                Console.WriteLine($"Loaded {systemData.raids.Count()} raids");
+        }
+
+        public async Task ManageDisconnect(Exception e) 
+        {
+            if (systemData.parties.Count > 0) 
             {
-                string partyText = File.ReadAllText(partyFile);
-                Party party = new Party();
-                systemData.parties.Add((Party)party.Load(partyText).Result);
+                systemData.parties = new List<Party>();
             }
-            Console.WriteLine($"Loaded {systemData.parties.Count()} parties");
-            foreach (var raidFile in raidFiles)
+            if (systemData.raids.Count > 0) 
             {
-                string raidText = File.ReadAllText(raidFile);
-                Raid raid = new Raid();
-                systemData.raids.Add((Raid)raid.Load(raidText).Result);
+                systemData.raids = new List<Raid>();
             }
-            Console.WriteLine($"Loaded {systemData.raids.Count()} raids");
         }
     }
 }
