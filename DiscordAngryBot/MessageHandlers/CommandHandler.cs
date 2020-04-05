@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 
 namespace DiscordAngryBot.MessageHandlers
 {
+    /// <summary>
+    /// Класс для обработки команд
+    /// </summary>
     public static class CommandHandler
     {
         /// <summary>
@@ -33,6 +36,10 @@ namespace DiscordAngryBot.MessageHandlers
             }           
             return Tuple.Create(channel, command, args);
         }
+
+        /// <summary>
+        /// Класс для обработки администраторских команд
+        /// </summary>
         public static class SystemCommands
         {
             /// <summary>
@@ -68,8 +75,19 @@ namespace DiscordAngryBot.MessageHandlers
                 }
             }
         }
+
+        /// <summary>
+        /// Класс для обработки пользовательских команд
+        /// </summary>
         public static class UserCommands
         {
+            /// <summary>
+            /// Операция создания группы
+            /// </summary>
+            /// <param name="groups">Список всех групп</param>
+            /// <param name="message">Сообщение, инициировавшее создание</param>
+            /// <param name="destination">Описание группы</param>
+            /// <returns></returns>
             public static async Task CreateParty(List<Group> groups, SocketMessage message, string[] destination)
             {
                 Party party = await GroupBuilder.BuildParty(message, destination);
@@ -77,12 +95,28 @@ namespace DiscordAngryBot.MessageHandlers
                 await party.SendMessage();
                 await party.SaveToDB();
             }
+
+            /// <summary>
+            /// Операция создания рейда
+            /// </summary>
+            /// <param name="groups">Список всех групп</param>
+            /// <param name="message">Сообщение, инициировавшее создание</param>
+            /// <param name="destination">Описание рейда</param>
+            /// <returns></returns>
             public static async Task CreateRaid(List<Group> groups, SocketMessage message, string[] destination)
             {
                 Raid raid = await GroupBuilder.BuildRaid(message, destination);
                 groups.Add(raid);
                 await raid.SendMessage();
+                await raid.SaveToDB();
             }
+
+            /// <summary>
+            /// Операция вывода списка групп
+            /// </summary>
+            /// <param name="message">Сообщение, инициировавшее вызов списка</param>
+            /// <param name="groups">Список всех групп</param>
+            /// <returns></returns>
             public static async Task ListGroups(SocketMessage message, List<Group> groups)
             {
                 StringBuilder text = new StringBuilder();

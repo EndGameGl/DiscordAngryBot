@@ -12,8 +12,16 @@ using System.Data;
 
 namespace DiscordAngryBot.CustomObjects.Groups
 {
+    /// <summary>
+    /// Класс, содержащий методы расширения Group
+    /// </summary>
     public static class GroupHandler
     {
+        /// <summary>
+        /// Добавить пользователя в группу
+        /// </summary>
+        /// <param name="group">Группа</param>
+        /// <param name="user">Пользователь, добавляемый в группу</param>
         public static void AddUser(this Group group, SocketUser user)
         {
             if (group.users.Contains(user))
@@ -25,6 +33,11 @@ namespace DiscordAngryBot.CustomObjects.Groups
                 group.users.Add(user);
             }
         }
+        /// <summary>
+        /// Удалить пользователя из группы
+        /// </summary>
+        /// <param name="group">Группа</param>
+        /// <param name="user">Пользователь, удаляемый из группы</param>
         public static void RemoveUser(this Group group, SocketUser user)
         {
             if (group.users.Contains(user))
@@ -36,6 +49,11 @@ namespace DiscordAngryBot.CustomObjects.Groups
                 return;
             }
         }
+        /// <summary>
+        /// Отправить первичное сообщение о сборе группы
+        /// </summary>
+        /// <param name="group">Группа</param>
+        /// <returns></returns>
         public static async Task SendMessage(this Group group)
         {
             StringBuilder messageBuilder = new StringBuilder();
@@ -56,6 +74,11 @@ namespace DiscordAngryBot.CustomObjects.Groups
             await group.targetMessage.AddReactionAsync(new Emoji("\u274C"));
             await group.targetMessage.AddReactionAsync(new Emoji("\u2757"));
         }
+        /// <summary>
+        /// Отредактировать сообщение в соотвествии с последней версией группы
+        /// </summary>
+        /// <param name="group">Группа</param>
+        /// <returns></returns>
         public static async Task RewriteMessage(this Group group)
         {
             StringBuilder messageBuilder = new StringBuilder();
@@ -73,6 +96,11 @@ namespace DiscordAngryBot.CustomObjects.Groups
             }
             await group.targetMessage.ModifyAsync(m => { m.Content = messageBuilder.ToString(); });
         }
+        /// <summary>
+        /// Конвертация группы в формат JSON
+        /// </summary>
+        /// <param name="group"></param>
+        /// <returns></returns>
         public static async Task<string> SerializeToJson(this Group group) 
         {
             using (MemoryStream serializationStream = new MemoryStream())
@@ -82,6 +110,12 @@ namespace DiscordAngryBot.CustomObjects.Groups
                 return jsonResult;
             }
         }
+        /// <summary>
+        /// Создание группы из формата JSON
+        /// </summary>
+        /// <param name="jsonText">Строка, представляющая файл</param>
+        /// <param name="client">Клиент бота</param>
+        /// <returns></returns>
         public static async Task<Group> DeserializeFromJson(string jsonText, DiscordSocketClient client)
         {
             using (MemoryStream serializationStream = new MemoryStream(Encoding.UTF8.GetBytes(jsonText)))
@@ -91,6 +125,11 @@ namespace DiscordAngryBot.CustomObjects.Groups
                 return group;
             }
         }
+        /// <summary>
+        /// Метод, определяющий, является ли группа рейдом
+        /// </summary>
+        /// <param name="group">Группа</param>
+        /// <returns></returns>
         public static bool IsRaid(this Group group)
         {
             if (group is Raid)
@@ -100,6 +139,11 @@ namespace DiscordAngryBot.CustomObjects.Groups
             else
                 return false;
         }
+        /// <summary>
+        /// Метод, определяющий, является ли группа простой группой
+        /// </summary>
+        /// <param name="group"></param>
+        /// <returns></returns>
         public static bool IsParty(this Group group)
         {
             if (group is Party)
@@ -109,6 +153,11 @@ namespace DiscordAngryBot.CustomObjects.Groups
             else
                 return false;
         }
+        /// <summary>
+        /// Сохранение группы в базу данных
+        /// </summary>
+        /// <param name="group"></param>
+        /// <returns></returns>
         public static async Task SaveToDB(this Group group)
         {
             var jsonString = await group.SerializeToJson();
@@ -118,6 +167,11 @@ namespace DiscordAngryBot.CustomObjects.Groups
             string query = $"INSERT INTO Groups (GUID, JSON, isActive) VALUES('{group.GUID}', '{jsonString}', {isActive})";
             await SQLiteDataManager.PushToDB(configs.groups_dbPath, query);
         }
+        /// <summary>
+        /// Обновление записи группы в базе данных
+        /// </summary>
+        /// <param name="group">Группа</param>
+        /// <returns></returns>
         public static async Task UpdateAtDB(this Group group)
         {
             var jsonString = await group.SerializeToJson();
@@ -127,6 +181,11 @@ namespace DiscordAngryBot.CustomObjects.Groups
             string query = $"UPDATE Groups SET JSON = '{jsonString}' WHERE GUID = '{group.GUID}'";
             await SQLiteDataManager.PushToDB(configs.groups_dbPath, query);
         }
+        /// <summary>
+        /// Обновление записи в случае, если группа заполнилась
+        /// </summary>
+        /// <param name="group">Группа</param>
+        /// <returns></returns>
         public static async Task UpdateAtDBIfFull(this Group group)
         {
             var jsonString = await group.SerializeToJson();
@@ -136,6 +195,11 @@ namespace DiscordAngryBot.CustomObjects.Groups
             string query = $"UPDATE Groups SET JSON = '{jsonString}', isActive = {isActive} WHERE GUID = '{group.GUID}'";
             await SQLiteDataManager.PushToDB(configs.groups_dbPath, query);
         }
+        /// <summary>
+        /// Удаление группы из базы данных
+        /// </summary>
+        /// <param name="group">Группа</param>
+        /// <returns></returns>
         public static async Task RemoveFromDB(this Group group)
         {
             var jsonString = await group.SerializeToJson();
@@ -145,6 +209,11 @@ namespace DiscordAngryBot.CustomObjects.Groups
             string query = $"DELETE FROM Groups WHERE GUID = '{group.GUID}'";
             await SQLiteDataManager.PushToDB(configs.groups_dbPath, query);
         }
+        /// <summary>
+        /// Загрузка всех активных групп из базы данных
+        /// </summary>
+        /// <param name="client"></param>
+        /// <returns></returns>
         public static async Task<List<Group>> LoadAllGroupsFromDB(DiscordSocketClient client)
         {
             string query = "SELECT * FROM Groups WHERE isActive = 1";
@@ -156,6 +225,12 @@ namespace DiscordAngryBot.CustomObjects.Groups
             }
             return groups;
         }
+        /// <summary>
+        /// Загрузка группы из рейда по GUID'у
+        /// </summary>
+        /// <param name="client">Клиент бота</param>
+        /// <param name="GUID">Уникальный идентификатор группы</param>
+        /// <returns></returns>
         public static async Task<Group> LoadGroupFromDBByGUID(DiscordSocketClient client, string GUID)
         {
             string query = $"SELECT * FROM Groups WHERE GUID = '{GUID}'";
@@ -165,8 +240,17 @@ namespace DiscordAngryBot.CustomObjects.Groups
         }
     }
 
+    /// <summary>
+    /// Класс, предназначенный для инициализации групп
+    /// </summary>
     public static class GroupBuilder
     {
+        /// <summary>
+        /// Конструктор простой группы
+        /// </summary>
+        /// <param name="sourceMessage">Сообщение, запустившее конструктор</param>
+        /// <param name="args">Параметры</param>
+        /// <returns></returns>
         public static async Task<Party> BuildParty(SocketMessage sourceMessage, string[] args)
         {
             var groupDestination = string.Empty;
@@ -188,6 +272,14 @@ namespace DiscordAngryBot.CustomObjects.Groups
             await sourceMessage.DeleteAsync();           
             return party;
         }
+        /// <summary>
+        /// Конструктор группы, на основе данных, полученных из базы данных
+        /// </summary>
+        /// <param name="client">Клиент бота</param>
+        /// <param name="GUID">Уникальный идентификатор</param>
+        /// <param name="json">JSON-данные группы</param>
+        /// <param name="isActive">Признак активности группы</param>
+        /// <returns></returns>
         public static async Task<Group> BuildLoadedGroup(DiscordSocketClient client, string GUID, string json, int isActive)
         {
             Group group = await GroupHandler.DeserializeFromJson(json, client);
@@ -202,6 +294,12 @@ namespace DiscordAngryBot.CustomObjects.Groups
                 return (Raid)group;
             }
         }
+        /// <summary>
+        /// Конструктор рейда
+        /// </summary>
+        /// <param name="sourceMessage">Сообщение, запустившее конструктор</param>
+        /// <param name="args">Параметры</param>
+        /// <returns></returns>
         public async static Task<Raid> BuildRaid(SocketMessage sourceMessage, string[] args)
         {
             var groupDestination = string.Empty;
@@ -224,9 +322,17 @@ namespace DiscordAngryBot.CustomObjects.Groups
             return raid;
         }
     }
-
+    /// <summary>
+    /// Класс, предназначенный для взаимодействия с базой данных
+    /// </summary>
     public static class SQLiteDataManager
     {
+        /// <summary>
+        /// Запрос к базе данных
+        /// </summary>
+        /// <param name="dbPath">Путь к БД</param>
+        /// <param name="sqlQuery">Запрос к БД</param>
+        /// <returns></returns>
         public static async Task PushToDB(string dbPath, string sqlQuery)
         {
             SQLiteConnection connection = new SQLiteConnection($"Data Source={dbPath};Version=3;");
@@ -235,6 +341,12 @@ namespace DiscordAngryBot.CustomObjects.Groups
             await command.ExecuteNonQueryAsync();
             connection.Close();
         }
+        /// <summary>
+        /// Загрузка объекта DataTable из базы данных по запросу
+        /// </summary>
+        /// <param name="dbPath">Путь к БД</param>
+        /// <param name="sqlQuery">Запрос к БД</param>
+        /// <returns></returns>
         public static async Task<DataTable> GetDataFromDB(string dbPath, string sqlQuery)
         {
             SQLiteConnection connection = new SQLiteConnection($"Data Source={dbPath};Version=3;");

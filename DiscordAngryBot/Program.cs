@@ -38,6 +38,9 @@ namespace DiscordAngryBot
         /// </summary>
         public static DataHandler systemData = new DataHandler();
 
+        /// <summary>
+        /// Пустой конструктор программы
+        /// </summary>
         private Program() { }
 
         /// <summary>
@@ -287,6 +290,12 @@ namespace DiscordAngryBot
             }
             Write($"Загружено групп: {partyCount}\nЗагружено рейдов: {raidCount}");
         }
+
+        /// <summary>
+        /// Обработка отключения сервера
+        /// </summary>
+        /// <param name="e">Исключение, повлекшее отключение сервера</param>
+        /// <returns></returns>
         public async Task ManageDisconnect(Exception e) 
         {
             if (systemData.groups.Count > 0) 

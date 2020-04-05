@@ -7,8 +7,14 @@ using System.Linq;
 
 namespace DiscordAngryBot.ReactionHandlers
 {
+    /// <summary>
+    /// Класс для обработки реакций к сообщениям
+    /// </summary>
     public static class ReactionHandler
     {
+        /// <summary>
+        /// Обработка реакций, связанных со сбором групп
+        /// </summary>
         public static class PartyReactionHandler
         {
             /// <summary>
