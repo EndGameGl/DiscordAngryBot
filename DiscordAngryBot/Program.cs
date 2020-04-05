@@ -1,16 +1,12 @@
 ﻿using Discord;
-using Discord.Commands;
 using Discord.WebSocket;
-using DiscordAngryBot.CustomObjects.Parties;
+using DiscordAngryBot.CustomObjects.Groups;
 using DiscordAngryBot.MessageHandlers;
 using DiscordAngryBot.ReactionHandlers;
-using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -143,9 +139,8 @@ namespace DiscordAngryBot
                                 switch (command.ToUpper())
                                 {
                                     case "BAN":
-                                        CommandHandler.SystemCommands.TempBanUser(serverObject, systemData.timers, message, commandParameters);
-                                        break;
-                                    
+                                        await CommandHandler.SystemCommands.TempBanUser(serverObject, systemData.timers, message, commandParameters);
+                                        break;                                   
                                 }
                             }
                             else
@@ -160,13 +155,13 @@ namespace DiscordAngryBot
                                 switch (command.ToUpper())
                                 {
                                     case "PARTY":
-                                        CommandHandler.UserCommands.CreateParty(message, commandParameters);
+                                        await CommandHandler.UserCommands.CreateParty(systemData.groups, message, args);
                                         break;
                                     case "RAID":
-                                        CommandHandler.UserCommands.CreateRaid(message, commandParameters);
+                                        await CommandHandler.UserCommands.CreateRaid(systemData.groups, message, args);
                                         break;
                                     case "LIST":
-                                        CommandHandler.UserCommands.ListGroups(message);
+                                        await CommandHandler.UserCommands.ListGroups(message, systemData.groups);
                                         break;
                                 }
                             }                            
@@ -195,20 +190,19 @@ namespace DiscordAngryBot
             {
                 var message = await messageChannel.GetMessageAsync(cache.Id);
 
-                IGroup group = GetGroup(message);
+                Group group = systemData.groups.Where(x => x.targetMessage.Id == message.Id).SingleOrDefault();
                 if (group != null)
                 {
-                    ReactionHandler.PartyReactionHandler.JoinGroup(group, message, reaction);
+                    ReactionHandler.PartyReactionHandler.JoinGroup(group, message, reaction, systemData.groups);
                 }
             }
             else if (reaction.Emote.Name == "\u274C" && !reaction.User.Value.IsBot)
             {
                 var message = await messageChannel.GetMessageAsync(cache.Id);
-                IGroup group = GetGroup(message);
-
+                Group group = systemData.groups.Where(x => x.targetMessage.Id == message.Id).SingleOrDefault();
                 if (group != null)
                 {
-                    ReactionHandler.PartyReactionHandler.TerminateGroup(group, message, reaction);
+                    ReactionHandler.PartyReactionHandler.TerminateGroup(group, message, reaction, systemData.groups);
                 }
             }
         }
@@ -226,14 +220,14 @@ namespace DiscordAngryBot
             {
                 var message = await messageChannel.GetMessageAsync(cache.Id);
 
-                IGroup group = systemData.parties.Where(x => x.targetMessage.Id == message.Id).SingleOrDefault();
+                Group group = systemData.groups.Where(x => x.targetMessage.Id == message.Id).SingleOrDefault();
                 if (group == null)
                 {
-                    group = systemData.raids.Where(x => x.targetMessage.Id == message.Id).SingleOrDefault();
+                    group = systemData.groups.Where(x => x.targetMessage.Id == message.Id).SingleOrDefault();
                 }
                 if (group != null)
                 {
-                    ReactionHandler.PartyReactionHandler.LeaveGroup(group, message, reaction);
+                    ReactionHandler.PartyReactionHandler.LeaveGroup(group, message, reaction, systemData.groups);
                 }
             }
         }
@@ -272,61 +266,32 @@ namespace DiscordAngryBot
         }
 
         /// <summary>
-        /// Получение группы/рейда
-        /// </summary>
-        /// <param name="message"></param>
-        /// <returns></returns>
-        public IGroup GetGroup(IMessage message)
-        {
-            IGroup group = null;
-            try
-            {
-                group = systemData.parties.Where(x => x.targetMessage.Id == message.Id).SingleOrDefault();
-                if (group == null)
-                {
-                    group = systemData.raids.Where(x => x.targetMessage.Id == message.Id).SingleOrDefault();
-                }
-                return group;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        /// <summary>
         /// Загрузка всех составов
         /// </summary>
         /// <returns></returns>
         public async Task LoadGroups()
         {
-                var partyFiles = Directory.GetFiles("GroupCache\\Parties");
-                var raidFiles = Directory.GetFiles("GroupCache\\Raids");
-                foreach (var partyFile in partyFiles)
+            systemData.groups = await GroupHandler.LoadAllGroupsFromDB(_client);
+            int raidCount = 0;
+            int partyCount = 0;
+            foreach (var group in systemData.groups)
+            {
+                if (group is Party)
                 {
-                    string partyText = File.ReadAllText(partyFile);
-                    Party party = new Party();
-                    systemData.parties.Add((Party)party.Load(partyText).Result);
+                    partyCount++;
                 }
-                Console.WriteLine($"Loaded {systemData.parties.Count()} parties");
-                foreach (var raidFile in raidFiles)
+                else if (group is Raid)
                 {
-                    string raidText = File.ReadAllText(raidFile);
-                    Raid raid = new Raid();
-                    systemData.raids.Add((Raid)raid.Load(raidText).Result);
-                }
-                Console.WriteLine($"Loaded {systemData.raids.Count()} raids");
+                    raidCount++;
+                }               
+            }
+            Write($"Загружено групп: {partyCount}\nЗагружено рейдов: {raidCount}");
         }
-
         public async Task ManageDisconnect(Exception e) 
         {
-            if (systemData.parties.Count > 0) 
+            if (systemData.groups.Count > 0) 
             {
-                systemData.parties = new List<Party>();
-            }
-            if (systemData.raids.Count > 0) 
-            {
-                systemData.raids = new List<Raid>();
+                systemData.groups = new List<Group>();
             }
         }
     }

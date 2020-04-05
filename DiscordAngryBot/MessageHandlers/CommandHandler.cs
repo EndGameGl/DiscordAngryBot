@@ -1,8 +1,7 @@
 ﻿using Discord.WebSocket;
-using DiscordAngryBot.CustomObjects.Parties;
+using DiscordAngryBot.CustomObjects.Groups;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -45,7 +44,7 @@ namespace DiscordAngryBot.MessageHandlers
             /// <param name="channel"></param>
             /// <param name="command"></param>
             /// <param name="args"></param>
-            public async static void TempBanUser(DiscordServerObject serverObject, List<Timer> timers, SocketMessage message, Tuple<ISocketMessageChannel, string, string[]> mainArgs)
+            public async static Task TempBanUser(DiscordServerObject serverObject, List<Timer> timers, SocketMessage message, Tuple<ISocketMessageChannel, string, string[]> mainArgs)
             {
                 Program.Write($"Called command: {mainArgs.Item2}\n    Arguments: {mainArgs.Item3[0]}, {mainArgs.Item3[1]}");
                 var targetID = mainArgs.Item3[0].Substring(3, mainArgs.Item3[0].Length - 4);
@@ -71,41 +70,54 @@ namespace DiscordAngryBot.MessageHandlers
         }
         public static class UserCommands
         {
-            public static async void CreateParty(SocketMessage message, Tuple<ISocketMessageChannel, string, string[]> mainArgs)
+            public static async Task CreateParty(List<Group> groups, SocketMessage message, string[] destination)
             {
-                Party createdParty = new Party(message, mainArgs.Item3);
-                createdParty.SendMessage();
-                Program.systemData.parties.Add(createdParty);
-                await message.DeleteAsync();
-
+                Party party = await GroupBuilder.BuildParty(message, destination);
+                groups.Add(party);
+                await party.SendMessage();
+                await party.SaveToDB();
             }
-            public static async void CreateRaid(SocketMessage message, Tuple<ISocketMessageChannel, string, string[]> mainArgs)
+            public static async Task CreateRaid(List<Group> groups, SocketMessage message, string[] destination)
             {
-                Raid createdRaid = new Raid(message, mainArgs.Item3);
-                createdRaid.SendMessage();
-                Program.systemData.raids.Add(createdRaid);
-                await message.DeleteAsync();
+                Raid raid = await GroupBuilder.BuildRaid(message, destination);
+                groups.Add(raid);
+                await raid.SendMessage();
             }
-            public static async void ListGroups(SocketMessage message)
+            public static async Task ListGroups(SocketMessage message, List<Group> groups)
             {
-                StringBuilder text = new StringBuilder(); if (Program.systemData.parties.Count() == 0 && Program.systemData.raids.Count() == 0)
+                StringBuilder text = new StringBuilder();
+                
+                if (groups.Count() == 0)
                 {
                     text.AppendLine("В данный момент нет никаких групп или рейдов.");
                 }                            
                 else
                 {
-                    text.AppendLine("Список собираемых в данный момент составов:");
-                    if (Program.systemData.parties.Count() > 0)
-                        text.AppendLine("Группы:");
-                    foreach (var party in Program.systemData.parties)
+                    List<Party> parties = new List<Party>();
+                    List<Raid> raids = new List<Raid>();
+                    foreach (var group in groups)
                     {
-                        text.AppendLine($"    {party.author.Username}: {party.partyDestination} ({party.users.Count} участников)");
+                        if (group is Party)
+                        {
+                            parties.Add((Party)group);
+                        }
+                        else if (group is Raid)
+                        {
+                            raids.Add((Raid)group);
+                        }
                     }
-                    if (Program.systemData.raids.Count() > 0)
-                        text.AppendLine("Рейды:");
-                    foreach (var raid in Program.systemData.raids)
+                    text.AppendLine("Список собираемых в данный момент составов:");
+                    if (parties.Count() > 0)
+                        text.AppendLine("Группы:");
+                    foreach (var party in parties)
                     {
-                        text.AppendLine($"    {raid.author.Username}: {raid.partyDestination} ({raid.users.Count} участников)");
+                        text.AppendLine($"    {party.author.Username}: {party.destination} ({party.users.Count} участников)");
+                    }
+                    if (raids.Count() > 0)
+                        text.AppendLine("Рейды:");
+                    foreach (var raid in raids)
+                    {
+                        text.AppendLine($"    {raid.author.Username}: {raid.destination} ({raid.users.Count} участников)");
                     }
                 }
                 await message.Channel.SendMessageAsync(text.ToString());

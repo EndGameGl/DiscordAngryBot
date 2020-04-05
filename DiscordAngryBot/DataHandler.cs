@@ -1,4 +1,4 @@
-﻿using DiscordAngryBot.CustomObjects.Parties;
+﻿using DiscordAngryBot.CustomObjects.Groups;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,13 +11,11 @@ namespace DiscordAngryBot
     public class DataHandler
     {
         public List<Timer> timers { get; set; }
-        public List<Party> parties { get; set; }
-        public List<Raid> raids { get; set; }
+        public List<Group> groups { get; set; }
         public DataHandler()
         {
             timers = new List<Timer>();
-            parties = new List<Party>();
-            raids = new List<Raid>();
+            groups = new List<Group>();
         }
     }
 }
