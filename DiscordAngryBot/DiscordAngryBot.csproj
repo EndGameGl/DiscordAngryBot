@@ -251,6 +251,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BotSettings.cs" />
+    <Compile Include="CustomObjects\Bans\BanHandler.cs" />
+    <Compile Include="CustomObjects\Bans\BanJSONobject.cs" />
+    <Compile Include="CustomObjects\Bans\DiscordBan.cs" />
     <Compile Include="CustomObjects\Groups\configs.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -261,12 +264,14 @@
     <Compile Include="CustomObjects\Groups\GroupJSONObject.cs" />
     <Compile Include="CustomObjects\Groups\Party.cs" />
     <Compile Include="CustomObjects\Groups\Raid.cs" />
+    <Compile Include="CustomObjects\SQLIteHandler\SQLiteDataManager.cs" />
     <Compile Include="DataHandler.cs" />
     <Compile Include="DiscordServerObject.cs" />
     <Compile Include="MessageHandlers\CommandHandler.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReactionHandlers\ReactionHandler.cs" />
+    <Compile Include="ReactionHandlers\ReactionValidator.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

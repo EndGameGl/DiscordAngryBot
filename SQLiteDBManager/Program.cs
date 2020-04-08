@@ -12,9 +12,7 @@ namespace SQLiteDBManager
     {
         static void Main(string[] args)
         {
-            CreatePartyDB();
-            ToConsole();
-            Console.ReadLine();
+            CreateBanTable();
         }
 
         public static void CreatePartyDB()
@@ -61,6 +59,25 @@ namespace SQLiteDBManager
             {
                 Console.WriteLine($"{row[0]} - {row[1]} - {row[2]}");
             }
+        }
+
+        public static void CreateBanTable()
+        {
+            SQLiteConnection.CreateFile("SystemDataBase.sqlite");
+            SQLiteConnection connection = new SQLiteConnection("Data Source=SystemDataBase.sqlite;Version=3;");
+            connection.Open();
+
+            string commandText = $"CREATE TABLE Bans (GUID TEXT PRIMARY KEY NOT NULL, JSON TEXT NOT NULL, isInfinite INT NOT NULL)";
+
+            SQLiteCommand command = new SQLiteCommand(commandText, connection);
+            command.ExecuteNonQuery();
+
+            commandText = $"CREATE TABLE Groups (GUID TEXT PRIMARY KEY NOT NULL, JSON TEXT NOT NULL, isActive INT NOT NULL)";
+
+            command = new SQLiteCommand(commandText, connection);
+            command.ExecuteNonQuery();
+
+            connection.Close();
         }
     }
 }

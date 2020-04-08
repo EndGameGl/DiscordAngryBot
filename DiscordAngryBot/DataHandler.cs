@@ -1,4 +1,5 @@
-﻿using DiscordAngryBot.CustomObjects.Groups;
+﻿using DiscordAngryBot.CustomObjects.Bans;
+using DiscordAngryBot.CustomObjects.Groups;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,6 +18,8 @@ namespace DiscordAngryBot
         /// Список таймеров
         /// </summary>
         public List<Timer> timers { get; set; }
+
+        public List<DiscordBan> bans { get; set; }
         /// <summary>
         /// Список групп
         /// </summary>
@@ -28,6 +31,7 @@ namespace DiscordAngryBot
         {
             timers = new List<Timer>();
             groups = new List<Group>();
+            bans = new List<DiscordBan>();
         }
     }
 }

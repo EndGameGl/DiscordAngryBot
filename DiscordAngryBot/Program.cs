@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using DiscordAngryBot.CustomObjects.Bans;
 using DiscordAngryBot.CustomObjects.Groups;
 using DiscordAngryBot.MessageHandlers;
 using DiscordAngryBot.ReactionHandlers;
@@ -56,7 +57,6 @@ namespace DiscordAngryBot
             _client.ReactionAdded += ReactionAdded;
             _client.ReactionRemoved += ReactionRemoved;
             _client.Ready += CollectServerInfo;
-            _client.Disconnected += ManageDisconnect;
 
             //_client.UserJoined
             //_client.UserLeft
@@ -142,7 +142,7 @@ namespace DiscordAngryBot
                                 switch (command.ToUpper())
                                 {
                                     case "BAN":
-                                        await CommandHandler.SystemCommands.TempBanUser(serverObject, systemData.timers, message, commandParameters);
+                                        systemData.bans.Add(await CommandHandler.SystemCommands.BanUser(serverObject, message, commandParameters));
                                         break;                                   
                                 }
                             }
@@ -189,23 +189,31 @@ namespace DiscordAngryBot
         /// <returns></returns>
         public async Task ReactionAdded(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel messageChannel, SocketReaction reaction)
         {
-            if (reaction.Emote.Name == "✅" && !reaction.User.Value.IsBot)
+            if (reaction.ValidateReaction(new Emoji("\u2705"))) // white_check_mark
             {
                 var message = await messageChannel.GetMessageAsync(cache.Id);
-
                 Group group = systemData.groups.Where(x => x.targetMessage.Id == message.Id).SingleOrDefault();
                 if (group != null)
                 {
                     ReactionHandler.PartyReactionHandler.JoinGroup(group, message, reaction, systemData.groups);
                 }
             }
-            else if (reaction.Emote.Name == "\u274C" && !reaction.User.Value.IsBot)
+            if (reaction.ValidateReaction(new Emoji("\u274C"))) // cross_mark
             {
                 var message = await messageChannel.GetMessageAsync(cache.Id);
                 Group group = systemData.groups.Where(x => x.targetMessage.Id == message.Id).SingleOrDefault();
                 if (group != null)
                 {
                     ReactionHandler.PartyReactionHandler.TerminateGroup(group, message, reaction, systemData.groups);
+                }
+            }
+            if (reaction.ValidateReaction(new Emoji("\u2757"))) // exclamation
+            {
+                var message = await messageChannel.GetMessageAsync(cache.Id);
+                Group group = systemData.groups.Where(x => x.targetMessage.Id == message.Id).SingleOrDefault();
+                if (group != null)
+                {
+                    ReactionHandler.PartyReactionHandler.GroupCallout(group, reaction);
                 }
             }
         }
@@ -219,10 +227,10 @@ namespace DiscordAngryBot
         /// <returns></returns>
         public async Task ReactionRemoved(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel messageChannel, SocketReaction reaction)
         {
-            if (reaction.Emote.Name == "✅" && !reaction.User.Value.IsBot)
+            if (reaction.ValidateReaction(new Emoji("\u2705"))) // white_check_mark
             {
                 var message = await messageChannel.GetMessageAsync(cache.Id);
-
+                
                 Group group = systemData.groups.Where(x => x.targetMessage.Id == message.Id).SingleOrDefault();
                 if (group == null)
                 {
@@ -243,6 +251,7 @@ namespace DiscordAngryBot
         {            
             serverObject = new DiscordServerObject(_client, 636208919114547212);
             await LoadGroups();
+            await LoadBans();
         }
 
         /// <summary>
@@ -274,6 +283,7 @@ namespace DiscordAngryBot
         /// <returns></returns>
         public async Task LoadGroups()
         {
+            systemData.groups = new List<Group>();
             systemData.groups = await GroupHandler.LoadAllGroupsFromDB(_client);
             int raidCount = 0;
             int partyCount = 0;
@@ -291,17 +301,16 @@ namespace DiscordAngryBot
             Write($"Загружено групп: {partyCount}\nЗагружено рейдов: {raidCount}");
         }
 
-        /// <summary>
-        /// Обработка отключения сервера
-        /// </summary>
-        /// <param name="e">Исключение, повлекшее отключение сервера</param>
-        /// <returns></returns>
-        public async Task ManageDisconnect(Exception e) 
+        public async Task LoadBans()
         {
-            if (systemData.groups.Count > 0) 
+            systemData.bans = new List<CustomObjects.Bans.DiscordBan>();
+            systemData.bans = await BanHandler.LoadAllBansFromDB(_client);
+            int banCount = 0;
+            foreach (var ban in systemData.bans)
             {
-                systemData.groups = new List<Group>();
+                banCount++;
             }
+            Write($"Загружено банов: {banCount}");
         }
     }
 }

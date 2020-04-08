@@ -61,7 +61,7 @@ namespace DiscordAngryBot.CustomObjects.Groups {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на GroupDataBase.sqlite.
+        ///   Ищет локализованную строку, похожую на SystemDataBase.sqlite.
         /// </summary>
         internal static string groups_dbPath {
             get {

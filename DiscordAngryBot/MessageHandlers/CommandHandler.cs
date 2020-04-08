@@ -1,4 +1,5 @@
 ﻿using Discord.WebSocket;
+using DiscordAngryBot.CustomObjects.Bans;
 using DiscordAngryBot.CustomObjects.Groups;
 using System;
 using System.Collections.Generic;
@@ -42,37 +43,18 @@ namespace DiscordAngryBot.MessageHandlers
         /// </summary>
         public static class SystemCommands
         {
-            /// <summary>
-            /// Метод временного бана юзера
-            /// </summary>
-            /// <param name="serverObject"></param>
-            /// <param name="timers"></param>
-            /// <param name="message"></param>
-            /// <param name="channel"></param>
-            /// <param name="command"></param>
-            /// <param name="args"></param>
-            public async static Task TempBanUser(DiscordServerObject serverObject, List<Timer> timers, SocketMessage message, Tuple<ISocketMessageChannel, string, string[]> mainArgs)
+            public async static Task<DiscordBan> BanUser(DiscordServerObject serverObject, SocketMessage message, Tuple<ISocketMessageChannel, string, string[]> mainArgs)
             {
-                Program.Write($"Called command: {mainArgs.Item2}\n    Arguments: {mainArgs.Item3[0]}, {mainArgs.Item3[1]}");
                 var targetID = mainArgs.Item3[0].Substring(3, mainArgs.Item3[0].Length - 4);
                 var targetUser = serverObject.users.Where(x => x.Id.ToString() == targetID).Single();
-                var time = Convert.ToInt32(mainArgs.Item3[1]) * 60 * 1000;
-                Program.Write(serverObject.server.GetRole(682277138455330821).Name);
-                Program.Write($"Removing role {serverObject.server.GetRole(682277138455330821)} from {targetUser.Username}");
-                await targetUser.RemoveRoleAsync(serverObject.server.GetRole(682277138455330821));
-                await mainArgs.Item1.SendMessageAsync($"Выдан бан пользователю {targetUser.Username} на {mainArgs.Item3[1]} минут");
-
-                timers.Add(new Timer(TimerCallBackMethod, timers.Count, time, Timeout.Infinite));
-
-                async void TimerCallBackMethod(object timerID)
+                int? time = null;
+                if (mainArgs.Item3.Count() > 1)
                 {
-                    Program.Write($"Adding role back to {targetUser.Username}");
-                    await targetUser.AddRoleAsync(serverObject.server.GetRole(682277138455330821));
-                    await mainArgs.Item1.SendMessageAsync($"Возвращена роль {serverObject.server.GetRole(682277138455330821).Name} пользователю {targetUser.Username}");
-                    timers[(int)timerID].Change(Timeout.Infinite, Timeout.Infinite);
-                    timers[(int)timerID].Dispose();
-                    timers[(int)timerID] = null;
+                    time = Convert.ToInt32(mainArgs.Item3[1]) * 60 * 1000;
                 }
+                var ban = await targetUser.Ban(time, serverObject.server.GetRole(682277138455330821), message.Channel);
+                await ban.SaveBanToDB();
+                return ban;
             }
         }
 
