@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace DiscordAngryBot.ReactionHandlers
 {
@@ -24,7 +25,7 @@ namespace DiscordAngryBot.ReactionHandlers
             /// <param name="groupObject"></param>
             /// <param name="message"></param>
             /// <param name="reaction"></param>
-            public async static void JoinGroup(Group groupObject, IMessage message, SocketReaction reaction, List<Group> groups)
+            public async static Task JoinGroup(Group groupObject, IMessage message, SocketReaction reaction, List<Group> groups)
             {
                 if (groupObject.isActive)
                 {
@@ -39,8 +40,6 @@ namespace DiscordAngryBot.ReactionHandlers
                             await message.Channel.SendMessageAsync($"Группа персонажа {party.author.Mention} собрана");
                             party.isActive = false;
                             await party.UpdateAtDBIfFull();
-                            //groups.Remove(party);
-                            //party.Dispose();
                         }
                     }
                     else if (groupObject.IsRaid())
@@ -54,8 +53,19 @@ namespace DiscordAngryBot.ReactionHandlers
                             await message.Channel.SendMessageAsync($"Группа персонажа {raid.author.Mention} собрана");
                             raid.isActive = false;
                             await raid.UpdateAtDBIfFull();
-                            //groups.Remove(raid);
-                            //raid.Dispose();
+                        }
+                    }
+                    else if (groupObject.IsGuildFight())
+                    {
+                        var guildFight = (GuildFight)groupObject;
+                        guildFight.AddUser((SocketUser)reaction.User);
+                        await guildFight.UpdateAtDB();
+                        await guildFight.RewriteMessage();
+                        if (guildFight.users.Count == 12)
+                        {
+                            await message.Channel.SendMessageAsync($"Группа персонажа {guildFight.author.Mention} собрана");
+                            guildFight.isActive = false;
+                            await guildFight.UpdateAtDBIfFull();
                         }
                     }
                 }
@@ -67,7 +77,7 @@ namespace DiscordAngryBot.ReactionHandlers
             /// <param name="groupObject"></param>
             /// <param name="message"></param>
             /// <param name="reaction"></param>
-            public async static void LeaveGroup(Group groupObject, IMessage message, SocketReaction reaction, List<Group> groups)
+            public async static Task LeaveGroup(Group groupObject, IMessage message, SocketReaction reaction, List<Group> groups)
             {
                 if (groupObject.isActive)
                 {
@@ -95,6 +105,19 @@ namespace DiscordAngryBot.ReactionHandlers
                             return;
                         }
                     }
+                    else if (groupObject.IsGuildFight())
+                    {
+                        var guildFight = (GuildFight)groupObject;
+                        bool isInFight = groups.Where(x => x.users.Contains((SocketUser)reaction.User.Value)).Count() > 0 == true;
+                        if (isInFight)
+                        {
+                            guildFight.RemoveUser((SocketUser)reaction.User);
+                            await guildFight.UpdateAtDB();
+                            await guildFight.RewriteMessage();
+                            return;
+                        }
+                    }
+
                 }
             }
 
@@ -104,7 +127,7 @@ namespace DiscordAngryBot.ReactionHandlers
             /// <param name="groupObject"></param>
             /// <param name="message"></param>
             /// <param name="reaction"></param>
-            public async static void TerminateGroup(Group groupObject, IMessage message, SocketReaction reaction, List<Group> groups)
+            public async static Task TerminateGroup(Group groupObject, IMessage message, SocketReaction reaction, List<Group> groups)
             {
                 if (groupObject.IsParty())
                 {
@@ -112,8 +135,9 @@ namespace DiscordAngryBot.ReactionHandlers
 
                     if (party != null && party.author.Id == reaction.UserId)
                     {
-                        await party.targetMessage.DeleteAsync();
-                        await message.Channel.SendMessageAsync($"Сбор группы {party.author.Mention} отменен");
+                        //await party.targetMessage.DeleteAsync();
+                        //await message.Channel.SendMessageAsync($"Сбор группы {party.author.Mention} ({party.destination}) закончен");
+                        await party.RewriteMessageOnCancel();
                         await party.RemoveFromDB();
                         groups.Remove(party);
                     }
@@ -123,15 +147,27 @@ namespace DiscordAngryBot.ReactionHandlers
                     var raid = groups.Where(x => x.targetMessage.Id == reaction.MessageId).SingleOrDefault();
                     if (raid != null && raid.author.Id == reaction.UserId)
                     {
-                        await raid.targetMessage.DeleteAsync();
-                        await message.Channel.SendMessageAsync($"Сбор рейда {raid.author.Mention} отменен");
+                        //await raid.targetMessage.DeleteAsync();
+                        //await message.Channel.SendMessageAsync($"Сбор рейда {raid.author.Mention} ({raid.destination}) закончен");
+                        await raid.RewriteMessageOnCancel();
                         await raid.RemoveFromDB();
                         groups.Remove(raid);
                     }
                 }
+                else if (groupObject.IsGuildFight())
+                {
+                    var guildFight = groups.Where(x => x.targetMessage.Id == reaction.MessageId).SingleOrDefault();
+                    if (guildFight != null && guildFight.author.Id == reaction.UserId)
+                    {
+                        await guildFight.targetMessage.DeleteAsync();
+                        await message.Channel.SendMessageAsync($"Сбор на битвы БШ {guildFight.destination} закончен");
+                        await guildFight.RemoveFromDB();
+                        groups.Remove(guildFight);
+                    }
+                }
             }
 
-            public async static void GroupCallout(Group groupObject, SocketReaction reaction)
+            public async static Task GroupCallout(Group groupObject, SocketReaction reaction)
             {
                 if (reaction.UserId == groupObject.author.Id)
                 {

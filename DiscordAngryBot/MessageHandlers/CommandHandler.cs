@@ -139,6 +139,14 @@ namespace DiscordAngryBot.MessageHandlers
                 await message.Channel.SendMessageAsync(text.ToString());
                 await message.DeleteAsync();
             }                   
+
+            public static async Task CreateGuildFight(List<Group> groups, SocketMessage message, string[] destination)
+            {
+                GuildFight guildFight = await GroupBuilder.BuildGuildFight(message, destination);
+                groups.Add(guildFight);
+                await guildFight.SendMessage();
+                await guildFight.SaveToDB();
+            }
         }
     }
 }

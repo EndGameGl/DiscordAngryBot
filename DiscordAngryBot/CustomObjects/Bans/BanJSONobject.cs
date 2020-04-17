@@ -1,4 +1,5 @@
 ﻿using Discord.WebSocket;
+using DiscordAngryBot.CustomObjects.ConsoleOutput;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,6 +28,7 @@ namespace DiscordAngryBot.CustomObjects.Bans
 
         public async Task<DiscordBan> ConvertToDiscordBan(SocketGuild guild)
         {
+            await ConsoleWriter.Write($"Converting into DiscordBan", ConsoleWriter.InfoType.Notice);
             DiscordBan ban = new DiscordBan()
             {
                 banTarget = guild.GetUser(banTarget_id),

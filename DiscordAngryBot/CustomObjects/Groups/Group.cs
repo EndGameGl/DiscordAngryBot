@@ -59,6 +59,7 @@ namespace DiscordAngryBot.CustomObjects.Groups
         /// Признак того, ведется ли набор в группе
         /// </summary>
         public bool isActive { get; set; }
+        public bool isGuildFight { get; set; }
         /// <summary>
         /// Метод вызова сбора памяти
         /// </summary>

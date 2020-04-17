@@ -254,6 +254,7 @@
     <Compile Include="CustomObjects\Bans\BanHandler.cs" />
     <Compile Include="CustomObjects\Bans\BanJSONobject.cs" />
     <Compile Include="CustomObjects\Bans\DiscordBan.cs" />
+    <Compile Include="CustomObjects\ConsoleOutput\ConsoleWriter.cs" />
     <Compile Include="CustomObjects\Groups\configs.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -262,16 +263,20 @@
     <Compile Include="CustomObjects\Groups\Group.cs" />
     <Compile Include="CustomObjects\Groups\GroupHandler.cs" />
     <Compile Include="CustomObjects\Groups\GroupJSONObject.cs" />
+    <Compile Include="CustomObjects\Groups\GuildFight.cs" />
     <Compile Include="CustomObjects\Groups\Party.cs" />
     <Compile Include="CustomObjects\Groups\Raid.cs" />
     <Compile Include="CustomObjects\SQLIteHandler\SQLiteDataManager.cs" />
     <Compile Include="DataHandler.cs" />
     <Compile Include="DiscordServerObject.cs" />
+    <Compile Include="EventHandlers\DiscordTask.cs" />
+    <Compile Include="EventHandlers\EventHandler.cs" />
     <Compile Include="MessageHandlers\CommandHandler.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReactionHandlers\ReactionHandler.cs" />
     <Compile Include="ReactionHandlers\ReactionValidator.cs" />
+    <Compile Include="WebhookEventHandlers\WebhookEventHandler.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

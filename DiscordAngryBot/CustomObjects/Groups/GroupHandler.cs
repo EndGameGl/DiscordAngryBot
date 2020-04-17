@@ -10,6 +10,7 @@ using System.IO;
 using System.Data.SQLite;
 using System.Data;
 using DiscordAngryBot.CustomObjects.SQLIteHandler;
+using DiscordAngryBot.CustomObjects.ConsoleOutput;
 
 namespace DiscordAngryBot.CustomObjects.Groups
 {
@@ -58,13 +59,17 @@ namespace DiscordAngryBot.CustomObjects.Groups
         public static async Task SendMessage(this Group group)
         {
             StringBuilder messageBuilder = new StringBuilder();
-            if (group is Party)
+            if (group.IsParty())
             {
                 messageBuilder.Append($"Собирается пати пользователем {group.author.Mention}: {group.destination}\nОсталось {group.userLimit - group.users.Count()} мест.\nСостав группы:\n");
             }
-            else if (group is Raid)
+            else if (group.IsRaid())
             {
                 messageBuilder.Append($"Собирается рейд пользователем {group.author.Mention}: {group.destination}\nОсталось {group.userLimit - group.users.Count()} мест.\nСостав группы:\n");
+            }
+            else if (group.IsGuildFight())
+            {
+                messageBuilder.Append($"Собирается группа на битвы БШ: {group.destination}\nОсталось {group.userLimit - group.users.Count()} мест.\nСостав группы:\n");
             }
             for (int i = 0; i < group.users.Where(x => x != null).Count(); i++)
             {
@@ -91,11 +96,22 @@ namespace DiscordAngryBot.CustomObjects.Groups
             {
                 messageBuilder.Append($"Собирается рейд пользователем {group.author.Mention}: {group.destination}\nОсталось {group.userLimit - group.users.Count()} мест.\nСостав группы:\n");
             }
+            else if (group.IsGuildFight())
+            {
+                messageBuilder.Append($"Собирается группа на битвы БШ: {group.destination}\nОсталось {group.userLimit - group.users.Count()} мест.\nСостав группы:\n");
+            }
             for (int i = 0; i < group.users.Where(x => x != null).Count(); i++)
             {
                 messageBuilder.AppendLine($"{i + 1}: {group.users[i].Mention}");
             }
             await group.targetMessage.ModifyAsync(m => { m.Content = messageBuilder.ToString(); });
+        }
+        public static async Task RewriteMessageOnCancel(this Group group)
+        {
+            StringBuilder messageBuilder = new StringBuilder();
+            messageBuilder.Append($"Сбор группы {group.author.Mention} ({group.destination}) завершен.");                    
+            await group.targetMessage.ModifyAsync(m => { m.Content = messageBuilder.ToString(); });
+            await group.targetMessage.RemoveAllReactionsAsync();
         }
         /// <summary>
         /// Конвертация группы в формат JSON
@@ -119,6 +135,7 @@ namespace DiscordAngryBot.CustomObjects.Groups
         /// <returns></returns>
         public static async Task<Group> DeserializeFromJson(string jsonText, DiscordSocketClient client)
         {
+            await ConsoleWriter.Write($"Deserializing Group info object from JSON", ConsoleWriter.InfoType.Notice);
             using (MemoryStream serializationStream = new MemoryStream(Encoding.UTF8.GetBytes(jsonText)))
             {
                 var groupDataObject = await JsonSerializer.DeserializeAsync<GroupJSONObject>(serializationStream);
@@ -154,6 +171,11 @@ namespace DiscordAngryBot.CustomObjects.Groups
             else
                 return false;
         }
+        public static bool IsGuildFight(this Group group)
+        {
+            return group is GuildFight;
+        }
+
         /// <summary>
         /// Сохранение группы в базу данных
         /// </summary>
@@ -217,9 +239,12 @@ namespace DiscordAngryBot.CustomObjects.Groups
         /// <returns></returns>
         public static async Task<List<Group>> LoadAllGroupsFromDB(DiscordSocketClient client)
         {
+            await ConsoleWriter.Write($"Loading all groups from database", ConsoleWriter.InfoType.Notice);
             string query = "SELECT * FROM Groups WHERE isActive = 1";
             DataTable data = await SQLiteDataManager.GetDataFromDB(configs.groups_dbPath, query);
+            await ConsoleWriter.Write($"Created empty Group list", ConsoleWriter.InfoType.Notice);
             List<Group> groups = new List<Group>();
+            await ConsoleWriter.Write($"Filling list with groups", ConsoleWriter.InfoType.Notice);
             foreach (DataRow row in data.AsEnumerable())
             {
                 groups.Add(await GroupBuilder.BuildLoadedGroup(client, row["GUID"].ToString(), row["JSON"].ToString(), (int)row["isActive"]));
@@ -238,6 +263,28 @@ namespace DiscordAngryBot.CustomObjects.Groups
             DataTable data = await SQLiteDataManager.GetDataFromDB(configs.groups_dbPath, query);
             DataRow row = data.Rows[0];
             return await GroupBuilder.BuildLoadedGroup(client, row["GUID"].ToString(), row["JSON"].ToString(), (int)row["isActive"]);
+        }
+
+        public static async Task ActualizeReactionsOnGroups(List<Group> groups, DiscordSocketClient client)
+        {
+            await ConsoleWriter.Write($"Actualizing group members", ConsoleWriter.InfoType.Notice);
+            foreach (var group in groups)
+            {
+                await ConsoleWriter.Write($"Checking group {group.GUID}", ConsoleWriter.InfoType.Notice);
+                var usersReacted = group.targetMessage.GetReactionUsersAsync(new Emoji("\u2705"), 13).ToEnumerable().FirstOrDefault();
+
+                foreach (var user in usersReacted)
+                {
+                    if (group.users.Where(x => x.Id == user.Id).Count() == 0 && !user.IsBot)
+                    {
+                        await ConsoleWriter.Write($"Adding user {user.Username}", ConsoleWriter.InfoType.Notice);
+                        group.AddUser(client.GetUser(user.Id));
+                        await group.UpdateAtDB();
+                        await group.RewriteMessage();
+                    }
+                }
+                await group.RewriteMessage();
+            }
         }
     }
 
@@ -273,28 +320,7 @@ namespace DiscordAngryBot.CustomObjects.Groups
             await sourceMessage.DeleteAsync();           
             return party;
         }
-        /// <summary>
-        /// Конструктор группы, на основе данных, полученных из базы данных
-        /// </summary>
-        /// <param name="client">Клиент бота</param>
-        /// <param name="GUID">Уникальный идентификатор</param>
-        /// <param name="json">JSON-данные группы</param>
-        /// <param name="isActive">Признак активности группы</param>
-        /// <returns></returns>
-        public static async Task<Group> BuildLoadedGroup(DiscordSocketClient client, string GUID, string json, int isActive)
-        {
-            Group group = await GroupHandler.DeserializeFromJson(json, client);
-            group.GUID = GUID;
-            group.isActive = true;
-            if (group.userLimit == 6)
-            {
-                return (Party)group;
-            }
-            else
-            {
-                return (Raid)group;
-            }
-        }
+
         /// <summary>
         /// Конструктор рейда
         /// </summary>
@@ -322,6 +348,57 @@ namespace DiscordAngryBot.CustomObjects.Groups
             await sourceMessage.DeleteAsync();
             return raid;
         }
+
+        public async static Task<GuildFight> BuildGuildFight(SocketMessage sourceMessage, string[] args)
+        {
+            var groupDestination = string.Empty;
+            foreach (var word in args)
+            {
+                groupDestination += (" " + word);
+            }
+            GuildFight guildFight = new GuildFight()
+            {
+                author = sourceMessage.Author,
+                channel = sourceMessage.Channel,
+                createdAt = DateTime.Now,
+                destination = groupDestination,
+                GUID = Guid.NewGuid().ToString(),
+                users = new List<SocketUser>(),
+                isActive = true,
+                userLimit = 6,
+                isGuildFight = true
+            };
+            await sourceMessage.DeleteAsync();
+            return guildFight;
+        }
+
+        /// <summary>
+        /// Конструктор группы, на основе данных, полученных из базы данных
+        /// </summary>
+        /// <param name="client">Клиент бота</param>
+        /// <param name="GUID">Уникальный идентификатор</param>
+        /// <param name="json">JSON-данные группы</param>
+        /// <param name="isActive">Признак активности группы</param>
+        /// <returns></returns>
+        public static async Task<Group> BuildLoadedGroup(DiscordSocketClient client, string GUID, string json, int isActive)
+        {
+            await ConsoleWriter.Write($"Building group {GUID}", ConsoleWriter.InfoType.Notice);
+            Group group = await GroupHandler.DeserializeFromJson(json, client);
+            group.GUID = GUID;
+            group.isActive = true;
+            if (group.userLimit == 6)
+            {
+                //if (group.isGuildFight)
+                //    return (GuildFight)group;
+                //else
+                    return (Party)group;
+            }
+            else
+            {
+                return (Raid)group;
+            }
+        }
+       
     }
    
 }

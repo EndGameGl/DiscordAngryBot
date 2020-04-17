@@ -1,4 +1,5 @@
 ﻿using Discord.WebSocket;
+using DiscordAngryBot.CustomObjects.ConsoleOutput;
 using DiscordAngryBot.CustomObjects.SQLIteHandler;
 using System;
 using System.Collections.Generic;
@@ -63,18 +64,21 @@ namespace DiscordAngryBot.CustomObjects.Bans
         }
         public static async Task<DiscordBan> DeserializeFromJson(string jsonText, DiscordSocketClient client)
         {
+            await ConsoleWriter.Write($"Deserializing ban from JSON", ConsoleWriter.InfoType.Notice);
             using (MemoryStream serializationStream = new MemoryStream(Encoding.UTF8.GetBytes(jsonText)))
             {
-                var groupDataObject = await JsonSerializer.DeserializeAsync<BanJSONobject>(serializationStream);
-                var group = await groupDataObject.ConvertToDiscordBan(client.GetGuild(636208919114547212));
-                return group;
+                var banDataObject = await JsonSerializer.DeserializeAsync<BanJSONobject>(serializationStream);
+                var ban = await banDataObject.ConvertToDiscordBan(client.GetGuild(636208919114547212));
+                return ban;
             }
         }
         public static async Task<List<DiscordBan>> LoadAllBansFromDB(DiscordSocketClient client)
         {
+            await ConsoleWriter.Write($"Loading bans from database", ConsoleWriter.InfoType.Notice);
             string query = "SELECT * FROM Bans WHERE isInfinite = 0";
             DataTable data = await SQLiteDataManager.GetDataFromDB(Groups.configs.groups_dbPath, query);
             List<DiscordBan> bans = new List<DiscordBan>();
+            await ConsoleWriter.Write($"Filling list with bans", ConsoleWriter.InfoType.Notice);
             foreach (DataRow row in data.AsEnumerable())
             {
                 bans.Add(await BanBuilder.BuildLoadedDiscordBan(client, row["GUID"].ToString(), row["JSON"].ToString()));
@@ -108,6 +112,7 @@ namespace DiscordAngryBot.CustomObjects.Bans
         }
         public static async Task<DiscordBan> BuildLoadedDiscordBan(DiscordSocketClient client, string GUID, string JSON)
         {
+            await ConsoleWriter.Write($"Building ban {GUID}", ConsoleWriter.InfoType.Notice);
             DiscordBan ban = await BanHandler.DeserializeFromJson(JSON, client);
             ban.GUID = GUID;
             DateTime currentTime = DateTime.Now;

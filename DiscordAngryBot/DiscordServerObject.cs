@@ -1,4 +1,5 @@
 ﻿using Discord.WebSocket;
+using DiscordAngryBot.CustomObjects.ConsoleOutput;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,9 +15,13 @@ namespace DiscordAngryBot
         public IReadOnlyCollection<SocketGuildUser> users { get; set; }
         public DiscordServerObject(DiscordSocketClient client, ulong serverID)
         {
+            ConsoleWriter.Write($"Fetching server object...", ConsoleWriter.InfoType.Notice);
             this.server = client.GetGuild(serverID);
+            ConsoleWriter.Write($"Server: {server.Name}", ConsoleWriter.InfoType.Notice);
             this.channels = this.server.Channels;
+            ConsoleWriter.Write($"Collected {channels.Count} channels", ConsoleWriter.InfoType.Notice);
             this.users = this.server.Users;
+            ConsoleWriter.Write($"Collected {users.Count} users", ConsoleWriter.InfoType.Notice);
         }
     }
 }

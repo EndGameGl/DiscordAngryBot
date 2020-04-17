@@ -1,5 +1,6 @@
 ﻿using Discord.Rest;
 using Discord.WebSocket;
+using DiscordAngryBot.CustomObjects.ConsoleOutput;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,6 +42,8 @@ namespace DiscordAngryBot.CustomObjects.Groups
         /// Дата создания группы
         /// </summary>
         public DateTime createdAt { get; set; }
+
+        public bool isGuildFight { get; set; }
         /// <summary>
         /// Пустой конструктор класса
         /// </summary>
@@ -61,6 +64,7 @@ namespace DiscordAngryBot.CustomObjects.Groups
             targetMessage_id = group.targetMessage.Id;
             destination = group.destination;
             createdAt = group.createdAt;
+            isGuildFight = group.isGuildFight;
         }
         /// <summary>
         /// Ковертация объекта данных в группу
@@ -69,30 +73,39 @@ namespace DiscordAngryBot.CustomObjects.Groups
         /// <returns></returns>
         public async Task<Group> ConvertToGroup(SocketGuild guild)
         {
-            Group group = null;
+            await ConsoleWriter.Write($"Converting Group info object to Group", ConsoleWriter.InfoType.Notice);
+            Group group = null;            
             var author = guild.GetUser(author_id);
+            await ConsoleWriter.Write($"Getting group author: {author.Username}", ConsoleWriter.InfoType.Notice);
             List<SocketUser> users = new List<SocketUser>();
             var channel = guild.GetChannel(channel_id);
+            await ConsoleWriter.Write($"Getting group channel: {channel.Name}", ConsoleWriter.InfoType.Notice);
+            await ConsoleWriter.Write($"Getting target message...", ConsoleWriter.InfoType.Notice);
             var targetMessage = await ((ISocketMessageChannel)channel).GetMessageAsync(targetMessage_id);
+            await ConsoleWriter.Write($"Adding users to group user list", ConsoleWriter.InfoType.Notice);
             foreach (var userId in users_id)
             {
                 users.Add(guild.GetUser(userId));
             }
+            await ConsoleWriter.Write($"Added {users.Count} users to group", ConsoleWriter.InfoType.Notice);
             if (userLimit == 6)
             {
+                await ConsoleWriter.Write($"Group object is party, creating party", ConsoleWriter.InfoType.Notice);
                 group = new Party()
-                {
-                    author = author,
-                    users = users,
-                    userLimit = userLimit,
-                    channel = (ISocketMessageChannel)channel,
-                    createdAt = createdAt,
-                    destination = destination,
-                    targetMessage = (RestUserMessage)targetMessage                   
-                };
+                    {
+                        author = author,
+                        users = users,
+                        userLimit = userLimit,
+                        channel = (ISocketMessageChannel)channel,
+                        createdAt = createdAt,
+                        destination = destination,
+                        targetMessage = (RestUserMessage)targetMessage,
+                        isGuildFight = isGuildFight
+                    };
             }
             else if (userLimit == 12)
             {
+                await ConsoleWriter.Write($"Group object is raid, creating raid", ConsoleWriter.InfoType.Notice);
                 group = new Raid() 
                 {
                     author = author,

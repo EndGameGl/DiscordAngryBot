@@ -32,6 +32,7 @@ namespace DiscordAngryBot
         /// Список администраторов бота
         /// </summary>
         public ulong[] admins { get; set; } = new ulong[] { 261497385274966026, 261496784336060417, 279716516595892235 };
+        public bool needsDeepLog { get; set; } = true;
         /// <summary>
         /// Пустой конструктор класса
         /// </summary>
