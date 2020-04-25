@@ -27,7 +27,7 @@ namespace DiscordAngryBot
         /// <summary>
         /// Список пользовательских команд
         /// </summary>
-        public string[] userCommands { get; set; } = new string[] { "PARTY", "RAID", "LIST"};
+        public string[] userCommands { get; set; } = new string[] { "PARTY", "RAID", "LIST", "GVG"};
         /// <summary>
         /// Список администраторов бота
         /// </summary>

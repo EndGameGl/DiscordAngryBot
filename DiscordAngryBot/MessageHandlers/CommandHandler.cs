@@ -94,6 +94,22 @@ namespace DiscordAngryBot.MessageHandlers
             }
 
             /// <summary>
+            /// Операция создания битвы БШ
+            /// </summary>
+            /// <param name="groups"></param>
+            /// <param name="message"></param>
+            /// <param name="destination"></param>
+            /// <returns></returns>
+            public static async Task CreateGuildFight(List<Group> groups, SocketMessage message, string[] destination)
+            {
+                GuildFight guildFight = await GroupBuilder.BuildGuildFight(message, destination);
+                groups.Add(guildFight);
+                await guildFight.SendMessage();
+                await guildFight.SaveToDB();
+                await guildFight.RewriteMessage();
+            }
+
+            /// <summary>
             /// Операция вывода списка групп
             /// </summary>
             /// <param name="message">Сообщение, инициировавшее вызов списка</param>
@@ -139,14 +155,6 @@ namespace DiscordAngryBot.MessageHandlers
                 await message.Channel.SendMessageAsync(text.ToString());
                 await message.DeleteAsync();
             }                   
-
-            public static async Task CreateGuildFight(List<Group> groups, SocketMessage message, string[] destination)
-            {
-                GuildFight guildFight = await GroupBuilder.BuildGuildFight(message, destination);
-                groups.Add(guildFight);
-                await guildFight.SendMessage();
-                await guildFight.SaveToDB();
-            }
         }
     }
 }

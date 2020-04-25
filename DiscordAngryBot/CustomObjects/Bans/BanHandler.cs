@@ -13,8 +13,19 @@ using System.Threading.Tasks;
 
 namespace DiscordAngryBot.CustomObjects.Bans
 {
+    /// <summary>
+    /// Обработчик операций, связанных с банами пользователей
+    /// </summary>
     public static class BanHandler
     {
+        /// <summary>
+        /// Бан пользователя
+        /// </summary>
+        /// <param name="user">Цель бана</param>
+        /// <param name="time">Время бана</param>
+        /// <param name="role">Роль, которая попадает под бан</param>
+        /// <param name="channel">Канал, в котором забанен пользователь</param>
+        /// <returns></returns>
         public static async Task<DiscordBan> Ban(this SocketGuildUser user, int? time, SocketRole role, ISocketMessageChannel channel)
         {
             DiscordBan ban = await BanBuilder.BuildDiscordBan(user, time, role, channel);
@@ -34,6 +45,10 @@ namespace DiscordAngryBot.CustomObjects.Bans
             return ban;
         }
 
+        /// <summary>
+        /// Метод, вызываемый при окончании бана
+        /// </summary>
+        /// <param name="ban"></param>
         public static async void BanTimerCallBack(object ban)
         {
             DiscordBan objBan = (DiscordBan)ban;
@@ -44,6 +59,12 @@ namespace DiscordAngryBot.CustomObjects.Bans
             string sqlQuery = $"DELETE FROM Bans WHERE GUID = '{objBan.GUID}'";
             await SQLiteDataManager.PushToDB(Groups.configs.groups_dbPath, sqlQuery);
         }     
+
+        /// <summary>
+        /// Сохранение бана в базе данных
+        /// </summary>
+        /// <param name="ban"></param>
+        /// <returns></returns>
         public static async Task SaveBanToDB(this DiscordBan ban)
         {
             string jsonString = await ban.SerializeToJson();
@@ -53,6 +74,12 @@ namespace DiscordAngryBot.CustomObjects.Bans
             string sqlQuery = $"INSERT INTO Bans (GUID, JSON, isInfinite) VALUES ('{ban.GUID}', '{jsonString}', {isInfinite})"; 
             await SQLIteHandler.SQLiteDataManager.PushToDB(Groups.configs.groups_dbPath, sqlQuery);
         }
+
+        /// <summary>
+        /// Сериализация бана в формат JSON
+        /// </summary>
+        /// <param name="ban"></param>
+        /// <returns></returns>
         public static async Task<string> SerializeToJson(this DiscordBan ban)
         {
             using (MemoryStream serializationStream = new MemoryStream())
@@ -62,6 +89,13 @@ namespace DiscordAngryBot.CustomObjects.Bans
                 return jsonResult;
             }
         }
+
+        /// <summary>
+        /// Десериализация бана из формата JSON
+        /// </summary>
+        /// <param name="jsonText"></param>
+        /// <param name="client"></param>
+        /// <returns></returns>
         public static async Task<DiscordBan> DeserializeFromJson(string jsonText, DiscordSocketClient client)
         {
             await ConsoleWriter.Write($"Deserializing ban from JSON", ConsoleWriter.InfoType.Notice);
@@ -72,6 +106,12 @@ namespace DiscordAngryBot.CustomObjects.Bans
                 return ban;
             }
         }
+
+        /// <summary>
+        /// Загрузка банов из базы данных
+        /// </summary>
+        /// <param name="client"></param>
+        /// <returns></returns>
         public static async Task<List<DiscordBan>> LoadAllBansFromDB(DiscordSocketClient client)
         {
             await ConsoleWriter.Write($"Loading bans from database", ConsoleWriter.InfoType.Notice);
@@ -86,8 +126,20 @@ namespace DiscordAngryBot.CustomObjects.Bans
             return bans;
         }
     }
+
+    /// <summary>
+    /// Класс-конструктор банов
+    /// </summary>
     public static class BanBuilder
     {
+        /// <summary>
+        /// Конструктор бана дискорда
+        /// </summary>
+        /// <param name="target"></param>
+        /// <param name="time"></param>
+        /// <param name="role"></param>
+        /// <param name="channel"></param>
+        /// <returns></returns>
         public static async Task<DiscordBan> BuildDiscordBan(SocketGuildUser target, int? time, SocketRole role, ISocketMessageChannel channel)
         {
             DateTime createdAt = DateTime.Now;
@@ -110,6 +162,14 @@ namespace DiscordAngryBot.CustomObjects.Bans
             };
             return ban;
         }
+
+        /// <summary>
+        /// Конструктор бана дискорда на основе данных из базы
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="GUID"></param>
+        /// <param name="JSON"></param>
+        /// <returns></returns>
         public static async Task<DiscordBan> BuildLoadedDiscordBan(DiscordSocketClient client, string GUID, string JSON)
         {
             await ConsoleWriter.Write($"Building ban {GUID}", ConsoleWriter.InfoType.Notice);

@@ -37,7 +37,6 @@ namespace DiscordAngryBot.ReactionHandlers
                         await party.RewriteMessage();
                         if (party.users.Count == 6)
                         {
-                            await message.Channel.SendMessageAsync($"Группа персонажа {party.author.Mention} собрана");
                             party.isActive = false;
                             await party.UpdateAtDBIfFull();
                         }
@@ -50,7 +49,6 @@ namespace DiscordAngryBot.ReactionHandlers
                         await raid.RewriteMessage();
                         if (raid.users.Count == 12)
                         {
-                            await message.Channel.SendMessageAsync($"Группа персонажа {raid.author.Mention} собрана");
                             raid.isActive = false;
                             await raid.UpdateAtDBIfFull();
                         }
@@ -63,7 +61,6 @@ namespace DiscordAngryBot.ReactionHandlers
                         await guildFight.RewriteMessage();
                         if (guildFight.users.Count == 12)
                         {
-                            await message.Channel.SendMessageAsync($"Группа персонажа {guildFight.author.Mention} собрана");
                             guildFight.isActive = false;
                             await guildFight.UpdateAtDBIfFull();
                         }
@@ -159,26 +156,97 @@ namespace DiscordAngryBot.ReactionHandlers
                     var guildFight = groups.Where(x => x.targetMessage.Id == reaction.MessageId).SingleOrDefault();
                     if (guildFight != null && guildFight.author.Id == reaction.UserId)
                     {
-                        await guildFight.targetMessage.DeleteAsync();
-                        await message.Channel.SendMessageAsync($"Сбор на битвы БШ {guildFight.destination} закончен");
+                        //await guildFight.targetMessage.DeleteAsync();
+                        //await message.Channel.SendMessageAsync($"Сбор на битвы БШ {guildFight.destination} закончен");
+                        await guildFight.RewriteMessageOnCancel();
                         await guildFight.RemoveFromDB();
                         groups.Remove(guildFight);
                     }
                 }
             }
 
+            /// <summary>
+            /// Объявление сбора группы
+            /// </summary>
+            /// <param name="groupObject"></param>
+            /// <param name="reaction"></param>
+            /// <returns></returns>
             public async static Task GroupCallout(Group groupObject, SocketReaction reaction)
             {
                 if (reaction.UserId == groupObject.author.Id)
                 {
                     StringBuilder calloutText = new StringBuilder();
-                    calloutText.AppendLine($"{groupObject.author.Mention} объявляет сбор группы: {groupObject.destination}");
+                    calloutText.AppendLine($"{groupObject.author.Mention} объявляет сбор группы");
                     foreach (var user in groupObject.users)
                     {
                         calloutText.AppendLine($"{user.Mention}");
                     }
                     await groupObject.targetMessage.Channel.SendMessageAsync(calloutText.ToString());
                 }           
+            }
+
+            /// <summary>
+            /// Обработка вступления на битву БШ
+            /// </summary>
+            /// <param name="groupObject"></param>
+            /// <param name="message"></param>
+            /// <param name="reaction"></param>
+            /// <param name="groups"></param>
+            /// <returns></returns>
+            public async static Task JoinGuildFight(Group groupObject, IMessage message, SocketReaction reaction, List<Group> groups)
+            {
+                if (groupObject.isActive)
+                {
+                    if (groupObject.IsGuildFight())
+                    {
+                        switch (reaction.Emote.Name)
+                        {
+                            case "🐾":
+                                ((GuildFight)groupObject).noGearUsers.Add((SocketUser)reaction.User);
+                                break;
+                            case "🐷":
+                                ((GuildFight)groupObject).unwillingUsers.Add((SocketUser)reaction.User);
+                                break;
+                            case "❓":
+                                ((GuildFight)groupObject).unsureUsers.Add((SocketUser)reaction.User);
+                                break;
+                        }
+                        await groupObject.UpdateAtDB();
+                        await groupObject.RewriteMessage();
+                    }
+                }
+            }
+
+            /// <summary>
+            /// Обработка выхода из битвы БШ
+            /// </summary>
+            /// <param name="groupObject"></param>
+            /// <param name="message"></param>
+            /// <param name="reaction"></param>
+            /// <param name="groups"></param>
+            /// <returns></returns>
+            public async static Task LeaveGuildFight(Group groupObject, IMessage message, SocketReaction reaction, List<Group> groups)
+            {
+                if (groupObject.isActive)
+                {
+                    if (groupObject.IsGuildFight())
+                    {
+                        switch (reaction.Emote.Name)
+                        {
+                            case "🐾":
+                                ((GuildFight)groupObject).noGearUsers.Remove((SocketUser)reaction.User);
+                                break;
+                            case "🐷":
+                                ((GuildFight)groupObject).unwillingUsers.Remove((SocketUser)reaction.User);
+                                break;
+                            case "❓":
+                                ((GuildFight)groupObject).unsureUsers.Remove((SocketUser)reaction.User);
+                                break;
+                        }
+                        await groupObject.UpdateAtDB();
+                        await groupObject.RewriteMessage();
+                    }
+                }
             }
         }
     }

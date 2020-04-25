@@ -27,6 +27,18 @@ namespace DiscordAngryBot.CustomObjects.Groups
         /// </summary>
         public List<ulong> users_id { get; set; } = new List<ulong>();
         /// <summary>
+        /// Идентификаторы пользователей без гира (ТОЛЬКО ДЛЯ БИТВ БШ)
+        /// </summary>
+        public List<ulong> noGearUsers_id { get; set; } = new List<ulong>();
+        /// <summary>
+        /// Идентификаторы пользователей на замену (ТОЛЬКО ДЛЯ БИТВ БШ)
+        /// </summary>
+        public List<ulong> unwillingUsers_id { get; set; } = new List<ulong>();
+        /// <summary>
+        /// Идентификаторы пользоваелей, не уверенных в возможности быть (ТОЛЬКО ДЛЯ БИТВ БШ)
+        /// </summary>
+        public List<ulong> unsureUsers_id { get; set; } = new List<ulong>();
+        /// <summary>
         /// Лимит пользователей в группе
         /// </summary>
         public int userLimit { get; set; }
@@ -42,7 +54,6 @@ namespace DiscordAngryBot.CustomObjects.Groups
         /// Дата создания группы
         /// </summary>
         public DateTime createdAt { get; set; }
-
         public bool isGuildFight { get; set; }
         /// <summary>
         /// Пустой конструктор класса
@@ -61,10 +72,24 @@ namespace DiscordAngryBot.CustomObjects.Groups
             {
                 users_id.Add(user.Id);
             }
+            if (group is GuildFight)
+            {
+                foreach (var user in ((GuildFight)group).noGearUsers)
+                {
+                    noGearUsers_id.Add(user.Id);
+                }
+                foreach (var user in ((GuildFight)group).unwillingUsers)
+                {
+                    unwillingUsers_id.Add(user.Id);
+                }
+                foreach (var user in ((GuildFight)group).unsureUsers)
+                {
+                    unsureUsers_id.Add(user.Id);
+                }
+            }
             targetMessage_id = group.targetMessage.Id;
             destination = group.destination;
             createdAt = group.createdAt;
-            isGuildFight = group.isGuildFight;
         }
         /// <summary>
         /// Ковертация объекта данных в группу
@@ -100,7 +125,6 @@ namespace DiscordAngryBot.CustomObjects.Groups
                         createdAt = createdAt,
                         destination = destination,
                         targetMessage = (RestUserMessage)targetMessage,
-                        isGuildFight = isGuildFight
                     };
             }
             else if (userLimit == 12)
@@ -110,6 +134,41 @@ namespace DiscordAngryBot.CustomObjects.Groups
                 {
                     author = author,
                     users = users,
+                    userLimit = userLimit,
+                    channel = (ISocketMessageChannel)channel,
+                    createdAt = createdAt,
+                    destination = destination,
+                    targetMessage = (RestUserMessage)targetMessage
+                };
+            }
+            else if (userLimit == 100)
+            {
+                await ConsoleWriter.Write($"Group object is guild fight, creating guild fight", ConsoleWriter.InfoType.Notice);
+                List<SocketUser> noGearUsers = new List<SocketUser>();
+                foreach (var userId in noGearUsers_id)
+                {
+                    noGearUsers.Add(guild.GetUser(userId));
+                }
+
+                List<SocketUser> unwillingUsers = new List<SocketUser>();
+                foreach (var userId in unwillingUsers_id)
+                {
+                    unwillingUsers.Add(guild.GetUser(userId));
+                }
+
+                List<SocketUser> unsureUsers = new List<SocketUser>();
+                foreach (var userId in unsureUsers_id)
+                {
+                    unsureUsers.Add(guild.GetUser(userId));
+                }
+
+                group = new GuildFight()
+                {
+                    author = author,
+                    users = users,
+                    noGearUsers = noGearUsers,
+                    unwillingUsers = unwillingUsers,
+                    unsureUsers = unsureUsers,
                     userLimit = userLimit,
                     channel = (ISocketMessageChannel)channel,
                     createdAt = createdAt,

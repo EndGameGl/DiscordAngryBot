@@ -4,6 +4,7 @@ using DiscordAngryBot.CustomObjects.Bans;
 using DiscordAngryBot.CustomObjects.ConsoleOutput;
 using DiscordAngryBot.CustomObjects.Groups;
 using DiscordAngryBot.EventHandlers;
+using DiscordAngryBot.GUI;
 using DiscordAngryBot.MessageHandlers;
 using DiscordAngryBot.ReactionHandlers;
 using DiscordAngryBot.WebhookEventHandlers;
@@ -13,6 +14,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace DiscordAngryBot
 {
@@ -27,6 +29,8 @@ namespace DiscordAngryBot
         /// Клиент дискорда
         /// </summary>
         public static DiscordSocketClient _client;
+
+        //private static Thread formThread = null;
 
         /// <summary>
         /// Объект сервера
@@ -86,6 +90,8 @@ namespace DiscordAngryBot
             await LoadBans();
             await _client.SetGameAsync($"{serverObject.users.Count()} users...", null, ActivityType.Watching);
             await ConsoleWriter.WriteDivideMessage($"CollectServerInfo finished");
+            //formThread = new Thread(() => Application.Run(new MainForm(serverObject)));
+            //formThread.Start();
         }
 
         /// <summary>
@@ -162,18 +168,43 @@ namespace DiscordAngryBot
             await ConsoleWriter.Write($"LOADED BANS: {systemData.bans.Count}", ConsoleWriter.InfoType.Notice);
             await ConsoleWriter.WriteDivideMessage($"LoadBans() finished");
         } 
+
+        /// <summary>
+        /// Метод для возврата настроек бота
+        /// </summary>
+        /// <returns></returns>
         public static BotSettings FetchSettings()
         {
             return settings;
         }
+
+        /// <summary>
+        /// Метод для возврата основных данных
+        /// </summary>
+        /// <returns></returns>
         public static DataHandler FetchData()
         {
             return systemData;
         }
+
+        /// <summary>
+        /// Метод для возврата объекта сервера
+        /// </summary>
+        /// <returns></returns>
         public static DiscordServerObject FetchServerObject()
         {
             return serverObject;
         }
+
+        //public static Thread GetFormThread()
+        //{
+        //    return formThread;
+        //}
+
+        /// <summary>
+        /// Добавка всех обработчиков событий клиента дискорда
+        /// </summary>
+        /// <param name="_client"></param>
         public static void AddHandlersToClient(DiscordSocketClient _client)
         {           
             _client.Log += WebhookEventHandler.LogHandler;         

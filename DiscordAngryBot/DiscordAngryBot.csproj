@@ -112,6 +112,7 @@
       <Private>True</Private>
       <Private>True</Private>
     </Reference>
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Globalization.Calendars, Version=4.0.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Globalization.Calendars.4.3.0\lib\net46\System.Globalization.Calendars.dll</HintPath>
       <Private>True</Private>
@@ -238,6 +239,7 @@
     <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.ValueTuple.4.5.0\lib\net47\System.ValueTuple.dll</HintPath>
     </Reference>
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -255,6 +257,7 @@
     <Compile Include="CustomObjects\Bans\BanJSONobject.cs" />
     <Compile Include="CustomObjects\Bans\DiscordBan.cs" />
     <Compile Include="CustomObjects\ConsoleOutput\ConsoleWriter.cs" />
+    <Compile Include="CustomObjects\DiscordCommands\DiscordCommand.cs" />
     <Compile Include="CustomObjects\Groups\configs.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -271,6 +274,12 @@
     <Compile Include="DiscordServerObject.cs" />
     <Compile Include="EventHandlers\DiscordTask.cs" />
     <Compile Include="EventHandlers\EventHandler.cs" />
+    <Compile Include="GUI\MainForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="GUI\MainForm.Designer.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="MessageHandlers\CommandHandler.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -286,6 +295,9 @@
     <EmbeddedResource Include="CustomObjects\Groups\configs.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>configs.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="GUI\MainForm.resx">
+      <DependentUpon>MainForm.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
