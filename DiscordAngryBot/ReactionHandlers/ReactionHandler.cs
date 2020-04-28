@@ -32,25 +32,33 @@ namespace DiscordAngryBot.ReactionHandlers
                     if (groupObject.IsParty())
                     {
                         var party = (Party)groupObject;
-                        party.AddUser((SocketUser)reaction.User);
-                        await party.UpdateAtDB();
-                        await party.RewriteMessage();
+                        if (party.users.Count < party.userLimit)
+                        {
+                            party.AddUser((SocketUser)reaction.User);
+                            await party.UpdateAtDB();
+                            await party.RewriteMessage();
+                        }
                         if (party.users.Count == 6)
                         {
-                            party.isActive = false;
-                            await party.UpdateAtDBIfFull();
+                            //party.isActive = false;
+                            await party.author.SendMessageAsync($"Ваш группа [{party.destination}] была собрана");
+                            //await party.UpdateAtDBIfFull();
                         }
                     }
                     else if (groupObject.IsRaid())
                     {
                         var raid = (Raid)groupObject;
-                        raid.AddUser((SocketUser)reaction.User);
-                        await raid.UpdateAtDB();
-                        await raid.RewriteMessage();
+                        if (raid.users.Count < raid.userLimit)
+                        {
+                            raid.AddUser((SocketUser)reaction.User);
+                            await raid.UpdateAtDB();
+                            await raid.RewriteMessage();
+                        }
                         if (raid.users.Count == 12)
                         {
-                            raid.isActive = false;
-                            await raid.UpdateAtDBIfFull();
+                            //raid.isActive = false;
+                            await raid.author.SendMessageAsync($"Ваш рейд [{raid.destination}] был собран");
+                            //await raid.UpdateAtDBIfFull();
                         }
                     }
                     else if (groupObject.IsGuildFight())
@@ -59,11 +67,6 @@ namespace DiscordAngryBot.ReactionHandlers
                         guildFight.AddUser((SocketUser)reaction.User);
                         await guildFight.UpdateAtDB();
                         await guildFight.RewriteMessage();
-                        if (guildFight.users.Count == 12)
-                        {
-                            guildFight.isActive = false;
-                            await guildFight.UpdateAtDBIfFull();
-                        }
                     }
                 }
             }
@@ -175,13 +178,69 @@ namespace DiscordAngryBot.ReactionHandlers
             {
                 if (reaction.UserId == groupObject.author.Id)
                 {
-                    StringBuilder calloutText = new StringBuilder();
-                    calloutText.AppendLine($"{groupObject.author.Mention} объявляет сбор группы");
-                    foreach (var user in groupObject.users)
+                    if (!groupObject.IsGuildFight())
                     {
-                        calloutText.AppendLine($"{user.Mention}");
+                        StringBuilder calloutText = new StringBuilder();
+                        calloutText.AppendLine($"{groupObject.author.Mention} объявляет сбор группы");
+                        foreach (var user in groupObject.users)
+                        {
+                            calloutText.AppendLine($"{user.Mention}");
+                        }
+                        await groupObject.targetMessage.Channel.SendMessageAsync(calloutText.ToString());
                     }
-                    await groupObject.targetMessage.Channel.SendMessageAsync(calloutText.ToString());
+                    else 
+                    {
+                        StringBuilder calloutText = new StringBuilder();
+                        calloutText.AppendLine($"__**Сбор на битвы БШ!**__\nСостав:");
+                        int memberCount = 0;
+                        // Пробег по первому списку юзеров
+                        foreach (var user in groupObject.users)
+                        {                           
+                            if (memberCount < 6)
+                            {
+                                calloutText.AppendLine($"> {user.Mention}");
+                                memberCount++;
+                            }
+                            else if (memberCount == 6)
+                                goto A;
+                        }
+ 
+                        // Пробег по второму списку
+                        foreach (var user in ((GuildFight)groupObject).noGearUsers)
+                        {                            
+                            if (memberCount < 6)
+                            {
+                                calloutText.AppendLine($"> {user.Mention}");
+                                memberCount++;
+                            }
+                            if (memberCount == 6)
+                                goto A;
+                        }
+
+                        foreach (var user in ((GuildFight)groupObject).unwillingUsers)
+                        {
+                            if (memberCount < 6)
+                            {
+                                calloutText.AppendLine($"> {user.Mention}");
+                                memberCount++;
+                            }
+                            if (memberCount == 6)
+                                goto A;
+                        }
+
+                        foreach (var user in ((GuildFight)groupObject).unsureUsers)
+                        {
+                            if (memberCount < 6)
+                            {
+                                calloutText.AppendLine($"> {user.Mention}");
+                                memberCount++;
+                            }
+                            if (memberCount == 6)
+                                goto A;
+                        }
+
+                        A: await groupObject.targetMessage.Channel.SendMessageAsync(calloutText.ToString());
+                    }
                 }           
             }
 
@@ -202,13 +261,28 @@ namespace DiscordAngryBot.ReactionHandlers
                         switch (reaction.Emote.Name)
                         {
                             case "🐾":
-                                ((GuildFight)groupObject).noGearUsers.Add((SocketUser)reaction.User);
+                                if (!((GuildFight)groupObject).users.Contains((SocketUser)reaction.User) &&
+                                    !((GuildFight)groupObject).unwillingUsers.Contains((SocketUser)reaction.User) &&
+                                    !((GuildFight)groupObject).unsureUsers.Contains((SocketUser)reaction.User))
+                                {
+                                    ((GuildFight)groupObject).noGearUsers.Add((SocketUser)reaction.User);
+                                }
                                 break;
                             case "🐷":
-                                ((GuildFight)groupObject).unwillingUsers.Add((SocketUser)reaction.User);
+                                if (!((GuildFight)groupObject).users.Contains((SocketUser)reaction.User) &&
+                                    !((GuildFight)groupObject).noGearUsers.Contains((SocketUser)reaction.User) &&
+                                    !((GuildFight)groupObject).unsureUsers.Contains((SocketUser)reaction.User))
+                                {
+                                    ((GuildFight)groupObject).unwillingUsers.Add((SocketUser)reaction.User); 
+                                }
                                 break;
                             case "❓":
-                                ((GuildFight)groupObject).unsureUsers.Add((SocketUser)reaction.User);
+                                if (!((GuildFight)groupObject).users.Contains((SocketUser)reaction.User) &&
+                                    !((GuildFight)groupObject).unwillingUsers.Contains((SocketUser)reaction.User) &&
+                                    !((GuildFight)groupObject).noGearUsers.Contains((SocketUser)reaction.User))
+                                {
+                                    ((GuildFight)groupObject).unsureUsers.Add((SocketUser)reaction.User);
+                                }
                                 break;
                         }
                         await groupObject.UpdateAtDB();

@@ -63,11 +63,11 @@ namespace DiscordAngryBot.CustomObjects.Groups
             StringBuilder messageBuilder = new StringBuilder();
             if (group.IsParty())
             {
-                messageBuilder.Append($"Собирается пати пользователем {group.author.Mention}: {group.destination}\nОсталось {group.userLimit - group.users.Count()} мест.\nСостав группы:\n");
+                messageBuilder.Append($"Собирается пати пользователем {group.author.Mention}: {group.destination}\n__**Осталось {group.userLimit - group.users.Count()} мест**__\nСостав группы:\n");
             }
             else if (group.IsRaid())
             {
-                messageBuilder.Append($"Собирается рейд пользователем {group.author.Mention}: {group.destination}\nОсталось {group.userLimit - group.users.Count()} мест.\nСостав группы:\n");
+                messageBuilder.Append($"Собирается рейд пользователем {group.author.Mention}: {group.destination}\n__**Осталось {group.userLimit - group.users.Count()} мест**__\nСостав группы:\n");
             }
             else if (group.IsGuildFight())
             {
@@ -96,15 +96,15 @@ namespace DiscordAngryBot.CustomObjects.Groups
             StringBuilder messageBuilder = new StringBuilder();
             if (group is Party)
             {
-                messageBuilder.Append($"Собирается пати пользователем {group.author.Mention}: {group.destination}\nОсталось {group.userLimit - group.users.Count()} мест.\nСостав группы:\n");
+                messageBuilder.Append($"Собирается пати пользователем {group.author.Mention}: {group.destination}\n__**Осталось {group.userLimit - group.users.Count()} мест**__\nСостав группы:\n");
             }
             else if (group is Raid)
             {
-                messageBuilder.Append($"Собирается рейд пользователем {group.author.Mention}: {group.destination}\nОсталось {group.userLimit - group.users.Count()} мест.\nСостав группы:\n");
+                messageBuilder.Append($"Собирается рейд пользователем {group.author.Mention}: {group.destination}\n__**Осталось {group.userLimit - group.users.Count()} мест**__\nСостав группы:\n");
             }
             else if (group.IsGuildFight())
             {
-                messageBuilder.Append($"```Собирается группа на битвы БШ: {group.destination}```\nОтмечаемся!\n");
+                messageBuilder.Append($"__**Собирается группа на битвы БШ: {group.destination} **__\nОтмечаемся!\n");
             }
             if (!group.IsGuildFight())
             {
@@ -353,9 +353,12 @@ namespace DiscordAngryBot.CustomObjects.Groups
                         {
                             if (group.users.Where(x => x.Id == user.Id).Count() == 0 && !user.IsBot)
                             {
-                                await ConsoleWriter.Write($"Adding user {user.Username}", ConsoleWriter.InfoType.Notice);
-                                group.AddUser((SocketUser)client.GetGuild(636208919114547212).GetUser(user.Id));
-                                await group.UpdateAtDB();
+                                if (group.users.Count < group.userLimit)
+                                {
+                                    await ConsoleWriter.Write($"Adding user {user.Username}", ConsoleWriter.InfoType.Notice);
+                                    group.AddUser((SocketUser)client.GetGuild(636208919114547212).GetUser(user.Id));
+                                    await group.UpdateAtDB();
+                                }
                             }
                         }
                         await group.RewriteMessage();
@@ -534,8 +537,6 @@ namespace DiscordAngryBot.CustomObjects.Groups
             {
                 return (GuildFight)group;
             }
-        }
-       
-    }
-   
+        }      
+    } 
 }

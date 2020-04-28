@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using DiscordAngryBot.CustomObjects.Bans;
 using DiscordAngryBot.CustomObjects.ConsoleOutput;
 using DiscordAngryBot.CustomObjects.Groups;
+using DiscordAngryBot.APIHandlers;
 using DiscordAngryBot.EventHandlers;
 using DiscordAngryBot.GUI;
 using DiscordAngryBot.MessageHandlers;
@@ -15,15 +16,19 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Net.Http.Headers;
 
 namespace DiscordAngryBot
 {
     public class Program
     {
-        
+        static APIServer apiServer = new APIServer();
         //public EventHandlers.EventHandler eventHandler = new EventHandlers.EventHandler();
         static void Main(string[] args) 
-            => new Program().MainAsync().GetAwaiter().GetResult();
+        {
+            apiServer.ConfigServer("http://192.168.1.9:25565", new MediaTypeHeaderValue("text/html"), true);           
+            MainAsync().GetAwaiter().GetResult(); 
+        }
 
         /// <summary>
         /// Клиент дискорда
@@ -48,18 +53,16 @@ namespace DiscordAngryBot
         public static DataHandler systemData = new DataHandler();
 
         /// <summary>
-        /// Пустой конструктор программы
-        /// </summary>
-        private Program() { }
-
-        /// <summary>
         /// Установка обработчиков и запуск серва
         /// </summary>
         /// <returns></returns>
-        public async Task MainAsync()
+        public async static Task MainAsync()
         {
             Console.Clear();
             Console.BackgroundColor = ConsoleColor.White;
+
+            await apiServer.RunAPIServer();
+
             await ConsoleWriter.WriteDivideMessage($"MainAsync() Task started");
             await ConsoleWriter.Write($"Starting bot...", ConsoleWriter.InfoType.Notice);
             _client = new DiscordSocketClient(new DiscordSocketConfig { LogLevel = LogSeverity.Info, MessageCacheSize = 10});
@@ -246,5 +249,6 @@ namespace DiscordAngryBot
             _client.UserVoiceStateUpdated += WebhookEventHandler.UserVoiceStateUpdatedHandler;
             _client.VoiceServerUpdated += WebhookEventHandler.VoiceServerUpdatedHandler;
         }
+
     }
 }

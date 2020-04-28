@@ -1,4 +1,5 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
+using Discord.WebSocket;
 using DiscordAngryBot.CustomObjects.Bans;
 using DiscordAngryBot.CustomObjects.Groups;
 using System;
@@ -152,7 +153,7 @@ namespace DiscordAngryBot.MessageHandlers
                         text.AppendLine($"    {raid.author.Username}: {raid.destination} ({raid.users.Count} участников)");
                     }
                 }
-                await message.Channel.SendMessageAsync(text.ToString());
+                await message.Author.SendMessageAsync(text.ToString());
                 await message.DeleteAsync();
             }                   
         }
