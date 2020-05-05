@@ -95,10 +95,8 @@ namespace DiscordAngryBot.WebhookEventHandlers
                                 await channel.SendMessageAsync($"Недостаточно прав на команду.");
                             }
                         }
-                        if (settings.userCommands.Contains(command.ToUpper()))
+                        else if (settings.userCommands.Contains(command.ToUpper()))
                         {
-                            if (true)
-                            {
                                 switch (command.ToUpper())
                                 {
                                     case "PARTY":
@@ -113,7 +111,22 @@ namespace DiscordAngryBot.WebhookEventHandlers
                                     case "GVG":
                                         await CommandHandler.UserCommands.CreateGuildFight(systemData.groups, message, args);
                                         break;
+                                    case "HELP":
+                                        await CommandHandler.UserCommands.HelpUser(message.Author);
+                                        await message.DeleteAsync();
+                                        break;
                                 }
+                        }
+                        else if (settings.otherCommands.Contains(command.ToUpper()))
+                        {
+                            switch (command.ToUpper())
+                            {
+                                case "КУСЬ":
+                                    await CommandHandler.OtherCommands.Bite(message, args);
+                                    break;
+                                case "БАН":
+                                    await CommandHandler.OtherCommands.Ban(message);
+                                    break;
                             }
                         }
                         else

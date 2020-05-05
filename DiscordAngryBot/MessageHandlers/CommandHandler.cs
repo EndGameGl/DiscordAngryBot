@@ -156,6 +156,93 @@ namespace DiscordAngryBot.MessageHandlers
                 await message.Author.SendMessageAsync(text.ToString());
                 await message.DeleteAsync();
             }                   
+
+            /// <summary>
+            /// Вывод для пользователя всех доступных комманд бота
+            /// </summary>
+            /// <param name="user"></param>
+            /// <returns></returns>
+            public static async Task HelpUser(SocketUser user)
+            {
+                StringBuilder stringBuilder = new StringBuilder();
+                stringBuilder.AppendLine("Информация о командах, используемых хомяком.");
+                if (Program.FetchSettings().admins.Contains(user.Id))
+                {
+                    stringBuilder.AppendLine("> Системные команды:"); 
+                    foreach (var com in Program.FetchSettings().systemCommands)
+                    {
+                        stringBuilder.AppendLine($" - {com.ToLowerInvariant()}");
+                    }
+                }
+                stringBuilder.AppendLine("> Пользовательские команды:");
+                foreach (var com in Program.FetchSettings().userCommands)
+                {
+                    stringBuilder.AppendLine($" - {com.ToLowerInvariant()}");
+                }
+                stringBuilder.AppendLine("> Другие команды:");
+                foreach (var com in Program.FetchSettings().otherCommands)
+                {
+                    stringBuilder.AppendLine($" - {com.ToLowerInvariant()}");
+                }
+
+                await user.SendMessageAsync(stringBuilder.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Класс для обработки команд для развлечения
+        /// </summary>
+        public static class OtherCommands
+        {
+            /// <summary>
+            /// Кусь
+            /// </summary>
+            /// <param name="message"></param>
+            /// <param name="args"></param>
+            /// <returns></returns>
+            public static async Task Bite(SocketMessage message, string[] args)
+            {
+                await message.DeleteAsync();
+
+                int shoudBite = -1;
+                Random rnd = new Random(Guid.NewGuid().GetHashCode());
+                shoudBite = rnd.Next(0,2);
+
+                if (args[0] != null && args[0].Length > 0) 
+                {
+                    if (shoudBite == 1)
+                    {
+                        List<string> choices = new List<string>() { "ляху", "кокоро", "жеппу", "ножку", "щечку", "хвост" };
+                        await message.Channel.SendMessageAsync($"Кусаю {args[0]} за {choices.OrderBy(x => Guid.NewGuid()).FirstOrDefault()}");
+                    }
+                    else if (shoudBite == 0)
+                    {
+                        await message.Channel.SendMessageAsync($"Не собираюсь я такое кусать D:");
+                    }
+                }
+                else
+                {
+                    if (shoudBite == 1)
+                    {
+                        List<string> moreChoices = new List<string>() { "Кого кусать то? ( ._.)", "КУСЬ" };
+                        await message.Channel.SendMessageAsync($"{moreChoices.OrderBy(x => Guid.NewGuid()).FirstOrDefault()}");
+                    }
+                    else
+                        await message.Channel.SendMessageAsync($"Сейчас мне лень кусаться");
+                }
+                    
+            }
+
+            /// <summary>
+            /// Бан
+            /// </summary>
+            /// <param name="message"></param>
+            /// <returns></returns>
+            public static async Task Ban(SocketMessage message)
+            {
+                await message.DeleteAsync();
+                await message.Channel.SendMessageAsync($"Не, ну это бан");
+            }
         }
     }
 }

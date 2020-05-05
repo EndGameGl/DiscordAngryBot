@@ -110,7 +110,9 @@ namespace DiscordAngryBot.CustomObjects.Groups
             await ConsoleWriter.Write($"Adding users to group user list", ConsoleWriter.InfoType.Notice);
             foreach (var userId in users_id)
             {
-                users.Add(guild.GetUser(userId));
+                var user = guild.GetUser(userId);
+                if (user != null)
+                users.Add(user);
             }
             await ConsoleWriter.Write($"Added {users.Count} users to group", ConsoleWriter.InfoType.Notice);
             if (userLimit == 6)

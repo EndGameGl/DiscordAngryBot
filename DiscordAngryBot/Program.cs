@@ -26,7 +26,7 @@ namespace DiscordAngryBot
         //public EventHandlers.EventHandler eventHandler = new EventHandlers.EventHandler();
         static void Main(string[] args) 
         {
-            apiServer.ConfigServer("http://192.168.1.9:25565", new MediaTypeHeaderValue("text/html"), true);           
+            apiServer.ConfigServer("http://192.168.1.9:20001", new MediaTypeHeaderValue("text/html"), true);           
             MainAsync().GetAwaiter().GetResult(); 
         }
 
@@ -70,7 +70,7 @@ namespace DiscordAngryBot
             AddHandlersToClient(_client);
 
             await ConsoleWriter.Write($"Loading token...", ConsoleWriter.InfoType.Notice);
-            string token = File.ReadAllText(@"F:\Programming Stuff\DToken\Token.txt");
+            string token = File.ReadAllText(@"Token\Token.txt");
             await ConsoleWriter.Write($"Logging bot...", ConsoleWriter.InfoType.Notice);
             await _client.LoginAsync(TokenType.Bot, token);
             await ConsoleWriter.Write($"Starting bot...", ConsoleWriter.InfoType.Notice);

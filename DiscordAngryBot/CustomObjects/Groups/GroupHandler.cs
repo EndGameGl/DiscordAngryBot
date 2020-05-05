@@ -351,14 +351,22 @@ namespace DiscordAngryBot.CustomObjects.Groups
 
                         foreach (var user in usersReacted)
                         {
-                            if (group.users.Where(x => x.Id == user.Id).Count() == 0 && !user.IsBot)
+                            try
                             {
-                                if (group.users.Count < group.userLimit)
+                                if (user != null && group.users.Where(x => x.Id == user.Id).Count() == 0 && !user.IsBot)
                                 {
-                                    await ConsoleWriter.Write($"Adding user {user.Username}", ConsoleWriter.InfoType.Notice);
-                                    group.AddUser((SocketUser)client.GetGuild(636208919114547212).GetUser(user.Id));
-                                    await group.UpdateAtDB();
+                                    if (group.users.Count < group.userLimit)
+                                    {
+                                        await ConsoleWriter.Write($"Adding user {user.Username}", ConsoleWriter.InfoType.Notice);
+                                        group.AddUser((SocketUser)client.GetGuild(636208919114547212).GetUser(user.Id));
+                                        await group.UpdateAtDB();
+                                    }
                                 }
+                            }
+                            catch (Exception ex)
+                            {
+                                await ConsoleWriter.Write($"{ex.Message}", ConsoleWriter.InfoType.Error);
+                                continue;
                             }
                         }
                         await group.RewriteMessage();
@@ -370,42 +378,62 @@ namespace DiscordAngryBot.CustomObjects.Groups
                         var unwillingUsersReacted = group.targetMessage.GetReactionUsersAsync(new Emoji("🐷"), 30).ToEnumerable().FirstOrDefault();
                         var unsureUsersReacted = group.targetMessage.GetReactionUsersAsync(new Emoji("❓"), 30).ToEnumerable().FirstOrDefault();
 
-                        foreach (var user in usersReacted)
-                        {
-                            if (group.users.Where(x => x.Id == user.Id).Count() == 0 && !user.IsBot)
-                            {
-                                await ConsoleWriter.Write($"Adding user {user.Username}", ConsoleWriter.InfoType.Notice);
-                                group.AddUser(client.GetGuild(636208919114547212).GetUser(user.Id));
-                                await group.UpdateAtDB();
-                            }
-                        }
-                        foreach (var user in noGearUsersReacted)
-                        {
-                            if (((GuildFight)group).noGearUsers.Where(x => x.Id == user.Id).Count() == 0 && !user.IsBot)
-                            {
-                                await ConsoleWriter.Write($"Adding user {user.Username}", ConsoleWriter.InfoType.Notice);
-                                ((GuildFight)group).noGearUsers.Add(client.GetGuild(636208919114547212).GetUser(user.Id));
-                                await group.UpdateAtDB();
-                            }
-                        }
-                        foreach (var user in unwillingUsersReacted)
-                        {
-                            if (((GuildFight)group).unwillingUsers.Where(x => x.Id == user.Id).Count() == 0 && !user.IsBot)
-                            {
-                                await ConsoleWriter.Write($"Adding user {user.Username}", ConsoleWriter.InfoType.Notice);
-                                ((GuildFight)group).unwillingUsers.Add(client.GetGuild(636208919114547212).GetUser(user.Id));
-                                await group.UpdateAtDB();
-                            }
-                        }
                         foreach (var user in unsureUsersReacted)
                         {
-                            if (((GuildFight)group).unsureUsers.Where(x => x.Id == user.Id).Count() == 0 && !user.IsBot)
+                            if (!user.IsBot &&
+                                (group.users.Where(x => x.Id == user.Id).Count() == 0 &&
+                                ((GuildFight)group).noGearUsers.Where(x => x.Id == user.Id).Count() == 0 &&
+                                ((GuildFight)group).unwillingUsers.Where(x => x.Id == user.Id).Count() == 0) &&
+                                ((GuildFight)group).unsureUsers.Where(x => x.Id == user.Id).Count() == 0)
                             {
                                 await ConsoleWriter.Write($"Adding user {user.Username}", ConsoleWriter.InfoType.Notice);
                                 ((GuildFight)group).unsureUsers.Add(client.GetGuild(636208919114547212).GetUser(user.Id));
                                 await group.UpdateAtDB();
                             }
                         }
+
+                        foreach (var user in unwillingUsersReacted)
+                        {
+                            if (!user.IsBot &&
+                                (group.users.Where(x => x.Id == user.Id).Count() == 0 &&
+                                ((GuildFight)group).noGearUsers.Where(x => x.Id == user.Id).Count() == 0 &&
+                                ((GuildFight)group).unwillingUsers.Where(x => x.Id == user.Id).Count() == 0) &&
+                                ((GuildFight)group).unsureUsers.Where(x => x.Id == user.Id).Count() == 0)
+                            {
+                                await ConsoleWriter.Write($"Adding user {user.Username}", ConsoleWriter.InfoType.Notice);
+                                ((GuildFight)group).unwillingUsers.Add(client.GetGuild(636208919114547212).GetUser(user.Id));
+                                await group.UpdateAtDB();
+                            }
+                        }
+
+                        foreach (var user in usersReacted)
+                        {
+                            if (!user.IsBot && 
+                                (group.users.Where(x => x.Id == user.Id).Count() == 0 &&
+                                ((GuildFight)group).noGearUsers.Where(x => x.Id == user.Id).Count() == 0 &&
+                                ((GuildFight)group).unwillingUsers.Where(x => x.Id == user.Id).Count() == 0) &&
+                                ((GuildFight)group).unsureUsers.Where(x => x.Id == user.Id).Count() == 0)
+                            {
+                                await ConsoleWriter.Write($"Adding user {user.Username}", ConsoleWriter.InfoType.Notice);
+                                group.AddUser(client.GetGuild(636208919114547212).GetUser(user.Id));
+                                await group.UpdateAtDB();
+                            }
+                        }
+
+                        foreach (var user in noGearUsersReacted)
+                        {
+                            if (!user.IsBot &&
+                                (group.users.Where(x => x.Id == user.Id).Count() == 0 &&
+                                ((GuildFight)group).noGearUsers.Where(x => x.Id == user.Id).Count() == 0 &&
+                                ((GuildFight)group).unwillingUsers.Where(x => x.Id == user.Id).Count() == 0) &&
+                                ((GuildFight)group).unsureUsers.Where(x => x.Id == user.Id).Count() == 0)
+                            {
+                                await ConsoleWriter.Write($"Adding user {user.Username}", ConsoleWriter.InfoType.Notice);
+                                ((GuildFight)group).noGearUsers.Add(client.GetGuild(636208919114547212).GetUser(user.Id));
+                                await group.UpdateAtDB();
+                            }
+                        }
+                                              
                         await group.RewriteMessage();
                     }
                 }

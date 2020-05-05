@@ -17,13 +17,24 @@ namespace DiscordAngryBot.APIHandlers
     [RoutePrefix("api/Groups")]
     public class GroupsController : ApiController
     {
+        [HttpGet, Route("")]
+        public List<GroupJSONObject> GetGroups()
+        {
+            List<Group> groups = Program.FetchData().groups;
+            List<GroupJSONObject> returnData = new List<GroupJSONObject>();
+            foreach (var group in groups)
+            {
+                returnData.Add(new GroupJSONObject(group));
+            }
+            return returnData;
+        }
+
         /// <summary>
         /// Получение всех групп
         /// </summary>
         /// <returns></returns>
-        [Route("")]
-        [HttpGet]
-        public List<object> GetGroups()
+        [HttpGet, Route("SimpleGroups")]
+        public List<object> GetSimpleGroups()
         {
             List<Group> groups = Program.FetchData().groups;
             List<object> returnData = new List<object>();
@@ -72,9 +83,8 @@ namespace DiscordAngryBot.APIHandlers
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        [Route("{id}")]
-        [HttpGet]
-        public object GetGroup(string id)
+        [HttpGet, Route("SimpleGroup/{id}")]
+        public object GetSimpleGroup(string id)
         {
             Group target = Program.FetchData().groups.Where(x => x.GUID == id).SingleOrDefault();
             if (target != null)
@@ -112,9 +122,8 @@ namespace DiscordAngryBot.APIHandlers
         /// Получение всех юзеров
         /// </summary>
         /// <returns></returns>
-        [Route("")]
-        [HttpGet]
-        public List<object> GetUsers()
+        [HttpGet, Route("SimpleUsers")]
+        public List<object> GetSimpleUsers()
         {
             var userList = Program.FetchServerObject().users;
             List<object> userReturnList = new List<object>();
