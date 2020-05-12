@@ -285,6 +285,9 @@
     <Compile Include="CustomObjects\Bans\DiscordBan.cs" />
     <Compile Include="CustomObjects\ConsoleOutput\ConsoleWriter.cs" />
     <Compile Include="CustomObjects\DiscordCommands\DiscordCommand.cs" />
+    <Compile Include="CustomObjects\Filters\SwearCounter.cs" />
+    <Compile Include="CustomObjects\Filters\SwearCounterHandler.cs" />
+    <Compile Include="CustomObjects\Filters\SwearFilter.cs" />
     <Compile Include="CustomObjects\Groups\configs.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

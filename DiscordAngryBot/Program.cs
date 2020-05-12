@@ -17,12 +17,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Net.Http.Headers;
+using DiscordAngryBot.CustomObjects.Filters;
 
 namespace DiscordAngryBot
 {
     public class Program
     {
         static APIServer apiServer = new APIServer();
+        public static List<SwearCounter> swearCounters = new List<SwearCounter>();
         //public EventHandlers.EventHandler eventHandler = new EventHandlers.EventHandler();
         static void Main(string[] args) 
         {

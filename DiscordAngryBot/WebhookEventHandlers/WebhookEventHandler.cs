@@ -1,12 +1,14 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using DiscordAngryBot.CustomObjects.ConsoleOutput;
+using DiscordAngryBot.CustomObjects.Filters;
 using DiscordAngryBot.CustomObjects.Groups;
 using DiscordAngryBot.MessageHandlers;
 using DiscordAngryBot.ReactionHandlers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -53,6 +55,15 @@ namespace DiscordAngryBot.WebhookEventHandlers
                 if (message.Content.Count() > 0)
                 {
                     await ConsoleWriter.Write($"[#{message.Channel}] {message.Author.Username}: {message.Content}", ConsoleWriter.InfoType.Chat);
+                    //if (await message.CheckPhrase() && Program.swearCounters.Where( x => x.author == message.Author).Count() == 0)
+                    //{
+                    //    Program.swearCounters.Add(await message.CreateSwearCounter());
+                        
+                    //}
+                    //else if (await message.CheckPhrase() && Program.swearCounters.Where(x => x.author == message.Author).Count() == 1)
+                    //{
+                    //    Program.swearCounters.Where(x => x.author == message.Author).SingleOrDefault().reasons.AddReason(message);
+                    //}
                 }
                 else
                 {
@@ -88,6 +99,9 @@ namespace DiscordAngryBot.WebhookEventHandlers
                                     case "BAN":
                                         systemData.bans.Add(await CommandHandler.SystemCommands.BanUser(serverObject, message, commandParameters));
                                         break;
+                                    case "CLEAR":
+                                        await CommandHandler.SystemCommands.ClearMessages(message, args);
+                                        break;
                                 }
                             }
                             else
@@ -97,25 +111,41 @@ namespace DiscordAngryBot.WebhookEventHandlers
                         }
                         else if (settings.userCommands.Contains(command.ToUpper()))
                         {
-                                switch (command.ToUpper())
-                                {
-                                    case "PARTY":
-                                        await CommandHandler.UserCommands.CreateParty(systemData.groups, message, args);
-                                        break;
-                                    case "RAID":
-                                        await CommandHandler.UserCommands.CreateRaid(systemData.groups, message, args);
-                                        break;
-                                    case "LIST":
-                                        await CommandHandler.UserCommands.ListGroups(message, systemData.groups);
-                                        break;
-                                    case "GVG":
-                                        await CommandHandler.UserCommands.CreateGuildFight(systemData.groups, message, args);
-                                        break;
-                                    case "HELP":
-                                        await CommandHandler.UserCommands.HelpUser(message.Author);
+                            switch (command.ToUpper())
+                            {
+                                case "PARTY":
+                                    await CommandHandler.UserCommands.CreateParty(systemData.groups, message, args);
+                                    break;
+                                case "RAID":
+                                    await CommandHandler.UserCommands.CreateRaid(systemData.groups, message, args);
+                                    break;
+                                case "LIST":
+                                    await CommandHandler.UserCommands.ListGroups(message, systemData.groups);
+                                    break;
+                                case "GVG":
+                                    await CommandHandler.UserCommands.CreateGuildFight(systemData.groups, message, args);
+                                    break;
+                                case "HELP":
+                                    await CommandHandler.UserCommands.HelpUser(message.Author, args);
+                                    try
+                                    {
                                         await message.DeleteAsync();
-                                        break;
-                                }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        await ConsoleWriter.Write(ex.Message, ConsoleWriter.InfoType.Error);
+                                    }
+                                    break;
+                            }
+                        }
+                        else if (settings.musicCommands.Contains(command.ToUpper()))
+                        {
+                            switch (command.ToUpper())
+                            {
+                                case "SUMMON":
+                                    await CommandHandler.MusicCommands.JoinChannel(message);
+                                    break;
+                            }
                         }
                         else if (settings.otherCommands.Contains(command.ToUpper()))
                         {
@@ -130,7 +160,9 @@ namespace DiscordAngryBot.WebhookEventHandlers
                             }
                         }
                         else
+                        {
                             await message.DeleteAsync();
+                        }
                     }
                 }
             }

@@ -2,12 +2,14 @@
 using Discord.WebSocket;
 using DiscordAngryBot.CustomObjects.Bans;
 using DiscordAngryBot.CustomObjects.Groups;
+using DiscordAngryBot.CustomObjects.ConsoleOutput;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Discord.Commands;
 
 namespace DiscordAngryBot.MessageHandlers
 {
@@ -56,6 +58,22 @@ namespace DiscordAngryBot.MessageHandlers
                 var ban = await targetUser.Ban(time, serverObject.server.GetRole(682277138455330821), message.Channel);
                 await ban.SaveBanToDB();
                 return ban;
+            }
+
+            public async static Task ClearMessages(SocketMessage message, string[] args)
+            {
+                var messages = message.Channel.GetMessagesAsync(Int32.Parse(args[0]) + 1, CacheMode.AllowDownload).Flatten();
+
+                try
+                {
+                    await Program.FetchServerObject().server.GetTextChannel(message.Channel.Id).DeleteMessagesAsync(messages.ToEnumerable());
+                }
+                catch (Exception ex)
+                {
+                    await ConsoleWriter.Write(ex.Message, ConsoleWriter.InfoType.Error);
+                    await message.Channel.SendMessageAsync($"Не получилось удалить столько сообщений, возможно, вы попытались удалить сообщения старше двух недель.");
+                    await message.DeleteAsync();
+                }
             }
         }
 
@@ -162,30 +180,83 @@ namespace DiscordAngryBot.MessageHandlers
             /// </summary>
             /// <param name="user"></param>
             /// <returns></returns>
-            public static async Task HelpUser(SocketUser user)
+            public static async Task HelpUser(SocketUser user, string[] args)
             {
                 StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.AppendLine("Информация о командах, используемых хомяком.");
-                if (Program.FetchSettings().admins.Contains(user.Id))
-                {
-                    stringBuilder.AppendLine("> Системные команды:"); 
-                    foreach (var com in Program.FetchSettings().systemCommands)
+                if (args[0] == null)
+                {                   
+                    stringBuilder.AppendLine("Информация о командах, используемых хомяком.");
+                    if (Program.FetchSettings().admins.Contains(user.Id))
+                    {
+                        stringBuilder.AppendLine("> Системные команды:");
+                        foreach (var com in Program.FetchSettings().systemCommands)
+                        {
+                            stringBuilder.AppendLine($" - {com.ToLowerInvariant()}");
+                        }
+                    }
+                    stringBuilder.AppendLine("> Пользовательские команды:");
+                    foreach (var com in Program.FetchSettings().userCommands)
                     {
                         stringBuilder.AppendLine($" - {com.ToLowerInvariant()}");
                     }
+                    stringBuilder.AppendLine("> Другие команды:");
+                    foreach (var com in Program.FetchSettings().otherCommands)
+                    {
+                        stringBuilder.AppendLine($" - {com.ToLowerInvariant()}");
+                    }                  
                 }
-                stringBuilder.AppendLine("> Пользовательские команды:");
-                foreach (var com in Program.FetchSettings().userCommands)
+                else
                 {
-                    stringBuilder.AppendLine($" - {com.ToLowerInvariant()}");
-                }
-                stringBuilder.AppendLine("> Другие команды:");
-                foreach (var com in Program.FetchSettings().otherCommands)
-                {
-                    stringBuilder.AppendLine($" - {com.ToLowerInvariant()}");
-                }
+                    stringBuilder.AppendLine($"Информация о команде {args[0]}");
+                    switch (args[0].ToUpperInvariant())
+                    {
+                        case "BAN":
+                            stringBuilder.AppendLine($"Применение:\n> {Program.FetchSettings().commandPrefix}ban [цель бана] [время в минутах]");
+                            break;
+                        case "CLEAR":
+                            stringBuilder.AppendLine($"Применение:\n> {Program.FetchSettings().commandPrefix}clear [количество сообщений]");
+                            break;
+                        case "PARTY":
+                            stringBuilder.AppendLine($"Применение:\n> {Program.FetchSettings().commandPrefix}party [цель сбора группы]");
+                            break;
+                        case "RAID":
+                            stringBuilder.AppendLine($"Применение:\n> {Program.FetchSettings().commandPrefix}raid [цель сбора рейда]");
+                            break;
+                        case "LIST":
+                            stringBuilder.AppendLine($"Применение:\n> {Program.FetchSettings().commandPrefix}list");
+                            break;
+                        case "GVG":
+                            stringBuilder.AppendLine($"Применение:\n> {Program.FetchSettings().commandPrefix}gvg [время сбора битв бш]");
+                            break;
+                        case "HELP":
+                            stringBuilder.AppendLine($"Применение:\n> {Program.FetchSettings().commandPrefix}help (команда)");
+                            break;
+                        case "КУСЬ":
+                            stringBuilder.AppendLine($"Применение:\n> {Program.FetchSettings().commandPrefix}кусь (цель)");
+                            break;
+                        case "БАН":
+                            stringBuilder.AppendLine($"Применение:\n> {Program.FetchSettings().commandPrefix}бан");
+                            break;
+                        default:
+                            stringBuilder.AppendLine($"Такой команды нет.");
+                            break;
+                    }
 
+                }
                 await user.SendMessageAsync(stringBuilder.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Класс для обработки музыкальных комманд
+        /// </summary>
+        public static class MusicCommands
+        {
+            [Command(RunMode = RunMode.Async)]
+            public static async Task JoinChannel(SocketMessage message)
+            {
+                var voiceChannel = Program.FetchServerObject().server.VoiceChannels.Where(x => x.Users.Contains(message.Author)).FirstOrDefault();
+                await voiceChannel.ConnectAsync();
             }
         }
 
