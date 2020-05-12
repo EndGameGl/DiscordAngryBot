@@ -1,22 +1,35 @@
-﻿using ObjectDiscordAPI.Resources.GuildResources;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Newtonsoft.Json;
+using ObjectDiscordAPI.Resources.GuildResources;
 
 namespace ObjectDiscordAPI.Resources
 {
     public class Invite
     {
-        public string code { get; set; }
-        public Guild guild { get; set; }
-        public Channel channel { get; set; }
-        public User inviter { get; set; }
-        public User target_user { get; set; }
-        public int? target_user_type { get; set; }
-        public int? approximate_presence_count { get; set; }
-        public int? approximate_member_count { get; set; }
+        [JsonProperty("code")]
+        public string Code { get; set; }
+
+        [JsonProperty("guild")]
+        public Guild Guild { get; set; }
+
+        [JsonProperty("channel")]
+        public Channel Channel { get; set; }
+
+        [JsonProperty("inviter")]
+        public User Inviter { get; set; }
+
+        [JsonProperty("target_user")]
+        public User TargetUser { get; set; }
+
+        [JsonProperty("target_user_type")]
+        public int? TargetUserType { get; set; }
+
+        [JsonProperty("approximate_presence_count")]
+        public int? ApproximatePresenceCount { get; set; }
+
+        [JsonProperty("approximate_member_count")]
+        public int? ApproximateMemberCount { get; set; }
+
+        [JsonConstructor]
         public Invite() { }
     }
 }

@@ -75,6 +75,7 @@
     <Compile Include="Resources\GuildResources\GuildRole.cs" />
     <Compile Include="Resources\User.cs" />
     <Compile Include="Resources\VoiceRegion.cs" />
+    <Compile Include="Resources\VoiceState.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

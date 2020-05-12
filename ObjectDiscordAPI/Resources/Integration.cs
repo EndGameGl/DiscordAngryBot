@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Newtonsoft.Json;
+using System;
 
 namespace ObjectDiscordAPI.Resources
 {
@@ -13,18 +10,43 @@ namespace ObjectDiscordAPI.Resources
     }
     public class Integration
     {
-        public ulong id { get; set; }
-        public string name { get; set; }
-        public string type { get; set; }
-        public bool enabled { get; set; }
-        public bool syncing { get; set; }
-        public ulong role_id { get; set; }
-        public bool? enable_emoticons { get; set; }
-        public ExpireBehavior expire_behavior { get; set; }
-        public int expire_grace_period { get; set; }
-        public User user { get; set; }
-        public IntegrationAccount account { get; set; }
-        public DateTime synced_at { get; set; }
+        [JsonProperty("id")]
+        public ulong ID { get; set; }
+
+        [JsonProperty("name")]
+        public string Name { get; set; }
+
+        [JsonProperty("type")]
+        public string Type { get; set; }
+
+        [JsonProperty("enabled")]
+        public bool IsEnabled { get; set; }
+
+        [JsonProperty("syncing")]
+        public bool IsSyncing { get; set; }
+
+        [JsonProperty("role_id")]
+        public ulong RoleID { get; set; }
+
+        [JsonProperty("enable_emoticons")]
+        public bool? DoEnableEmoticons { get; set; }
+
+        [JsonProperty("expire_behavior")]
+        public ExpireBehavior ExpireBehavior { get; set; }
+
+        [JsonProperty("expire_grace_period")]
+        public int ExpireGracePeriod { get; set; }
+
+        [JsonProperty("user")]
+        public User User { get; set; }
+
+        [JsonProperty("account")]
+        public IntegrationAccount IntegrationAccount { get; set; }
+
+        [JsonProperty("synced_at")]
+        public DateTime SyncedAt { get; set; }
+
+        [JsonConstructor]
         public Integration() { }
     }
 }

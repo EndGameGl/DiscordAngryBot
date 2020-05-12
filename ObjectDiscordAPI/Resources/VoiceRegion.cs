@@ -1,19 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Newtonsoft.Json;
 
 namespace ObjectDiscordAPI.Resources
 {
     public class VoiceRegion
     {
-        public string id { get; set; }
-        public string name { get; set; }
-        public bool vip { get; set; }
-        public bool optimal { get; set; }
-        public bool deprecated { get; set; }
-        public bool custom { get; set; }
+        [JsonProperty("id")]
+        public string ID { get; set; }
+
+        [JsonProperty("name")]
+        public string Name { get; set; }
+
+        [JsonProperty("vip")]
+        public bool IsVIP { get; set; }
+
+        [JsonProperty("optimal")]
+        public bool IsOptimal { get; set; }
+
+        [JsonProperty("deprecated")]
+        public bool IsDeprecated { get; set; }
+
+        [JsonProperty("custom")]
+        public bool IsCustom { get; set; }
+
+        [JsonConstructor]
         public VoiceRegion() { }
     }
 }

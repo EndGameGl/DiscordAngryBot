@@ -1,17 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Newtonsoft.Json;
 
 namespace ObjectDiscordAPI.Resources
 {
     public class Overwrite
     {
-        public ulong id { get; set; }
-        public string type { get; set; }
-        public int allow { get; set; }
-        public int deny { get; set; }
+        [JsonProperty("id")]
+        public ulong ID { get; set; }
+
+        [JsonProperty("type")]
+        public string Type { get; set; }
+
+        [JsonProperty("allow")]
+        public int Allow { get; set; }
+
+        [JsonProperty("deny")]
+        public int Deny { get; set; }
+
+        [JsonConstructor]
         public Overwrite() { }
     }
 }

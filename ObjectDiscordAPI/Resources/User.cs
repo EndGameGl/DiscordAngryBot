@@ -1,27 +1,55 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Newtonsoft.Json;
 
 namespace ObjectDiscordAPI.Resources
 {
+    public enum UserPremiumType
+    {
+        None,
+        NitroClassic,
+        Nitro
+    }
     public class User
     {
-        public ulong id { get; set; }
-        public string username { get; set; }
-        public string discriminator { get; set; }
-        public string avatar { get; set; }
-        public bool? bot { get; set; }
-        public bool? system { get; set; }
-        public bool? mfa_enabled { get; set; }
-        public string locale { get; set; }
-        public bool? verified { get; set; }
-        public string email { get; set; }
-        public int? flags { get; set; }
-        public int? premium_type { get; set; }
-        public int? public_flags { get; set; }
+        [JsonProperty("id")]
+        public ulong ID { get; set; }
 
+        [JsonProperty("username")]
+        public string Username { get; set; }
+
+        [JsonProperty("discriminator")]
+        public string Discriminator { get; set; }
+
+        [JsonProperty("avatar")]
+        public string AvatarHash { get; set; }
+
+        [JsonProperty("bot")]
+        public bool? IsBot { get; set; }
+
+        [JsonProperty("system")]
+        public bool? IsSystem { get; set; }
+
+        [JsonProperty("mfa_enabled")]
+        public bool? IsMFAEnabled { get; set; }
+
+        [JsonProperty("locale")]
+        public string Locale { get; set; }
+
+        [JsonProperty("verified")]
+        public bool? IsVerified { get; set; }
+
+        [JsonProperty("email")]
+        public string Email { get; set; }
+
+        [JsonProperty("flags")]
+        public int? Flags { get; set; }
+
+        [JsonProperty("premium_type")]
+        public UserPremiumType? PremiumType { get; set; }
+
+        [JsonProperty("public_flags")]
+        public int? PublicFlags { get; set; }
+
+        [JsonConstructor]
         public User() { }
     }
 }
