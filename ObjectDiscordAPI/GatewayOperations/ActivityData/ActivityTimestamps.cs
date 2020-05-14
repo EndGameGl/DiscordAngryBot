@@ -10,10 +10,10 @@ namespace ObjectDiscordAPI.GatewayOperations.ActivityData
     public class ActivityTimestamps
     {
         [JsonProperty("start")]
-        public int? ActivityStarted { get; set; }
+        public ulong? ActivityStarted { get; set; }
 
         [JsonProperty("end")]
-        public int? ActivityEnded { get; set; }
+        public ulong? ActivityEnded { get; set; }
 
         [JsonConstructor]
         public ActivityTimestamps() { }

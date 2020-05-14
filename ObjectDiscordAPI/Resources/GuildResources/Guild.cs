@@ -68,7 +68,7 @@ namespace ObjectDiscordAPI.Resources.GuildResources
         public string Region { get; set; }
 
         [JsonProperty("afk_channel_id")]
-        public ulong AFKChannelID { get; set; }
+        public ulong? AFKChannelID { get; set; }
 
         [JsonProperty("afk_timeout")]
         public int AFKTimeout { get; set; }
@@ -145,11 +145,14 @@ namespace ObjectDiscordAPI.Resources.GuildResources
         [JsonProperty("public_updates_channel_id")]
         public ulong? PublicUpdatesChannelID { get; set; }
 
+        [JsonProperty("max_video_channel_users")]
+        public int? MaxVideoChannelUsers { get; set; }
+
         [JsonProperty("approximate_member_count")]
-        public ulong? ApproximateMemberCount { get; set; }
+        public int? ApproximateMemberCount { get; set; }
 
         [JsonProperty("approximate_presence_count")]
-        public ulong? ApproximatePresenceCount { get; set; }
+        public int? ApproximatePresenceCount { get; set; }
 
         [JsonConstructor]
         public Guild() { }

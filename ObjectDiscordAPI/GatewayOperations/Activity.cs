@@ -27,7 +27,7 @@ namespace ObjectDiscordAPI.GatewayOperations
         public string StreamURL { get; set; }
 
         [JsonProperty("created_at")]
-        public int CreatedAt { get; set; }
+        public ulong CreatedAt { get; set; }
 
         [JsonProperty("timestamps")]
         public ActivityTimestamps ActivityTimestamp { get; set; }

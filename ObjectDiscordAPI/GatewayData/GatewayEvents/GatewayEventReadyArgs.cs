@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using ObjectDiscordAPI.GatewayOperations;
 using ObjectDiscordAPI.Resources;
 using System;
 using System.Collections.Generic;
@@ -6,9 +7,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ObjectDiscordAPI.GatewayOperations
+namespace ObjectDiscordAPI.GatewayData.GatewayEvents
 {
-    public class ReadyData
+    public class GatewayEventReadyArgs
     {
         [JsonProperty("v")]
         public int Version { get; set; }
@@ -29,6 +30,6 @@ namespace ObjectDiscordAPI.GatewayOperations
         public int[] Shard { get; set; }
 
         [JsonConstructor]
-        public ReadyData() { }
+        public GatewayEventReadyArgs() { }
     }
 }

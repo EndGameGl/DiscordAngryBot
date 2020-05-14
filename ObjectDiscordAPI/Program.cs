@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using ObjectDiscordAPI.Extensions;
@@ -22,23 +23,21 @@ namespace ObjectDiscordAPI
         {
             try
             {
-                var result = DoStuff().GetAwaiter().GetResult();
+                var result = StartBot().GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"{ex.Message}: {ex.InnerException.Message}"); 
             }
-
             Console.ReadLine();
         }
 
-        public async static Task<object> DoStuff()
+        public async static Task<object> StartBot()
         {
             discordClient.SetSettings("NjM1MDEyNzg1MTkyOTYwMDEx.Xnj0TQ.B38NBN5KmbLE89hwUWIjSKk2aII");
             await discordClient.ConnectAsync();
-            discordClient.Ready += RunOnReady;
-
-            return await discordClient.GetGuildChannelsAsync(636208919114547212);
+            //discordClient.Ready += RunOnReady;
+            return await discordClient.GetGuildAsync(636208919114547212);
         }
 
         public async static Task RunOnReady()

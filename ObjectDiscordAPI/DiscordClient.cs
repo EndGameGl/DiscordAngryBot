@@ -1,6 +1,8 @@
 ﻿using Newtonsoft.Json;
 using ObjectDiscordAPI.Extensions;
 using ObjectDiscordAPI.GatewayData;
+using ObjectDiscordAPI.GatewayData.GatewayCommands;
+using ObjectDiscordAPI.GatewayData.GatewayEvents;
 using ObjectDiscordAPI.GatewayOperations;
 using System;
 using System.Collections.Generic;
@@ -48,7 +50,8 @@ namespace ObjectDiscordAPI
         public delegate Task ReadyHandler();
         public event ReadyHandler Ready;
 
-
+        public delegate Task CreateGuildHandler(GatewayEventGuildCreateArgs e);
+        public event CreateGuildHandler GuildCreated;
 
         public void SetSettings(string botToken)
         {
@@ -60,7 +63,9 @@ namespace ObjectDiscordAPI
             socket = new ClientWebSocket();
             cancellationTokenSource = new CancellationTokenSource();
 
-            OnHello += Hello;
+            OnHello += InnerHelloTask;
+            Ready += InnerReadyTask;
+            GuildCreated += InnerGuildCreatedTask;
 
             isConfigured = true;
         }
@@ -128,8 +133,7 @@ namespace ObjectDiscordAPI
                                 {
                                     var payloadData = await Task.Run(async () => JsonConvert.DeserializeObject<GatewayPayload>(await reader.ReadToEndAsync()));                                   
                                     await Task.Run(() => Console.WriteLine($"{DateTime.Now}: Payload received:\n    Payload code: {payloadData.OperationCode}: {(StatusCodes)payloadData.OperationCode}\n" +
-                                        $"    Payload sequence number: {payloadData.SequenceNumber}\n    Payload event name: {payloadData.EventName}\n" +
-                                        $"    Payload data: {payloadData.JSONEventData}"));
+                                        $"    Payload sequence number: {payloadData.SequenceNumber}\n    Payload event name: {payloadData.EventName}\n"));
 
                                     switch ((StatusCodes)payloadData.OperationCode)
                                     {
@@ -181,9 +185,9 @@ namespace ObjectDiscordAPI
                 }, cancellationTokenSource.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default);           
         }
 
-        private static async Task Hello(GatewayPayload payload)
+        private static async Task InnerHelloTask(GatewayPayload payload)
         {
-            var op = await Task.Run( () => JsonConvert.DeserializeObject<OperationHello>(payload.JSONEventData.ToString()));
+            var op = await Task.Run( () => JsonConvert.DeserializeObject<GatewayEventHelloArgs>(payload.JSONEventData.ToString()));
             await SendHeartbeat(lastSequence);
             await Identify();
             heartbeatTimer = new Timer( 
@@ -198,9 +202,79 @@ namespace ObjectDiscordAPI
             switch (gatewayPayload.EventName)
             {
                 case "READY":
-                    var data = JsonConvert.DeserializeObject<ReadyData>(gatewayPayload.JSONEventData.ToString());
-                    SessionID = data.SessionID;
+                    var readyData = await Task.Run(() => JsonConvert.DeserializeObject<GatewayEventReadyArgs>(gatewayPayload.JSONEventData.ToString()));
+                    SessionID = readyData.SessionID;
                     await Ready?.Invoke();
+                    break;
+                case "GUILD_CREATE":
+                    var guildCreateData = await Task.Run(() => JsonConvert.DeserializeObject<GatewayEventGuildCreateArgs>(gatewayPayload.JSONEventData.ToString()));
+                    await GuildCreated?.Invoke(guildCreateData);
+                    break;
+                case "CHANNEL_CREATE":
+                    break;
+                case "CHANNEL_UPDATE":
+                    break;
+                case "CHANNEL_DELETE":
+                    break;
+                case "CHANNEL_PINS_UPDATE":
+                    break;
+                case "GUILD_UPDATE":
+                    break;
+                case "GUILD_DELETE":
+                    break;
+                case "GUILD_BAN_ADD":
+                    break;
+                case "GUILD_BAN_REMOVE":
+                    break;
+                case "GUILD_EMOJIS_UPDATE":
+                    break;
+                case "GUILD_INTEGRATIONS_UPDATE":
+                    break;
+                case "GUILD_MEMBER_ADD":
+                    break;
+                case "GUILD_MEMBER_REMOVE":
+                    break;
+                case "GUILD_MEMBER_UPDATE":
+                    break;
+                case "GUILD_MEMBERS_CHUNK":
+                    break;
+                case "GUILD_ROLE_CREATE":
+                    break;
+                case "GUILD_ROLE_UPDATE":
+                    break;
+                case "GUILD_ROLE_DELETE":
+                    break;
+                case "INVITE_CREATE":
+                    break;
+                case "INVITE_DELETE":
+                    break;
+                case "MESSAGE_CREATE":
+                    break;
+                case "MESSAGE_UPDATE":
+                    break;
+                case "MESSAGE_DELETE":
+                    break;
+                case "MESSAGE_DELETE_BULK":
+                    break;
+                case "MESSAGE_REACTION_ADD":
+                    break;
+                case "MESSAGE_REACTION_REMOVE":
+                    break;
+                case "MESSAGE_REACTION_REMOVE_ALL":
+                    break;
+                case "MESSAGE_REACTION_REMOVE_EMOJI":
+                    break;
+                case "PRESENCE_UPDATE":
+                    break;
+                case "TYPING_START":
+                    break;
+                case "USER_UPDATE":
+                    break;
+                case "VOICE_STATE_UPDATE":
+                    break;
+                case "VOICE_SERVER_UPDATE":
+                    break;
+                case "WEBHOOKS_UPDATE":
                     break;
             }
         }
@@ -218,7 +292,8 @@ namespace ObjectDiscordAPI
                         Browser = "library",
                         Device = "library",
                         OS = "Windows"
-                    }
+                    },
+                    DoGuildSubscriptions = true
                 }
             };
             Console.WriteLine($"{DateTime.Now}: Sending identity data");
@@ -227,7 +302,7 @@ namespace ObjectDiscordAPI
 
         private static async Task SendHeartbeat(int? seq)
         {
-            Heartbeat heartbeat = new Heartbeat()
+            GatewayHeartbeat heartbeat = new GatewayHeartbeat()
             {
                 LastSequence = seq,
                 Operation = 1
@@ -255,5 +330,14 @@ namespace ObjectDiscordAPI
             await socket.SendAsync(await payload.ConvertObjectToArraySegment(true), WebSocketMessageType.Text, true, cancellationTokenSource.Token);
         }
 
+        private static async Task InnerReadyTask()
+        {
+            await Task.Run(() => Console.WriteLine($"[{DateTime.Now}]: Client is ready."));
+        }
+
+        private static async Task InnerGuildCreatedTask(GatewayEventGuildCreateArgs e)
+        {
+            await Task.Run(() => Console.WriteLine($"Guild {e.Name} is available for use"));
+        }
     }
 }

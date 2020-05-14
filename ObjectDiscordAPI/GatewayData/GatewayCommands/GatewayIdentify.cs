@@ -1,11 +1,7 @@
 ﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using ObjectDiscordAPI.GatewayOperations;
 
-namespace ObjectDiscordAPI.GatewayOperations
+namespace ObjectDiscordAPI.GatewayData.GatewayCommands
 {
     public class IdentifyData
     {
@@ -25,13 +21,13 @@ namespace ObjectDiscordAPI.GatewayOperations
         public int[] Shard { get; set; }
 
         [JsonProperty("presence")]
-        public UpdateStatus UpdatePresenceStatus { get; set; }
+        public GatewayUpdateStatus UpdatePresenceStatus { get; set; }
 
         [JsonProperty("guild_subscriptions")]
         public bool DoGuildSubscriptions { get; set; } = true;
 
         [JsonProperty("intents")]
-        public int Intents { get; set; } = 1 << 14;
+        public int? Intents { get; set; }
 
         [JsonConstructor]
         public IdentifyData() { }
