@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using ObjectDiscordAPI.Extensions;
+using ObjectDiscordAPI.GatewayData;
 using ObjectDiscordAPI.Resources;
 using ObjectDiscordAPI.Resources.GuildResources;
 
@@ -34,8 +35,15 @@ namespace ObjectDiscordAPI
         public async static Task<object> DoStuff()
         {
             discordClient.SetSettings("NjM1MDEyNzg1MTkyOTYwMDEx.Xnj0TQ.B38NBN5KmbLE89hwUWIjSKk2aII");
+            await discordClient.ConnectAsync();
+            discordClient.Ready += RunOnReady;
 
             return await discordClient.GetGuildChannelsAsync(636208919114547212);
+        }
+
+        public async static Task RunOnReady()
+        {
+            Console.WriteLine("Ready handler is running");
         }
     }
 }

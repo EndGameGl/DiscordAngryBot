@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using ObjectDiscordAPI.Resources.GuildResources;
 using System.Drawing;
 using System.IO;
+using ObjectDiscordAPI.GatewayData;
 
 namespace ObjectDiscordAPI.Extensions
 {
@@ -217,6 +218,9 @@ namespace ObjectDiscordAPI.Extensions
         }
 
         #endregion
-
+        public async static Task<Gateway> GetGatewayAsync(this DiscordClient client)
+        {
+            return JsonConvert.DeserializeObject<Gateway>(await client.GET("gateway/bot"));
+        }
     }
 }

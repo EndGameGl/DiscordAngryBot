@@ -57,7 +57,7 @@ namespace DiscordAngryBot.ReactionHandlers
                         if (raid.users.Count == 12)
                         {
                             //raid.isActive = false;
-                            await raid.author.SendMessageAsync($"Ваш рейд [{raid.destination}] был собран");
+                            //await raid.author.SendMessageAsync($"Ваш рейд [{raid.destination}] был собран");
                             //await raid.UpdateAtDBIfFull();
                         }
                     }
@@ -133,7 +133,7 @@ namespace DiscordAngryBot.ReactionHandlers
                 {
                     var party = groups.Where(x => x.targetMessage.Id == reaction.MessageId).SingleOrDefault();
 
-                    if (party != null && party.author.Id == reaction.UserId)
+                    if (party != null && (party.author.Id == reaction.UserId || Program.FetchSettings().admins.Contains(reaction.UserId)))
                     {
                         //await party.targetMessage.DeleteAsync();
                         //await message.Channel.SendMessageAsync($"Сбор группы {party.author.Mention} ({party.destination}) закончен");
@@ -145,7 +145,7 @@ namespace DiscordAngryBot.ReactionHandlers
                 else if (groupObject.IsRaid())
                 {
                     var raid = groups.Where(x => x.targetMessage.Id == reaction.MessageId).SingleOrDefault();
-                    if (raid != null && raid.author.Id == reaction.UserId)
+                    if (raid != null && (raid.author.Id == reaction.UserId || Program.FetchSettings().admins.Contains(reaction.UserId)))
                     {
                         //await raid.targetMessage.DeleteAsync();
                         //await message.Channel.SendMessageAsync($"Сбор рейда {raid.author.Mention} ({raid.destination}) закончен");
@@ -157,7 +157,7 @@ namespace DiscordAngryBot.ReactionHandlers
                 else if (groupObject.IsGuildFight())
                 {
                     var guildFight = groups.Where(x => x.targetMessage.Id == reaction.MessageId).SingleOrDefault();
-                    if (guildFight != null && guildFight.author.Id == reaction.UserId)
+                    if (guildFight != null && (guildFight.author.Id == reaction.UserId || Program.FetchSettings().admins.Contains(reaction.UserId)))
                     {
                         //await guildFight.targetMessage.DeleteAsync();
                         //await message.Channel.SendMessageAsync($"Сбор на битвы БШ {guildFight.destination} закончен");
@@ -176,7 +176,7 @@ namespace DiscordAngryBot.ReactionHandlers
             /// <returns></returns>
             public async static Task GroupCallout(Group groupObject, SocketReaction reaction)
             {
-                if (reaction.UserId == groupObject.author.Id)
+                if (reaction.UserId == groupObject.author.Id || Program.FetchSettings().admins.Contains(reaction.UserId))
                 {
                     if (!groupObject.IsGuildFight())
                     {

@@ -57,7 +57,25 @@
       <DependentUpon>apiPath.resx</DependentUpon>
     </Compile>
     <Compile Include="DiscordClient.cs" />
+    <Compile Include="Extensions\Convertes.cs" />
     <Compile Include="Extensions\GETMethods.cs" />
+    <Compile Include="GatewayData\Gateway.cs" />
+    <Compile Include="GatewayData\GatewayPayload.cs" />
+    <Compile Include="GatewayData\GatewayResume.cs" />
+    <Compile Include="GatewayData\SessionStartLimit.cs" />
+    <Compile Include="GatewayOperations\Activity.cs" />
+    <Compile Include="GatewayOperations\ActivityData\ActivityAssets.cs" />
+    <Compile Include="GatewayOperations\ActivityData\ActivityEmoji.cs" />
+    <Compile Include="GatewayOperations\ActivityData\ActivityParty.cs" />
+    <Compile Include="GatewayOperations\ActivityData\ActivitySecrets.cs" />
+    <Compile Include="GatewayOperations\ActivityData\ActivityTimestamps.cs" />
+    <Compile Include="GatewayOperations\Heartbeat.cs" />
+    <Compile Include="GatewayOperations\IdentifyData.cs" />
+    <Compile Include="GatewayOperations\IdentityConnectionProperties.cs" />
+    <Compile Include="GatewayOperations\OperationHello.cs" />
+    <Compile Include="GatewayOperations\ReadyData.cs" />
+    <Compile Include="GatewayOperations\UnavailableGuild.cs" />
+    <Compile Include="GatewayOperations\UpdateStatus.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Resources\GuildResources\GuildEmbed.cs" />
