@@ -44,27 +44,30 @@ namespace DiscordAngryBot.CustomObjects.ConsoleOutput
         /// <param name="type">Тип информации</param>
         /// <returns></returns>
         public static async Task Write(object obj, InfoType type)
-        {
-                Console.BackgroundColor = ConsoleColor.White;
-                switch (type)
+        {               
+                await Task.Run( () => 
                 {
-                    case InfoType.Info:
-                        Console.ForegroundColor = ConsoleColor.Black;
-                        break;
-                    case InfoType.Chat:
-                        Console.ForegroundColor = ConsoleColor.Black;
-                        break;
-                    case InfoType.Error:
-                        Console.ForegroundColor = ConsoleColor.DarkYellow;
-                        break;
-                    case InfoType.Notice:
-                        Console.ForegroundColor = ConsoleColor.DarkMagenta;
-                        break;
-                    case InfoType.CommandInfo:
-                        Console.ForegroundColor = ConsoleColor.DarkCyan;
-                        break;
-                }
-                Console.WriteLine($"[{DateTime.Now,5}] [{type.ToString(),5}]: {obj.ToString()}");
+                    Console.BackgroundColor = ConsoleColor.White;
+                    switch (type)
+                    {
+                        case InfoType.Info:
+                            Console.ForegroundColor = ConsoleColor.Black;
+                            break;
+                        case InfoType.Chat:
+                            Console.ForegroundColor = ConsoleColor.Black;
+                            break;
+                        case InfoType.Error:
+                            Console.ForegroundColor = ConsoleColor.DarkYellow;
+                            break;
+                        case InfoType.Notice:
+                            Console.ForegroundColor = ConsoleColor.DarkMagenta;
+                            break;
+                        case InfoType.CommandInfo:
+                            Console.ForegroundColor = ConsoleColor.DarkCyan;
+                            break;
+                    }
+                    Console.WriteLine($"[{DateTime.Now,5}] [{type.ToString(),5}]: {obj.ToString()}");
+                });
         }
 
         /// <summary>
@@ -73,8 +76,11 @@ namespace DiscordAngryBot.CustomObjects.ConsoleOutput
         /// <returns></returns>
         public static async Task WriteDivideLine()
         {
-            Console.ForegroundColor = ConsoleColor.Black;
-            Console.WriteLine($"[{DateTime.Now,5}]: #-------------------------------------------------#");
+            await Task.Run(() =>
+            {
+                Console.ForegroundColor = ConsoleColor.Black;
+                Console.WriteLine($"[{DateTime.Now,5}]: #-------------------------------------------------#");
+            });
         }
 
         /// <summary>
@@ -84,8 +90,11 @@ namespace DiscordAngryBot.CustomObjects.ConsoleOutput
         /// <returns></returns>
         public static async Task WriteDivideMessage(object text)
         {
-            Console.ForegroundColor = ConsoleColor.Black;
-            Console.WriteLine($"\n[{DateTime.Now,5}]: ..//{text.ToString()}/\n");
+            await Task.Run(() => 
+            {
+                Console.ForegroundColor = ConsoleColor.Black;
+                Console.WriteLine($"\n[{DateTime.Now,5}]: ..//{text.ToString()}/\n"); 
+            });
         }
     }
 }

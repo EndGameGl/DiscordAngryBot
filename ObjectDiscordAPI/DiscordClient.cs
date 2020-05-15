@@ -4,6 +4,7 @@ using ObjectDiscordAPI.GatewayData;
 using ObjectDiscordAPI.GatewayData.GatewayCommands;
 using ObjectDiscordAPI.GatewayData.GatewayEvents;
 using ObjectDiscordAPI.GatewayOperations;
+using ObjectDiscordAPI.Resources;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -53,6 +54,9 @@ namespace ObjectDiscordAPI
         public delegate Task CreateGuildHandler(GatewayEventGuildCreateArgs e);
         public event CreateGuildHandler GuildCreated;
 
+        public delegate Task MessageCreatedHandler(Message e);
+        public event MessageCreatedHandler MessageCreated;
+
         public void SetSettings(string botToken)
         {
             client = new WebClient();
@@ -66,6 +70,7 @@ namespace ObjectDiscordAPI
             OnHello += InnerHelloTask;
             Ready += InnerReadyTask;
             GuildCreated += InnerGuildCreatedTask;
+            MessageCreated += InnerMessageCreatedTask;
 
             isConfigured = true;
         }
@@ -107,6 +112,7 @@ namespace ObjectDiscordAPI
         public async Task ConnectAsync()
         {
             var gateway = await this.GetGatewayAsync();
+
             await socket.ConnectAsync(new Uri($"{gateway.URL}/?v=6&encoding=json"), cancellationTokenSource.Token);
 
             await Task.Factory.StartNew(
@@ -249,6 +255,8 @@ namespace ObjectDiscordAPI
                 case "INVITE_DELETE":
                     break;
                 case "MESSAGE_CREATE":
+                    var message = await Task.Run(() => JsonConvert.DeserializeObject<Message>(gatewayPayload.JSONEventData.ToString()));
+                    await MessageCreated?.Invoke(message);
                     break;
                 case "MESSAGE_UPDATE":
                     break;
@@ -338,6 +346,11 @@ namespace ObjectDiscordAPI
         private static async Task InnerGuildCreatedTask(GatewayEventGuildCreateArgs e)
         {
             await Task.Run(() => Console.WriteLine($"Guild {e.Name} is available for use"));
+        }
+
+        private static async Task InnerMessageCreatedTask(Message e)
+        {
+
         }
     }
 }

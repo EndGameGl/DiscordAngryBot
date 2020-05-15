@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Web;
 using ObjectDiscordAPI.Extensions;
 using ObjectDiscordAPI.GatewayData;
+using ObjectDiscordAPI.GatewayData.GatewayEvents;
 using ObjectDiscordAPI.Resources;
 using ObjectDiscordAPI.Resources.GuildResources;
 
@@ -19,30 +20,32 @@ namespace ObjectDiscordAPI
     class Program
     {
         static DiscordClient discordClient = new DiscordClient();
+        public static List<GatewayEventGuildCreateArgs> guilds = new List<GatewayEventGuildCreateArgs>();
         static void Main(string[] args)
         {
             try
             {
-                var result = StartBot().GetAwaiter().GetResult();
+                StartBot().GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"{ex.Message}: {ex.InnerException.Message}"); 
-            }
-            Console.ReadLine();
+            }           
         }
 
-        public async static Task<object> StartBot()
+        public async static Task StartBot()
         {
             discordClient.SetSettings("NjM1MDEyNzg1MTkyOTYwMDEx.Xnj0TQ.B38NBN5KmbLE89hwUWIjSKk2aII");
             await discordClient.ConnectAsync();
-            //discordClient.Ready += RunOnReady;
-            return await discordClient.GetGuildAsync(636208919114547212);
+            discordClient.MessageCreated += DisplayNewMessage;
+            await Task.Delay(Timeout.Infinite);
         }
 
-        public async static Task RunOnReady()
+        public async static Task DisplayNewMessage(Message e)
         {
-            Console.WriteLine("Ready handler is running");
+            var guild = await discordClient.GetGuildAsync(e.GuildID.Value);
+            var channel = (await discordClient.GetGuildChannelsAsync(guild.ID)).Where( x => x.ID == e.ChannelID).SingleOrDefault();
+            await Task.Run(() => Console.WriteLine($"[{DateTime.Now}] [{guild.Name}] [{channel.Name}] [{e.Author.Username}]: {e.Content}"));
         }
     }
 }
