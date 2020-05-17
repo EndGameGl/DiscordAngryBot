@@ -35,6 +35,7 @@ namespace ObjectDiscordAPI
     }
     public class DiscordClient
     {
+        private static List<GatewayEventGuildCreateArgs> guildList = new List<GatewayEventGuildCreateArgs>();
         WebClient client { get; set; }
         bool isConfigured { get; set; } = false;
         static ClientWebSocket socket { get; set; }
@@ -57,6 +58,12 @@ namespace ObjectDiscordAPI
         public delegate Task MessageCreatedHandler(Message e);
         public event MessageCreatedHandler MessageCreated;
 
+        public delegate Task MessageUpdatedHandler(Message e);
+        public event MessageUpdatedHandler MessageUpdated;
+
+        public delegate Task MessageDeletedHandler(GatewayEventMessageDeleteArgs e);
+        public event MessageDeletedHandler MessageDeleted;
+
         public void SetSettings(string botToken)
         {
             client = new WebClient();
@@ -71,7 +78,8 @@ namespace ObjectDiscordAPI
             Ready += InnerReadyTask;
             GuildCreated += InnerGuildCreatedTask;
             MessageCreated += InnerMessageCreatedTask;
-
+            MessageUpdated += InnerMessageUpdatedTask;
+            MessageDeleted += InnerMessageDeletedTask;
             isConfigured = true;
         }
 
@@ -214,6 +222,7 @@ namespace ObjectDiscordAPI
                     break;
                 case "GUILD_CREATE":
                     var guildCreateData = await Task.Run(() => JsonConvert.DeserializeObject<GatewayEventGuildCreateArgs>(gatewayPayload.JSONEventData.ToString()));
+                    guildList.Add(guildCreateData);
                     await GuildCreated?.Invoke(guildCreateData);
                     break;
                 case "CHANNEL_CREATE":
@@ -255,12 +264,16 @@ namespace ObjectDiscordAPI
                 case "INVITE_DELETE":
                     break;
                 case "MESSAGE_CREATE":
-                    var message = await Task.Run(() => JsonConvert.DeserializeObject<Message>(gatewayPayload.JSONEventData.ToString()));
-                    await MessageCreated?.Invoke(message);
+                    var createdMessage = await Task.Run(() => JsonConvert.DeserializeObject<Message>(gatewayPayload.JSONEventData.ToString()));
+                    await MessageCreated?.Invoke(createdMessage);
                     break;
                 case "MESSAGE_UPDATE":
+                    var updatedMessage = await Task.Run(() => JsonConvert.DeserializeObject<Message>(gatewayPayload.JSONEventData.ToString()));
+                    await MessageUpdated?.Invoke(updatedMessage);
                     break;
                 case "MESSAGE_DELETE":
+                    var deletedMessageData = await Task.Run(() => JsonConvert.DeserializeObject<GatewayEventMessageDeleteArgs>(gatewayPayload.JSONEventData.ToString()));
+                    await MessageDeleted?.Invoke(deletedMessageData);
                     break;
                 case "MESSAGE_DELETE_BULK":
                     break;
@@ -351,6 +364,28 @@ namespace ObjectDiscordAPI
         private static async Task InnerMessageCreatedTask(Message e)
         {
 
+        }
+
+        private static async Task InnerMessageUpdatedTask(Message e)
+        {
+
+        }
+
+        private static async Task InnerMessageDeletedTask(GatewayEventMessageDeleteArgs e)
+        {
+
+        }
+
+        public async Task<GatewayEventGuildCreateArgs> GetGuildByNameAsync(string Name)
+        {
+            var guild = await Task.Run(() => guildList.Where(x => x.Name == Name).SingleOrDefault());
+            return guild;
+        }
+
+        public async Task<GatewayEventGuildCreateArgs> GetGuildByIDAsync(ulong ID)
+        {
+            var guild = await Task.Run(() => guildList.Where(x => x.ID == ID).SingleOrDefault());
+            return guild;
         }
     }
 }

@@ -55,7 +55,7 @@ namespace DiscordAngryBot.MessageHandlers
                 {
                     time = Convert.ToInt32(mainArgs.Item3[1]) * 60 * 1000;
                 }
-                var ban = await targetUser.Ban(time, serverObject.server.GetRole(682277138455330821), message.Channel);
+                var ban = await targetUser.Ban(time, serverObject.server.GetRole(682277138455330821), message.Channel, false);
                 await ban.SaveBanToDB();
                 return ban;
             }

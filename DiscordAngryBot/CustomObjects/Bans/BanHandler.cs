@@ -26,7 +26,7 @@ namespace DiscordAngryBot.CustomObjects.Bans
         /// <param name="role">Роль, которая попадает под бан</param>
         /// <param name="channel">Канал, в котором забанен пользователь</param>
         /// <returns></returns>
-        public static async Task<DiscordBan> Ban(this SocketGuildUser user, int? time, SocketRole role, ISocketMessageChannel channel)
+        public static async Task<DiscordBan> Ban(this SocketGuildUser user, int? time, SocketRole role, ISocketMessageChannel channel, bool isAuto)
         {
             DiscordBan ban = await BanBuilder.BuildDiscordBan(user, time, role, channel);
 
@@ -39,7 +39,14 @@ namespace DiscordAngryBot.CustomObjects.Bans
             {
                 await ban.banTarget.RemoveRoleAsync(ban.roleToBan);
                 ban.timer = new Timer(BanTimerCallBack, ban, (int)time, Timeout.Infinite);
-                await ban.channel.SendMessageAsync($"Выдан бан пользователю {ban.banTarget.Mention} на {time / 60 / 1000} минут");
+                if (isAuto == false)
+                {
+                    await ban.channel.SendMessageAsync($"Выдан бан пользователю {ban.banTarget.Mention} на {time / 60 / 1000} минут");
+                }
+                else 
+                {
+                    await ban.channel.SendMessageAsync($"Выдан автоматический бан за мат пользователю {ban.banTarget.Mention}, если вы считаете его ошибочным, напишите администраторам");
+                }
             }
             
             return ban;
@@ -72,7 +79,7 @@ namespace DiscordAngryBot.CustomObjects.Bans
             if (ban.isInfinite)
                 isInfinite = 1;
             string sqlQuery = $"INSERT INTO Bans (GUID, JSON, isInfinite) VALUES ('{ban.GUID}', '{jsonString}', {isInfinite})"; 
-            await SQLIteHandler.SQLiteDataManager.PushToDB(Groups.configs.groups_dbPath, sqlQuery);
+            await SQLiteDataManager.PushToDB(Groups.configs.groups_dbPath, sqlQuery);
         }
 
         /// <summary>

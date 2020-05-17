@@ -38,14 +38,30 @@ namespace ObjectDiscordAPI
             discordClient.SetSettings("NjM1MDEyNzg1MTkyOTYwMDEx.Xnj0TQ.B38NBN5KmbLE89hwUWIjSKk2aII");
             await discordClient.ConnectAsync();
             discordClient.MessageCreated += DisplayNewMessage;
+            discordClient.MessageUpdated += DisplayUpdatedMessage;
+            discordClient.MessageDeleted += DisplayDeletedMessage;
             await Task.Delay(Timeout.Infinite);
         }
 
         public async static Task DisplayNewMessage(Message e)
         {
-            var guild = await discordClient.GetGuildAsync(e.GuildID.Value);
-            var channel = (await discordClient.GetGuildChannelsAsync(guild.ID)).Where( x => x.ID == e.ChannelID).SingleOrDefault();
+            var guild = await discordClient.GetGuildByIDAsync(e.GuildID.GetValueOrDefault());
+            var channel = guild.Channels.Where(x => x.ID == e.ChannelID).SingleOrDefault();
             await Task.Run(() => Console.WriteLine($"[{DateTime.Now}] [{guild.Name}] [{channel.Name}] [{e.Author.Username}]: {e.Content}"));
+        }
+
+        public async static Task DisplayUpdatedMessage(Message e)
+        {
+            var guild = await discordClient.GetGuildByIDAsync(e.GuildID.GetValueOrDefault());
+            var channel = guild.Channels.Where(x => x.ID == e.ChannelID).SingleOrDefault();
+            await Task.Run(() => Console.WriteLine($"[{DateTime.Now}] [{guild.Name}] [{channel.Name}] [{e.Author.Username}]: [UPDATED] {e.Content}"));
+        }
+
+        public async static Task DisplayDeletedMessage(GatewayEventMessageDeleteArgs e)
+        {
+            var guild = await discordClient.GetGuildByIDAsync(e.GuildID.GetValueOrDefault());
+            var channel = guild.Channels.Where(x => x.ID == e.ChannelID).SingleOrDefault();
+            await Task.Run(() => Console.WriteLine($"[{DateTime.Now}] [{guild.Name}] [{channel.Name}]: Message {e.ID} was deleted"));
         }
     }
 }

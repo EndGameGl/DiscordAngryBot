@@ -64,6 +64,7 @@
     <Compile Include="GatewayData\GatewayCommands\GatewayRequestGuildMembers.cs" />
     <Compile Include="GatewayData\GatewayCommands\GatewayUpdateVoiceState.cs" />
     <Compile Include="GatewayData\GatewayEvents\GatewayEventGuildCreateArgs.cs" />
+    <Compile Include="GatewayData\GatewayEvents\GatewayEventMessageDeleteArgs.cs" />
     <Compile Include="GatewayData\GatewayPayload.cs" />
     <Compile Include="GatewayData\GatewayCommands\GatewayResume.cs" />
     <Compile Include="GatewayData\GuildMembersChunk.cs" />
@@ -125,6 +126,8 @@
       <LastGenOutput>apiPath.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="CacheData\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

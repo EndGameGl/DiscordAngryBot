@@ -16,7 +16,7 @@ namespace DiscordAngryBot.CustomObjects.Filters
             {
                 foreach (var word in Program.FetchSettings().swearFilterWords)
                 {
-                    if (message.Content.Contains(word))
+                    if (message.Content.ToUpper().Contains(word))
                     {
                         doesContainSwear = true;
                     }

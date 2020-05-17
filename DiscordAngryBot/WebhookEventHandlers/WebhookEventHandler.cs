@@ -55,15 +55,15 @@ namespace DiscordAngryBot.WebhookEventHandlers
                 if (message.Content.Count() > 0)
                 {
                     await ConsoleWriter.Write($"[#{message.Channel}] {message.Author.Username}: {message.Content}", ConsoleWriter.InfoType.Chat);
-                    //if (await message.CheckPhrase() && Program.swearCounters.Where( x => x.author == message.Author).Count() == 0)
-                    //{
-                    //    Program.swearCounters.Add(await message.CreateSwearCounter());
+                    if ((message.Channel.Id != 636222368028688385) && (await message.CheckPhrase() && Program.swearCounters.Where( x => x.author == message.Author).Count() == 0))
+                    {
+                        Program.swearCounters.Add(await message.CreateSwearCounter());
                         
-                    //}
-                    //else if (await message.CheckPhrase() && Program.swearCounters.Where(x => x.author == message.Author).Count() == 1)
-                    //{
-                    //    Program.swearCounters.Where(x => x.author == message.Author).SingleOrDefault().reasons.AddReason(message);
-                    //}
+                    }
+                    else if ((message.Channel.Id != 636222368028688385) && (await message.CheckPhrase() && Program.swearCounters.Where(x => x.author == message.Author).Count() == 1))
+                    {
+                        await Program.swearCounters.Where(x => x.author == message.Author).SingleOrDefault().reasons.AddReason(message);
+                    }
                 }
                 else
                 {
