@@ -56,6 +56,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>apiPath.resx</DependentUpon>
     </Compile>
+    <Compile Include="CacheData\MessagesCache.cs" />
     <Compile Include="DiscordClient.cs" />
     <Compile Include="Extensions\Convertes.cs" />
     <Compile Include="Extensions\GETMethods.cs" />
@@ -63,11 +64,13 @@
     <Compile Include="GatewayData\Gateway.cs" />
     <Compile Include="GatewayData\GatewayCommands\GatewayRequestGuildMembers.cs" />
     <Compile Include="GatewayData\GatewayCommands\GatewayUpdateVoiceState.cs" />
+    <Compile Include="GatewayData\GatewayEvents\GatewayEventChannelPinsUpdateArgs.cs" />
     <Compile Include="GatewayData\GatewayEvents\GatewayEventGuildCreateArgs.cs" />
     <Compile Include="GatewayData\GatewayEvents\GatewayEventMessageDeleteArgs.cs" />
     <Compile Include="GatewayData\GatewayPayload.cs" />
     <Compile Include="GatewayData\GatewayCommands\GatewayResume.cs" />
     <Compile Include="GatewayData\GuildMembersChunk.cs" />
+    <Compile Include="GatewayData\MessageDeleteBulk.cs" />
     <Compile Include="GatewayData\PresenceUpdate.cs" />
     <Compile Include="GatewayData\SessionStartLimit.cs" />
     <Compile Include="GatewayOperations\Activity.cs" />
@@ -126,8 +129,6 @@
       <LastGenOutput>apiPath.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="CacheData\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -10,10 +10,10 @@ namespace ObjectDiscordAPI.GatewayOperations
     public class UnavailableGuild
     {
         [JsonProperty("id")]
-        public string ID { get; set; }
+        public ulong ID { get; set; }
 
         [JsonProperty("unavailable")]
-        public bool Unavailable { get; set; }
+        public bool? Unavailable { get; set; }
 
         [JsonConstructor]
         public UnavailableGuild() { }

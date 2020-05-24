@@ -10,6 +10,7 @@ using ObjectDiscordAPI.Resources.GuildResources;
 using System.Drawing;
 using System.IO;
 using ObjectDiscordAPI.GatewayData;
+using System.Net;
 
 namespace ObjectDiscordAPI.Extensions
 {
@@ -18,6 +19,7 @@ namespace ObjectDiscordAPI.Extensions
     /// </summary>
     public static class GETMethods
     {
+
         #region Методы для получения данных о гильдии
 
         /// <summary>
@@ -50,9 +52,9 @@ namespace ObjectDiscordAPI.Extensions
         /// <param name="maxAmount">Максимальное количество пользователей к получению (Макс. 1000)</param>
         /// <param name="afterUser">Параметр, определяющий, после какого пользователя будет получен список</param>
         /// <returns></returns>
-        public async static Task<GuildMember[]> GetGuildMembersAsync(this DiscordClient client, ulong ID, int maxAmount = 1, int afterUser = 0)
+        public async static Task<List<GuildMember>> GetGuildMembersAsync(this DiscordClient client, ulong ID, int maxAmount = 1, int afterUser = 0)
         {
-            return JsonConvert.DeserializeObject<GuildMember[]>(await client.GET($"guilds/{ID}/members?limit={maxAmount}&after{afterUser}"));
+            return JsonConvert.DeserializeObject<List<GuildMember>>(await client.GET($"guilds/{ID}/members?limit={maxAmount}&after{afterUser}"));
         }
 
         /// <summary>
@@ -76,18 +78,6 @@ namespace ObjectDiscordAPI.Extensions
         public async static Task<Channel[]> GetGuildChannelsAsync(this DiscordClient client, ulong ID)
         {
             return JsonConvert.DeserializeObject<Channel[]>(await client.GET($"guilds/{ID}/channels"));
-        }
-
-        /// <summary>
-        /// Получение конкретного канала гильдии
-        /// </summary>
-        /// <param name="client">Клиент дискорда</param>
-        /// <param name="guildID">Идентификатор гильдии</param>
-        /// <param name="channelID">Идентификатор канала</param>
-        /// <returns></returns>
-        public async static Task<Channel> GetGuildChannelAsync(this DiscordClient client, ulong guildID, ulong channelID)
-        {
-            return JsonConvert.DeserializeObject<Channel>(await client.GET($"guilds/{guildID}/channels/{channelID}"));
         }
 
         /// <summary>
@@ -221,6 +211,11 @@ namespace ObjectDiscordAPI.Extensions
         public async static Task<Gateway> GetGatewayAsync(this DiscordClient client)
         {
             return JsonConvert.DeserializeObject<Gateway>(await client.GET("gateway/bot"));
+        }
+
+        public async static Task<Message[]> GetChannelMessagesAsync(this DiscordClient client, ulong ChannelID, int MessagesAmount)
+        {
+            return JsonConvert.DeserializeObject<Message[]>(await client.GET($"channels/{ChannelID}/messages?limit={MessagesAmount}"));
         }
     }
 }

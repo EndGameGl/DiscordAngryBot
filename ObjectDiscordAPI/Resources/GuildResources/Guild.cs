@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace ObjectDiscordAPI.Resources.GuildResources
 {
@@ -144,13 +145,13 @@ namespace ObjectDiscordAPI.Resources.GuildResources
         /// Roles in the guild
         /// </summary>
         [JsonProperty("roles")]
-        public GuildRole[] Roles { get; set; }
+        public List<GuildRole> Roles { get; set; }
 
         /// <summary>
         /// Custom guild emojis
         /// </summary>
         [JsonProperty("emojis")]
-        public Emoji[] Emojis { get; set; }
+        public List<Emoji> Emojis { get; set; }
 
         /// <summary>
         /// Enabled guild features

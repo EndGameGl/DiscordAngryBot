@@ -16,9 +16,14 @@ namespace ObjectDiscordAPI.Resources.MessageResources
     }
     public class MessageActivity
     {
+        /// <summary>
+        /// Type of message activity
+        /// </summary>
         [JsonProperty("type")]
         public MessageActivityType MessageActivityType { get; set; }
-
+        /// <summary>
+        /// Party_id from a Rich Presence event
+        /// </summary>
         [JsonProperty("party_id")]
         public string PartyID { get; set; }
 

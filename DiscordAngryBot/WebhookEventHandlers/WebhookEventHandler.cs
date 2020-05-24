@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using DiscordAngryBot.CustomObjects.ConsoleOutput;
 using DiscordAngryBot.CustomObjects.Filters;
 using DiscordAngryBot.CustomObjects.Groups;
+using DiscordAngryBot.CustomObjects.Notifications;
 using DiscordAngryBot.MessageHandlers;
 using DiscordAngryBot.ReactionHandlers;
 using System;
@@ -30,9 +31,11 @@ namespace DiscordAngryBot.WebhookEventHandlers
             {
                 case LogSeverity.Error:
                     await ConsoleWriter.Write($"{message.Message}: {message.Exception}", ConsoleWriter.InfoType.Error);
+                    await PushNotificator.Notify(message);
                     break;
                 case LogSeverity.Warning:
                     await ConsoleWriter.Write($"{message.Message}: {message.Exception}", ConsoleWriter.InfoType.Error);
+                    await PushNotificator.Notify(message);
                     break;
                 case LogSeverity.Info:
                     await ConsoleWriter.Write($"{message.Message}", ConsoleWriter.InfoType.Info);

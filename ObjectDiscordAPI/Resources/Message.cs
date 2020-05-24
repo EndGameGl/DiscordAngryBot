@@ -88,37 +88,37 @@ namespace ObjectDiscordAPI.Resources
         /// Users specifically mentioned in the message
         /// </summary>
         [JsonProperty("mentions")]
-        public object[] Mentions { get; set; }
+        public List<object> Mentions { get; set; }
         /// <summary>
         /// Roles specifically mentioned in this message
         /// </summary>
         [JsonProperty("mention_roles")]
-        public ulong[] MentionedRoles { get; set; }
+        public List<ulong> MentionedRoles { get; set; }
         /// <summary>
         /// Channels specifically mentioned in this message
         /// </summary>
         [JsonProperty("mention_channels")]
-        public Channel[] MentionedChannels { get; set; }
+        public List<Channel> MentionedChannels { get; set; }
         /// <summary>
         /// Any attached files
         /// </summary>
         [JsonProperty("attachments")]
-        public MessageAttachment[] Attachments { get; set; }
+        public List<MessageAttachment> Attachments { get; set; }
         /// <summary>
         /// Any embedded content
         /// </summary>
         [JsonProperty("embeds")]
-        public Embed[] Embeds { get; set; }
+        public List<Embed> Embeds { get; set; }
         /// <summary>
         /// Reactions to the message
         /// </summary>
         [JsonProperty("reactions")]
-        public Reaction[] Reactions { get; set; }
+        public List<Reaction> Reactions { get; set; }
         /// <summary>
         /// Used for validating a message was sent
         /// </summary>
         [JsonProperty("nonce")]
-        public object Nonce { get; set; }
+        public string Nonce { get; set; }
         /// <summary>
         /// Whether this message is pinned
         /// </summary>

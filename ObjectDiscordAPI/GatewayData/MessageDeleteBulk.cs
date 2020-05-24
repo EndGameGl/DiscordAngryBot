@@ -5,27 +5,27 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ObjectDiscordAPI.Resources.MessageResources
+namespace ObjectDiscordAPI.GatewayData
 {
-    public class MessageReference
+    public class MessageDeleteBulk
     {
         /// <summary>
-        /// ID of the originating message
+        /// The ids of the messages
         /// </summary>
-        [JsonProperty("message_id")]
-        public ulong? MessageID { get; set; }
+        [JsonProperty("ids")]
+        public ulong[] IDs { get; set; }
         /// <summary>
-        /// ID of the originating message's channel
+        /// The id of the channel
         /// </summary>
         [JsonProperty("channel_id")]
-        public ulong? ChannelID { get; set; }
+        public ulong ChannelID { get; set; }
         /// <summary>
-        /// ID of the originating message's guild
+        /// The id of the guild
         /// </summary>
         [JsonProperty("guild_id")]
         public ulong? GuildID { get; set; }
 
         [JsonConstructor]
-        public MessageReference() { }
+        public MessageDeleteBulk() { }
     }
 }

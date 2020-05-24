@@ -2,6 +2,7 @@
 using ObjectDiscordAPI.Resources;
 using ObjectDiscordAPI.Resources.GuildResources;
 using System;
+using System.Collections.Generic;
 
 namespace ObjectDiscordAPI.GatewayData.GatewayEvents
 {
@@ -35,25 +36,25 @@ namespace ObjectDiscordAPI.GatewayData.GatewayEvents
         /// States of members currently in voice channels; lacks the guild_id key
         /// </summary>
         [JsonProperty("voice_states")]
-        public VoiceState[] VoiceState { get; set; }
+        public List<VoiceState> VoiceState { get; set; }
 
         /// <summary>
         /// Users in the guild
         /// </summary>
         [JsonProperty("members")]
-        public GuildMember[] Members { get; set; }
+        public List<GuildMember> Members { get; set; }
 
         /// <summary>
         /// Channels in the guild
         /// </summary>
         [JsonProperty("channels")]
-        public Channel[] Channels { get; set; }
+        public List<Channel> Channels { get; set; }
 
         /// <summary>
         /// Presences of the members in the guild, will only include non-offline members if the size is greater than large threshold
         /// </summary>
         [JsonProperty("presences")]
-        public PresenceUpdate[] Presences { get; set; }
+        public List<PresenceUpdate> Presences { get; set; }
 
         [JsonConstructor]
         public GatewayEventGuildCreateArgs() { }

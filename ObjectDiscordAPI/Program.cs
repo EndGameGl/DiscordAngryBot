@@ -47,7 +47,11 @@ namespace ObjectDiscordAPI
         {
             var guild = await discordClient.GetGuildByIDAsync(e.GuildID.GetValueOrDefault());
             var channel = guild.Channels.Where(x => x.ID == e.ChannelID).SingleOrDefault();
-            await Task.Run(() => Console.WriteLine($"[{DateTime.Now}] [{guild.Name}] [{channel.Name}] [{e.Author.Username}]: {e.Content}"));
+            var memberSent = guild.Members.Where(x => x.User.ID == e.Author.ID).SingleOrDefault();
+            if (memberSent.Nickname != null && memberSent.Nickname != "")
+                await Task.Run(() => Console.WriteLine($"[{DateTime.Now}] [{guild.Name}] [{channel.Name}] [{memberSent.Nickname}]: {e.Content}"));
+            else
+                await Task.Run(() => Console.WriteLine($"[{DateTime.Now}] [{guild.Name}] [{channel.Name}] [{memberSent.User.Username}]: {e.Content}"));
         }
 
         public async static Task DisplayUpdatedMessage(Message e)
