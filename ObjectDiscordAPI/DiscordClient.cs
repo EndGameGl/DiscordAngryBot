@@ -6,8 +6,10 @@ using ObjectDiscordAPI.GatewayData.GatewayCommands;
 using ObjectDiscordAPI.GatewayData.GatewayEvents;
 using ObjectDiscordAPI.GatewayOperations;
 using ObjectDiscordAPI.Resources;
+using ObjectDiscordAPI.Resources.GuildResources;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -81,7 +83,8 @@ namespace ObjectDiscordAPI
         /// Whether client is ready for work
         /// </summary>
         private bool IsReady { get; set; } = false;
-        
+
+        #region Events and delegates
         /// <summary>
         /// HELLO event handler
         /// </summary>
@@ -225,6 +228,173 @@ namespace ObjectDiscordAPI
         public event GuildDeletedHandler GuildDeleted;
 
         /// <summary>
+        /// MESSAGE_REACTION_ADD event handler
+        /// </summary>
+        /// <param name="e">Message reaction added event parameters</param>
+        /// <returns></returns>
+        public delegate Task MessageReactionAddedHandler(GatewayEventMessageReactionAddedArgs e);
+        /// <summary>
+        /// User reacted to a message
+        /// </summary>
+        public event MessageReactionAddedHandler MessageReactionAdded;
+
+        /// <summary>
+        /// MESSAGE_REACTION_REMOVE event handler
+        /// </summary>
+        /// <param name="e">Message reaction removed event parameters</param>
+        /// <returns></returns>
+        public delegate Task MessageReactionRemovedHandler(GatewayEventMessageReactionRemovedArgs e);
+        /// <summary>
+        /// User removed a reaction from a message
+        /// </summary>
+        public event MessageReactionRemovedHandler MessageReactionRemoved;
+
+        /// <summary>
+        /// MESSAGE_REACTION_REMOVE_ALL event handler
+        /// </summary>
+        /// <param name="e">Message all reaction removed event parameters</param>
+        /// <returns></returns>
+        public delegate Task MessageAllReactionRemovedHandler(GatewayEventMessageAllReactionRemovedArgs e);
+        /// <summary>
+        /// All reactions were explicitly removed from a message
+        /// </summary>
+        public event MessageAllReactionRemovedHandler MessageAllReactionRemoved;
+
+        /// <summary>
+        /// PRESENCE_UPDATE event handler
+        /// </summary>
+        /// <param name="e">Presence update event parameters</param>
+        /// <returns></returns>
+        public delegate Task PresenceUpdatedHandler(PresenceUpdate e);
+        /// <summary>
+        /// User was updated
+        /// </summary>
+        public event PresenceUpdatedHandler PresenceUpdated;
+
+        /// <summary>
+        /// MESSAGE_REACTION_REMOVE_EMOJI event handler
+        /// </summary>
+        /// <param name="e">Message emoji reaction removed event parameters</param>
+        /// <returns></returns>
+        public delegate Task MessageReactionEmojiRemovedHandler(GatewayEventMessageReactionEmojiRemovedArgs e);
+        /// <summary>
+        /// All reactions were explicitly removed from a message
+        /// </summary>
+        public event MessageReactionEmojiRemovedHandler MessageReactionEmojiRemoved;
+
+        /// <summary>
+        /// TYPING_START event handler
+        /// </summary>
+        /// <param name="e">Typing start event parameters</param>
+        /// <returns></returns>
+        public delegate Task TypingStartHandler(GatewayEventTypingStartArgs e);
+        /// <summary>
+        /// User started typing in a channel
+        /// </summary>
+        public event TypingStartHandler TypingStart;
+
+        /// <summary>
+        /// USER_UPDATE event handler
+        /// </summary>
+        /// <param name="e">User updated event parameters</param>
+        /// <returns></returns>
+        public delegate Task UserUpdatedHandler(User e);
+        /// <summary>
+        /// Properties about the user changed
+        /// </summary>
+        public event UserUpdatedHandler UserUpdated;
+
+        /// <summary>
+        /// VOICE_STATE_UPDATE event handler
+        /// </summary>
+        /// <param name="e">Voice state updated event parameters</param>
+        /// <returns></returns>
+        public delegate Task VoiceStateUpdatedHandler(VoiceState e);
+        /// <summary>
+        /// Someone joined, left, or moved a voice channel
+        /// </summary>
+        public event VoiceStateUpdatedHandler VoiceStateUpdated;
+
+        /// <summary>
+        /// VOICE_SERVER_UPDATE event handler
+        /// </summary>
+        /// <param name="e">Voice server updated event parameters</param>
+        /// <returns></returns>
+        public delegate Task VoiceServerUpdatedHandler(GatewayEventsVoiceServerUpdatedArgs e);
+        /// <summary>
+        /// Guild's voice server was updated
+        /// </summary>
+        public event VoiceServerUpdatedHandler VoiceServerUpdated;
+
+        /// <summary>
+        /// WEBHOOKS_UPDATE event handler
+        /// </summary>
+        /// <param name="e">Webhooks updated event parameters</param>
+        /// <returns></returns>
+        public delegate Task WebhooksUpdatedHandler(GatewayEventWebhookUpdatedArgs e);
+        /// <summary>
+        /// Guild channel webhook was created, update, or deleted
+        /// </summary>
+        public event WebhooksUpdatedHandler WebhooksUpdated;
+
+        /// <summary>
+        /// GUILD_BAN_ADD event handler
+        /// </summary>
+        /// <param name="e">Guild ban added event parameters</param>
+        /// <returns></returns>
+        public delegate Task GuildBanAddedHandler(GatewayEventGuildBanArgs e);
+        /// <summary>
+        /// User was banned from a guild
+        /// </summary>
+        public event GuildBanAddedHandler GuildBanAdded;
+
+        /// <summary>
+        /// GUILD_BAN_REMOVE event handler
+        /// </summary>
+        /// <param name="e">Guild ban added event parameters</param>
+        /// <returns></returns>
+        public delegate Task GuildBanRemovedHandler(GatewayEventGuildBanArgs e);
+        /// <summary>
+        /// User was unbanned from a guild
+        /// </summary>
+        public event GuildBanRemovedHandler GuildBanRemoved;
+
+        /// <summary>
+        /// GUILD_EMOJIS_UPDATE event handler
+        /// </summary>
+        /// <param name="e">Guild emojis updated event parameters</param>
+        /// <returns></returns>
+        public delegate Task GuildEmojisUpdatedHandler(GatewayEventGuildEmojisUpdateArgs e);
+        /// <summary>
+        /// Guild emojis were updated
+        /// </summary>
+        public event GuildEmojisUpdatedHandler GuildEmojisUpdated;
+
+        /// <summary>
+        /// GUILD_INTEGRATIONS_UPDATE event handler
+        /// </summary>
+        /// <param name="e">Guild integrations updated event parameters</param>
+        /// <returns></returns>
+        public delegate Task GuildIntegrationsUpdatedHandler(GatewayEventGuildIntegrationsUpdatedArgs e);
+        /// <summary>
+        /// Guild integration was updated
+        /// </summary>
+        public event GuildIntegrationsUpdatedHandler GuildIntegrationsUpdated;
+
+        /// <summary>
+        /// GUILD_MEMBER_ADD event handler
+        /// </summary>
+        /// <param name="e">Guild member added event parameters</param>
+        /// <returns></returns>
+        public delegate Task GuildMemberAddedHandler(GatewayEventGuildMemberArgs e);
+        /// <summary>
+        /// New user joined a guild
+        /// </summary>
+        public event GuildMemberAddedHandler GuildMemberAdded;
+
+        #endregion
+
+        /// <summary>
         /// Set up all client settings to run bot
         /// </summary>
         /// <param name="botToken">Bot token for authentification</param>
@@ -240,17 +410,39 @@ namespace ObjectDiscordAPI
 
             OnHello += InnerHelloTask;
             InnerReady += InnerReadyTask;
+
             InnerGuildCreated += InnerGuildCreatedTask;
             GuildUpdated += InnerGuildUpdatedTask;
+            GuildDeleted += InnerGuildDeletedTask;
+            GuildBanAdded += InnerGuildBanAddedTask;
+            GuildBanRemoved += InnerGuildBanRemovedTask;
+            GuildEmojisUpdated += InnerGuildEmojisUpdatedTask;
+            GuildIntegrationsUpdated += InnerGuildIntegrationsUpdatedTask;
+            GuildMemberAdded += InnerGuildMemberAddedTask;
+
+
             MessageCreated += InnerMessageCreatedTask;
             MessageUpdated += InnerMessageUpdatedTask;
             MessageDeleted += InnerMessageDeletedTask;
             MessageBulkDeleted += InnerMessageBulkDeletedTask;
+            MessageReactionAdded += InnerMessageReactionAddedTask;
+            MessageReactionRemoved += InnerMessageReactionRemovedTask;
+            MessageAllReactionRemoved += InnerMessageAllReactionRemovedTask;
+            MessageReactionEmojiRemoved += InnerMessageReactionEmojiRemovedTask;
+
             ChannelCreated += InnerChannelCreatedTask;
             ChannelUpdated += InnerChannelUpdatedTask;
             ChannelDeleted += InnerChannelDeletedTask;
             ChannelPinsUpdated += InnerChannelPinsUpdatedTask;
-            GuildDeleted += InnerGuildDeletedTask;
+
+            PresenceUpdated += InnerPresenceUpdatedTask;
+            TypingStart += InnerTypingStartTask;
+            UserUpdated += InnerUserUpdatedTask;
+
+            VoiceStateUpdated += InnerVoiceStateUpdatedTask;
+            VoiceServerUpdated += InnerVoiceServerUpdatedTask;
+
+            WebhooksUpdated += InnerWebhooksUpdatedTask;
 
             isConfigured = true;
         }
@@ -397,103 +589,140 @@ namespace ObjectDiscordAPI
         /// <returns></returns>
         private async Task ProcessEvent(GatewayPayload gatewayPayload)
         {
-            switch (gatewayPayload.EventName)
+            try
             {
-                case "READY":
-                    var readyData = await Task.Run(() => JsonConvert.DeserializeObject<GatewayEventReadyArgs>(gatewayPayload.JSONEventData.ToString()));
-                    SessionID = readyData.SessionID;
-                    await InnerReady?.Invoke();
-                    break;
-                case "GUILD_CREATE":
-                    var guildCreateData = await Task.Run(() => JsonConvert.DeserializeObject<GatewayEventGuildCreateArgs>(gatewayPayload.JSONEventData.ToString()));                    
-                    await InnerGuildCreated?.Invoke(guildCreateData);
-                    break;
-                case "CHANNEL_CREATE":
-                    var channelCreatedData = await Task.Run(() => JsonConvert.DeserializeObject<Channel>(gatewayPayload.JSONEventData.ToString()));
-                    await ChannelCreated?.Invoke(channelCreatedData);
-                    break;
-                case "CHANNEL_UPDATE":
-                    var channelUpdatedData = await Task.Run(() => JsonConvert.DeserializeObject<Channel>(gatewayPayload.JSONEventData.ToString()));
-                    await ChannelUpdated?.Invoke(channelUpdatedData);
-                    break;
-                case "CHANNEL_DELETE":
-                    var channelDeletedData = await Task.Run(() => JsonConvert.DeserializeObject<Channel>(gatewayPayload.JSONEventData.ToString()));
-                    await ChannelDeleted?.Invoke(channelDeletedData);
-                    break;
-                case "CHANNEL_PINS_UPDATE":
-                    var channelPinsUpdateData = await Task.Run(() => JsonConvert.DeserializeObject<GatewayEventChannelPinsUpdateArgs>(gatewayPayload.JSONEventData.ToString()));
-                    await ChannelPinsUpdated?.Invoke(channelPinsUpdateData);
-                    break;
-                case "GUILD_UPDATE":
-                    var guildUpdatedData = await Task.Run(() => JsonConvert.DeserializeObject<GatewayEventGuildCreateArgs>(gatewayPayload.JSONEventData.ToString()));                   
-                    await InnerGuildCreated?.Invoke(guildUpdatedData);
-                    break;
-                case "GUILD_DELETE":
-                    var guildDeletedData = await Task.Run(() => JsonConvert.DeserializeObject<UnavailableGuild>(gatewayPayload.JSONEventData.ToString()));
-                    await GuildDeleted?.Invoke(guildDeletedData);
-                    break;
-                case "GUILD_BAN_ADD":
-                    break;
-                case "GUILD_BAN_REMOVE":
-                    break;
-                case "GUILD_EMOJIS_UPDATE":
-                    break;
-                case "GUILD_INTEGRATIONS_UPDATE":
-                    break;
-                case "GUILD_MEMBER_ADD":
-                    break;
-                case "GUILD_MEMBER_REMOVE":
-                    break;
-                case "GUILD_MEMBER_UPDATE":
-                    break;
-                case "GUILD_MEMBERS_CHUNK":
-                    break;
-                case "GUILD_ROLE_CREATE":
-                    break;
-                case "GUILD_ROLE_UPDATE":
-                    break;
-                case "GUILD_ROLE_DELETE":
-                    break;
-                case "INVITE_CREATE":
-                    break;
-                case "INVITE_DELETE":
-                    break;
-                case "MESSAGE_CREATE":
-                    var createdMessage = await Task.Run(() => JsonConvert.DeserializeObject<Message>(gatewayPayload.JSONEventData.ToString()));
-                    await MessageCreated?.Invoke(createdMessage);
-                    break;
-                case "MESSAGE_UPDATE":
-                    var updatedMessage = await Task.Run(() => JsonConvert.DeserializeObject<Message>(gatewayPayload.JSONEventData.ToString()));
-                    await MessageUpdated?.Invoke(updatedMessage);
-                    break;
-                case "MESSAGE_DELETE":
-                    var deletedMessageData = await Task.Run(() => JsonConvert.DeserializeObject<GatewayEventMessageDeleteArgs>(gatewayPayload.JSONEventData.ToString()));
-                    await MessageDeleted?.Invoke(deletedMessageData);
-                    break;
-                case "MESSAGE_DELETE_BULK":
-                    var deletedMessagesBulkData = await Task.Run(() => JsonConvert.DeserializeObject<MessageDeleteBulk>(gatewayPayload.JSONEventData.ToString()));
-                    await MessageBulkDeleted?.Invoke(deletedMessagesBulkData);
-                    break;
-                case "MESSAGE_REACTION_ADD":
-                    break;
-                case "MESSAGE_REACTION_REMOVE":
-                    break;
-                case "MESSAGE_REACTION_REMOVE_ALL":
-                    break;
-                case "MESSAGE_REACTION_REMOVE_EMOJI":
-                    break;
-                case "PRESENCE_UPDATE":
-                    break;
-                case "TYPING_START":
-                    break;
-                case "USER_UPDATE":
-                    break;
-                case "VOICE_STATE_UPDATE":
-                    break;
-                case "VOICE_SERVER_UPDATE":
-                    break;
-                case "WEBHOOKS_UPDATE":
-                    break;
+                switch (gatewayPayload.EventName)
+                {
+                    case "READY":
+                        var readyData = await Task.Run(() => JsonConvert.DeserializeObject<GatewayEventReadyArgs>(gatewayPayload.JSONEventData.ToString()));
+                        SessionID = readyData.SessionID;
+                        await InnerReady?.Invoke();
+                        break;
+                    case "GUILD_CREATE":
+                        var guildCreateData = await Task.Run(() => JsonConvert.DeserializeObject<GatewayEventGuildCreateArgs>(gatewayPayload.JSONEventData.ToString()));
+                        await InnerGuildCreated?.Invoke(guildCreateData);
+                        break;
+                    case "CHANNEL_CREATE":
+                        var channelCreatedData = await Task.Run(() => JsonConvert.DeserializeObject<Channel>(gatewayPayload.JSONEventData.ToString()));
+                        await ChannelCreated?.Invoke(channelCreatedData);
+                        break;
+                    case "CHANNEL_UPDATE":
+                        var channelUpdatedData = await Task.Run(() => JsonConvert.DeserializeObject<Channel>(gatewayPayload.JSONEventData.ToString()));
+                        await ChannelUpdated?.Invoke(channelUpdatedData);
+                        break;
+                    case "CHANNEL_DELETE":
+                        var channelDeletedData = await Task.Run(() => JsonConvert.DeserializeObject<Channel>(gatewayPayload.JSONEventData.ToString()));
+                        await ChannelDeleted?.Invoke(channelDeletedData);
+                        break;
+                    case "CHANNEL_PINS_UPDATE":
+                        var channelPinsUpdateData = await Task.Run(() => JsonConvert.DeserializeObject<GatewayEventChannelPinsUpdateArgs>(gatewayPayload.JSONEventData.ToString()));
+                        await ChannelPinsUpdated?.Invoke(channelPinsUpdateData);
+                        break;
+                    case "GUILD_UPDATE":
+                        var guildUpdatedData = await Task.Run(() => JsonConvert.DeserializeObject<GatewayEventGuildCreateArgs>(gatewayPayload.JSONEventData.ToString()));
+                        await GuildUpdated?.Invoke(guildUpdatedData);
+                        break;
+                    case "GUILD_DELETE":
+                        var guildDeletedData = await Task.Run(() => JsonConvert.DeserializeObject<UnavailableGuild>(gatewayPayload.JSONEventData.ToString()));
+                        await GuildDeleted?.Invoke(guildDeletedData);
+                        break;
+                    case "GUILD_BAN_ADD":
+                        var guildBanAddedData = await Task.Run(() => JsonConvert.DeserializeObject<GatewayEventGuildBanArgs>(gatewayPayload.JSONEventData.ToString()));
+                        await GuildBanAdded?.Invoke(guildBanAddedData);
+                        break;
+                    case "GUILD_BAN_REMOVE":
+                        var guildBanRemovedData = await Task.Run(() => JsonConvert.DeserializeObject<GatewayEventGuildBanArgs>(gatewayPayload.JSONEventData.ToString()));
+                        await GuildBanRemoved?.Invoke(guildBanRemovedData);
+                        break;
+                    case "GUILD_EMOJIS_UPDATE":
+                        var guildEmojisUpdatedData = await Task.Run(() => JsonConvert.DeserializeObject<GatewayEventGuildEmojisUpdateArgs>(gatewayPayload.JSONEventData.ToString()));
+                        await GuildEmojisUpdated?.Invoke(guildEmojisUpdatedData);
+                        break;
+                    case "GUILD_INTEGRATIONS_UPDATE":
+                        var guildIntegrationsUpdatedData = await Task.Run(() => JsonConvert.DeserializeObject<GatewayEventGuildIntegrationsUpdatedArgs>(gatewayPayload.JSONEventData.ToString()));
+                        await GuildIntegrationsUpdated?.Invoke(guildIntegrationsUpdatedData);
+                        break;
+                    case "GUILD_MEMBER_ADD":
+                        var guildMemberAddedData = await Task.Run(() => JsonConvert.DeserializeObject<GatewayEventGuildMemberArgs>(gatewayPayload.JSONEventData.ToString()));
+                        GuildMemberAdded?.Invoke(guildMemberAddedData);
+                        break;
+                    case "GUILD_MEMBER_REMOVE":
+                        break;
+                    case "GUILD_MEMBER_UPDATE":
+                        break;
+                    case "GUILD_MEMBERS_CHUNK":
+                        break;
+                    case "GUILD_ROLE_CREATE":
+                        break;
+                    case "GUILD_ROLE_UPDATE":
+                        break;
+                    case "GUILD_ROLE_DELETE":
+                        break;
+                    case "INVITE_CREATE":
+                        break;
+                    case "INVITE_DELETE":
+                        break;
+                    case "MESSAGE_CREATE":
+                        var createdMessage = await Task.Run(() => JsonConvert.DeserializeObject<Message>(gatewayPayload.JSONEventData.ToString()));
+                        await MessageCreated?.Invoke(createdMessage);
+                        break;
+                    case "MESSAGE_UPDATE":
+                        var updatedMessage = await Task.Run(() => JsonConvert.DeserializeObject<Message>(gatewayPayload.JSONEventData.ToString()));
+                        await MessageUpdated?.Invoke(updatedMessage);
+                        break;
+                    case "MESSAGE_DELETE":
+                        var deletedMessageData = await Task.Run(() => JsonConvert.DeserializeObject<GatewayEventMessageDeleteArgs>(gatewayPayload.JSONEventData.ToString()));
+                        await MessageDeleted?.Invoke(deletedMessageData);
+                        break;
+                    case "MESSAGE_DELETE_BULK":
+                        var deletedMessagesBulkData = await Task.Run(() => JsonConvert.DeserializeObject<MessageDeleteBulk>(gatewayPayload.JSONEventData.ToString()));
+                        await MessageBulkDeleted?.Invoke(deletedMessagesBulkData);
+                        break;
+                    case "MESSAGE_REACTION_ADD":
+                        var messageReactionAddedData = await Task.Run(() => JsonConvert.DeserializeObject<GatewayEventMessageReactionAddedArgs>(gatewayPayload.JSONEventData.ToString()));
+                        await MessageReactionAdded?.Invoke(messageReactionAddedData);
+                        break;
+                    case "MESSAGE_REACTION_REMOVE":
+                        var messageReactionRemovedData = await Task.Run(() => JsonConvert.DeserializeObject<GatewayEventMessageReactionRemovedArgs>(gatewayPayload.JSONEventData.ToString()));
+                        await MessageReactionRemoved?.Invoke(messageReactionRemovedData);
+                        break;
+                    case "MESSAGE_REACTION_REMOVE_ALL":
+                        var messageAllReactionRemovedData = await Task.Run(() => JsonConvert.DeserializeObject<GatewayEventMessageAllReactionRemovedArgs>(gatewayPayload.JSONEventData.ToString()));
+                        await MessageAllReactionRemoved?.Invoke(messageAllReactionRemovedData);
+                        break;
+                    case "MESSAGE_REACTION_REMOVE_EMOJI":
+                        var messageReactionEmojiRemovedData = JsonConvert.DeserializeObject<GatewayEventMessageReactionEmojiRemovedArgs>(gatewayPayload.JSONEventData.ToString());
+                        await MessageReactionEmojiRemoved?.Invoke(messageReactionEmojiRemovedData);
+                        break;
+                    case "PRESENCE_UPDATE":
+                        var presenceUpdateData = JsonConvert.DeserializeObject<PresenceUpdate>(gatewayPayload.JSONEventData.ToString());
+                        await PresenceUpdated?.Invoke(presenceUpdateData);
+                        break;
+                    case "TYPING_START":
+                        var typingStartData = JsonConvert.DeserializeObject<GatewayEventTypingStartArgs>(gatewayPayload.JSONEventData.ToString());
+                        await TypingStart?.Invoke(typingStartData);
+                        break;
+                    case "USER_UPDATE":
+                        var userUpdatedData = JsonConvert.DeserializeObject<User>(gatewayPayload.JSONEventData.ToString());
+                        await UserUpdated?.Invoke(userUpdatedData);
+                        break;
+                    case "VOICE_STATE_UPDATE":
+                        var voiceStateUpdateData = JsonConvert.DeserializeObject<VoiceState>(gatewayPayload.JSONEventData.ToString());
+                        await VoiceStateUpdated?.Invoke(voiceStateUpdateData);
+                        break;
+                    case "VOICE_SERVER_UPDATE":
+                        var voiceServerUpdatedData = JsonConvert.DeserializeObject<GatewayEventsVoiceServerUpdatedArgs>(gatewayPayload.JSONEventData.ToString());
+                        await VoiceServerUpdated?.Invoke(voiceServerUpdatedData);
+                        break;
+                    case "WEBHOOKS_UPDATE":
+                        var webhookUpdatedData = JsonConvert.DeserializeObject<GatewayEventWebhookUpdatedArgs>(gatewayPayload.JSONEventData.ToString());
+                        await WebhooksUpdated?.Invoke(webhookUpdatedData);
+                        break;
+                }
+            }
+            catch (Exception e)
+            {
+                await Task.Run(() => Console.WriteLine($"{e.Message}: {e.InnerException?.Message} "));
             }
         }
         /// <summary>
@@ -557,6 +786,10 @@ namespace ObjectDiscordAPI
             Console.WriteLine($"{DateTime.Now}: Resuming... {gatewayResume.SessionID}");
             await socket.SendAsync(await payload.ConvertObjectToArraySegment(true), WebSocketMessageType.Text, true, cancellationTokenSource.Token);
         }
+
+
+
+        #region Inner event tasks
         /// <summary>
         /// Task for managing READY gateway event before user actions
         /// </summary>
@@ -572,22 +805,29 @@ namespace ObjectDiscordAPI
         /// <returns></returns>
         private async Task InnerGuildCreatedTask(GatewayEventGuildCreateArgs e)
         {
-            await Task.Run(async () => 
+            await Task.Run(async () =>
             {
                 Console.WriteLine($"Guild {e.Name} is available for use");
-                e.Members = await this.GetGuildMembersAsync(e.ID, e.MemberCount);
-                guildList.Add(e);
-                Console.WriteLine($"Downloading message cache for {e.Name}");
-                foreach (var channel in e.Channels)
+                
+                if (guildList.Where(x => x.ID == e.ID).Count() == 0)
                 {
-                    if (channel.ChannelType == ChannelType.GuildText)
+                    e.Members = await this.GetGuildMembersAsync(e.ID, e.MemberCount);
+                    guildList.Add(e);
+                    Console.WriteLine($"Downloading message cache for {e.Name}");
+                    Stopwatch sw = new Stopwatch();
+                    sw.Start();
+                    foreach (var channel in e.Channels)
                     {
-                        Console.WriteLine($"Downloading message cache for {e.Name} - {channel.Name}");
-                        List<Message> messages = (await this.GetChannelMessagesAsync(channel.ID, 100)).ToList();
-                        messagesCache.Add(new MessagesCache() { GuildID = e.ID, ChannelID = channel.ID, cachedData = messages });
+                        if (messagesCache.Where(x => x.ChannelID == channel.ID).Count() == 0 && channel.ChannelType == ChannelType.GuildText)
+                        {
+                            Console.WriteLine($"Downloading message cache for {e.Name} - {channel.Name}");
+                            List<Message> messages = (await this.GetChannelMessagesAsync(channel.ID, 100)).ToList();
+                            messagesCache.Add(new MessagesCache() { GuildID = e.ID, ChannelID = channel.ID, cachedData = messages });
+                        }
                     }
-                }
-               
+                    sw.Stop();
+                    Console.WriteLine($"Time to download all messages from {e.Name}: {sw.Elapsed.TotalSeconds} seconds");
+                }                          
             });
         }
         /// <summary>
@@ -619,11 +859,11 @@ namespace ObjectDiscordAPI
         /// <returns></returns>
         private static async Task InnerGuildUpdatedTask(GatewayEventGuildCreateArgs e)
         {
-            await Task.Run(() => 
+            await Task.Run(async () => 
             { 
                 Console.WriteLine($"Guild {e.Name} was updated");
                 var guildToReplace = guildList.Where(x => x.ID == e.ID).SingleOrDefault();
-                guildToReplace = e;
+                guildToReplace = await ObjectComparer.CompareAndUpdate(guildToReplace, e);
             });
         }
         /// <summary>
@@ -645,11 +885,11 @@ namespace ObjectDiscordAPI
         /// <returns></returns>
         private static async Task InnerMessageUpdatedTask(Message e)
         {
-            await Task.Run(() => 
+            await Task.Run(async () => 
             {
                 MessagesCache targetCache = messagesCache.Where(x => x.GuildID == e.GuildID && x.ChannelID == e.ChannelID).SingleOrDefault();
                 Message targetMessage = targetCache.cachedData.Where(x => x.ID == e.ID).SingleOrDefault();
-                targetMessage = e;
+                targetMessage = await ObjectComparer.CompareAndUpdate(targetMessage, e);
             });
         }
         /// <summary>
@@ -737,6 +977,189 @@ namespace ObjectDiscordAPI
                 }
             });
         }
+        /// <summary>
+        /// Task for managing MESSAGE_REACTION_ADD gateway event before user actions
+        /// </summary>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        private static async Task InnerMessageReactionAddedTask(GatewayEventMessageReactionAddedArgs e)
+        {
+            await Task.Run(()=> { });
+        }
+        /// <summary>
+        /// Task for managing MESSAGE_REACTION_REMOVE gateway event before user actions
+        /// </summary>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        private static async Task InnerMessageReactionRemovedTask(GatewayEventMessageReactionRemovedArgs e)
+        {
+            await Task.Run(() => { });
+        }
+        /// <summary>
+        /// Task for managing MESSAGE_REACTION_REMOVE_ALL gateway event before user actions
+        /// </summary>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        private static async Task InnerMessageAllReactionRemovedTask(GatewayEventMessageAllReactionRemovedArgs e)
+        {
+            await Task.Run(() => { });
+        }
+        /// <summary>
+        /// Task for managing MESSAGE_REACTION_REMOVE_EMOJI gateway event before user actions
+        /// </summary>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        private static async Task InnerMessageReactionEmojiRemovedTask(GatewayEventMessageReactionEmojiRemovedArgs e)
+        {
+            await Task.Run(() => { });
+        }
+        /// <summary>
+        /// Task for managing PRESENCE_UPDATE gateway event before user actions
+        /// </summary>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        private static async Task InnerPresenceUpdatedTask(PresenceUpdate e)
+        {
+            await Task.Run(() => { });
+        }
+        /// <summary>
+        /// Task for managing TYPING_START gateway event before user actions
+        /// </summary>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        private static async Task InnerTypingStartTask(GatewayEventTypingStartArgs e)
+        {
+            await Task.Run(() => { });
+        }
+        /// <summary>
+        /// Task for managing USER_UPDATE gateway event before user actions
+        /// </summary>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        private static async Task InnerUserUpdatedTask(User e)
+        {
+            await Task.Run(() => 
+            {
+                foreach (var guild in guildList)
+                {
+                    foreach (var member in guild.Members)
+                    {
+                        if (member.User.ID == e.ID)
+                        {
+                            member.User = e;
+                            return;
+                        }
+                    }
+                }
+            });
+        }
+        /// <summary>
+        /// Task for managing VOICE_STATE_UPDATE gateway event before user actions
+        /// </summary>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        private static async Task InnerVoiceStateUpdatedTask(VoiceState e)
+        {
+            await Task.Run(() =>
+            {
+
+            });
+        }
+        /// <summary>
+        /// Task for managing VOICE_SERVER_UPDATE gateway event before user actions
+        /// </summary>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        private static async Task InnerVoiceServerUpdatedTask(GatewayEventsVoiceServerUpdatedArgs e)
+        {
+            await Task.Run(() =>
+            {
+
+            });
+        }
+        /// <summary>
+        /// Task for managing WEBHOOKS_UPDATE gateway event before user actions
+        /// </summary>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        private static async Task InnerWebhooksUpdatedTask(GatewayEventWebhookUpdatedArgs e)
+        {
+            await Task.Run(() =>
+            {
+
+            });
+        }
+        /// <summary>
+        /// Task for managing GUILD_BAN_ADD gateway event before user actions
+        /// </summary>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        private static async Task InnerGuildBanAddedTask(GatewayEventGuildBanArgs e)
+        {
+            await Task.Run(() =>
+            {
+
+            });
+        }
+        /// <summary>
+        /// Task for managing GUILD_BAN_REMOVE gateway event before user actions
+        /// </summary>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        private static async Task InnerGuildBanRemovedTask(GatewayEventGuildBanArgs e)
+        {
+            await Task.Run(() =>
+            {
+
+            });
+        }
+        /// <summary>
+        /// Task for managing GUILD_EMOJIS_UPDATE gateway event before user actions
+        /// </summary>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        private static async Task InnerGuildEmojisUpdatedTask(GatewayEventGuildEmojisUpdateArgs e)
+        {
+            await Task.Run(() =>
+            {
+
+            });
+        }
+        /// <summary>
+        /// Task for managing GUILD_INTEGRATIONS_UPDATE gateway event before user actions
+        /// </summary>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        private static async Task InnerGuildIntegrationsUpdatedTask(GatewayEventGuildIntegrationsUpdatedArgs e)
+        {
+            await Task.Run(() =>
+            {
+
+            });
+        }
+        /// <summary>
+        /// Task for managing GUILD_MEMBER_ADD gateway event before user actions
+        /// </summary>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        private static async Task InnerGuildMemberAddedTask(GatewayEventGuildMemberArgs e)
+        {
+            await Task.Run(() =>
+            {
+                guildList.Where(x => x.ID == e.GuildID).SingleOrDefault()?.Members.Add(
+                    new GuildMember() 
+                    { 
+                        IsDeaf = e.IsDeaf,
+                        IsMuted = e.IsMuted,
+                        JoinedAt = e.JoinedAt,
+                        Nickname = e.Nickname,
+                        PremiumSince = e.PremiumSince,
+                        RolesIDs = e.RolesIDs,
+                        User = e.User
+                    });
+            });
+        }
+        #endregion
 
 
 

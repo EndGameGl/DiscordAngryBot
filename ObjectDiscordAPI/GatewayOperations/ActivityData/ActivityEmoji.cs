@@ -9,12 +9,19 @@ namespace ObjectDiscordAPI.GatewayOperations.ActivityData
 {
     public class ActivityEmoji
     {
+        /// <summary>
+        /// The name of the emoji
+        /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
-
+        /// <summary>
+        /// The id of the emoji
+        /// </summary>
         [JsonProperty("id")]
         public ulong? ID { get; set; }
-
+        /// <summary>
+        /// Whether this emoji is animated
+        /// </summary>
         [JsonProperty("animated")]
         public bool? IsAnimated { get; set; }
 
