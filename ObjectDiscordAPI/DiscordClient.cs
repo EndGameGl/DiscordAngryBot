@@ -50,11 +50,11 @@ namespace ObjectDiscordAPI
         /// <summary>
         /// Web client for sending API requests
         /// </summary>
-        WebClient client { get; set; }
+        static WebClient client { get; set; }
         /// <summary>
         /// Whether Discord client is configured
         /// </summary>
-        bool isConfigured { get; set; } = false;
+        static bool isConfigured { get; set; } = false;
         /// <summary>
         /// Web socket client for maintaining gateway connection
         /// </summary>
@@ -447,7 +447,7 @@ namespace ObjectDiscordAPI
             isConfigured = true;
         }
 
-        public async Task<string> GET(string parameters)
+        public static async Task<string> GET(string parameters)
         {
             if (isConfigured)
             {
@@ -464,7 +464,7 @@ namespace ObjectDiscordAPI
                 return null;
         }
 
-        public async Task<byte[]> GETFile(string parameters)
+        public static async Task<byte[]> GETFile(string parameters)
         {
             if (isConfigured)
             {
@@ -479,6 +479,66 @@ namespace ObjectDiscordAPI
             }
             else
                 return null;
+        }
+
+        public static async Task PUT(string parameters, string data)
+        {
+            if (isConfigured)
+            {
+                try
+                {
+                    await Task.Run(() => client.UploadStringAsync(new Uri(client.BaseAddress + parameters), "PUT", data));
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("PUT string operation error", ex);
+                }
+            }
+        }
+
+        public static async Task PATCH(string parameters, string data)
+        {
+            if (isConfigured)
+            {
+                try
+                {
+                    await Task.Run(() => client.UploadStringAsync(new Uri(client.BaseAddress + parameters), "PATCH", data));
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("PATCH string operation error", ex);
+                }
+            }
+        }
+
+        public static async Task DELETE(string parameters, string data)
+        {
+            if (isConfigured)
+            {
+                try
+                {
+                    await Task.Run(() => client.UploadStringAsync(new Uri(client.BaseAddress + parameters), "DELETE", data));
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("DELETE string operation error", ex);
+                }
+            }
+        }
+
+        public static async Task POST(string parameters, string data)
+        {
+            if (isConfigured)
+            {
+                try
+                {
+                    await Task.Run(() => client.UploadStringAsync(new Uri(client.BaseAddress + parameters), "POST", data));
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("POST string operation error", ex);
+                }
+            }
         }
 
         /// <summary>

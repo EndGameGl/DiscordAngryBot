@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -55,6 +56,18 @@ namespace DiscordAngryBot.CustomObjects.SQLIteHandler
             await ConsoleWriter.Write($"Closed connection", ConsoleWriter.InfoType.Notice);
 
             return dataTable;
+        }
+        /// <summary>
+        /// Создание базы данных
+        /// </summary>
+        /// <param name="Path"></param>
+        /// <returns></returns>
+        public static async Task CreateDataBase(string Path)
+        {
+            await Task.Run(
+                () =>
+            SQLiteConnection.CreateFile($"{Path}")
+            );
         }
     }
 }

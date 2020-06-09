@@ -1,9 +1,11 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using DiscordAngryBot.CustomObjects.ConsoleOutput;
+using DiscordAngryBot.CustomObjects.DiscordCommands;
 using DiscordAngryBot.CustomObjects.Filters;
 using DiscordAngryBot.CustomObjects.Groups;
 using DiscordAngryBot.CustomObjects.Notifications;
+using DiscordAngryBot.CustomObjects.Parsers;
 using DiscordAngryBot.MessageHandlers;
 using DiscordAngryBot.ReactionHandlers;
 using System;
@@ -12,13 +14,14 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
+using Windows.Media.Playback;
 
-namespace DiscordAngryBot.WebhookEventHandlers
+namespace DiscordAngryBot.GatewayEventHandlers
 {
     /// <summary>
     /// Класс-обработчик событий клиента дискорда
     /// </summary>
-    public static class WebhookEventHandler
+    public static class GatewayEventHandler
     {
         /// <summary>
         /// Обработчик логгирования
@@ -40,6 +43,10 @@ namespace DiscordAngryBot.WebhookEventHandlers
                 case LogSeverity.Info:
                     await ConsoleWriter.Write($"{message.Message}", ConsoleWriter.InfoType.Info);
                     break;
+                case LogSeverity.Critical:
+                    await ConsoleWriter.Write($"{message.Message}: {message.Exception}", ConsoleWriter.InfoType.Error);
+                    await PushNotificator.Notify(message);
+                    break;
             }
         }
         /// <summary>
@@ -49,122 +56,134 @@ namespace DiscordAngryBot.WebhookEventHandlers
         /// <returns></returns>
         public static async Task MessageReceivedHandler(SocketMessage message)
         {
-            BotSettings settings = Program.FetchSettings();
-            DataHandler systemData = Program.FetchData();
-            DiscordServerObject serverObject = Program.FetchServerObject();
             // Проверка, от бота ли сообщение
             if (!message.Author.IsBot)
             {
                 if (message.Content.Count() > 0)
                 {
                     await ConsoleWriter.Write($"[#{message.Channel}] {message.Author.Username}: {message.Content}", ConsoleWriter.InfoType.Chat);
-                    if ((message.Channel.Id != 636222368028688385) && (await message.CheckPhrase() && Program.swearCounters.Where( x => x.author == message.Author).Count() == 0))
-                    {
-                        Program.swearCounters.Add(await message.CreateSwearCounter());
-                        
-                    }
-                    else if ((message.Channel.Id != 636222368028688385) && (await message.CheckPhrase() && Program.swearCounters.Where(x => x.author == message.Author).Count() == 1))
-                    {
-                        await Program.swearCounters.Where(x => x.author == message.Author).SingleOrDefault().reasons.AddReason(message);
-                    }
+                    await message.RunSwearFilter();
                 }
                 else
                 {
                     await ConsoleWriter.Write($"[#{message.Channel}] {message.Author.Username}: Пустое сообщение", ConsoleWriter.InfoType.Chat);
                 }
-
                 // Проверка сообщения на запрещенные команды 
-                if (message.Channel.Name != "команды-ботам" && settings.forbiddenCommands.Contains(message.Content))
+                if (message.Channel.Name != "команды-ботам" && BotCore.ForbiddenCommands().Contains(message.Content))
                 {
-                    var mashiroMessage = $"<@!{message.Author.Id}>, все команды ботам пишутся в этот канал: <#636226731459608576>";
+                    var mashiroMessage = $"{message.Author.Mention}, все команды ботам пишутся в этот канал: <#636226731459608576>";
                     await message.Channel.SendMessageAsync(mashiroMessage);
                     await message.DeleteAsync();
                 }
-
-                // Проверка, не пустое ли сообщение
                 if (message.Content.Count() > 0)
                 {
-                    // Проверка наличия команды в сообщении
-                    if (message.Content[0] == settings.commandPrefix)
+                    char? prefix = null;
+                    if (message.Channel is SocketGuildChannel)
                     {
-                        var commandParameters = CommandHandler.ProcessCommandMessage(message);
-                        var channel = commandParameters.Item1;
-                        var command = commandParameters.Item2;
-                        var args = commandParameters.Item3;
-                        // Проверка наличия такой команды в списке команд бота
-                        if (settings.systemCommands.Contains(command.ToUpper()))
+                        prefix = BotCore.GetGuildCommandPrefix(((SocketGuildChannel)message.Channel).Guild.Id);
+                    }
+                    else if (message.Channel is SocketDMChannel)
+                    {
+                        prefix = BotCore.GetDefaultCommandPrefix();
+                    }
+                    if (prefix != null && message.Content[0] == prefix)
+                    {
+                        try
                         {
-                            if (settings.admins.Contains(message.Author.Id))
+                            CommandParser commandParser = new CommandParser(message, prefix);
+                            string command = commandParser.GetCommand();
+
+                            if (BotCore.SystemCommands().Contains(command))
                             {
-                                // Перебор команд
+                                if (message.Channel is SocketGuildChannel)
+                                {
+                                    if (BotCore.GetDiscordGuildSettings(((SocketGuildChannel)message.Channel).Guild.Id).adminsID.Contains(message.Author.Id))
+                                    {
+                                        // Перебор команд
+                                        switch (command)
+                                        {
+                                            case "BAN":
+                                                new DiscordCommand(CommandHandler.SystemCommands.BanUser(message, commandParser.GetCommandParameters())).RunCommand();
+                                                break;
+                                            case "UNBAN":
+                                                new DiscordCommand(CommandHandler.SystemCommands.UnbanUser(message, commandParser.GetCommandParameters())).RunCommand();
+                                                break;
+                                            case "CLEAR":
+                                                new DiscordCommand(CommandHandler.SystemCommands.ClearMessages(message, commandParser.GetCommandParameters())).RunCommand();
+                                                break;
+                                            case "SETPREFIX":
+                                                new DiscordCommand(CommandHandler.SystemCommands.SetPrefix(message, commandParser.GetCommandParameters())).RunCommand();
+                                                break;
+                                            case "NEWS":
+                                                new DiscordCommand(CommandHandler.SystemCommands.SetNews(message)).RunCommand();
+                                                break;
+                                            case "BANROLE":
+                                                new DiscordCommand(CommandHandler.SystemCommands.SetBanRole(message)).RunCommand();
+                                                break;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        await message.Channel.SendMessageAsync($"Недостаточно прав на команду.");
+                                    }
+                                }
+                            }
+                            else if (BotCore.UserCommands().Contains(command))
+                            {
                                 switch (command.ToUpper())
                                 {
-                                    case "BAN":
-                                        systemData.bans.Add(await CommandHandler.SystemCommands.BanUser(serverObject, message, commandParameters));
+                                    case "PARTY":
+                                        new DiscordCommand(CommandHandler.UserCommands.CreateParty(message, commandParser.GetCommandParameters())).RunCommand();
                                         break;
-                                    case "CLEAR":
-                                        await CommandHandler.SystemCommands.ClearMessages(message, args);
+                                    case "RAID":
+                                        new DiscordCommand(CommandHandler.UserCommands.CreateRaid(message, commandParser.GetCommandParameters())).RunCommand();
+                                        break;
+                                    case "LIST":
+                                        new DiscordCommand(CommandHandler.UserCommands.ListGroups(message)).RunCommand();
+                                        break;
+                                    case "GVGEV":
+                                        new DiscordCommand(CommandHandler.UserCommands.CreateGuildFight(message, commandParser.GetCommandParameters(), GuildFightType.EV)).RunCommand();
+                                        break;
+                                    case "GVGPR":
+                                        new DiscordCommand(CommandHandler.UserCommands.CreateGuildFight(message, commandParser.GetCommandParameters(), GuildFightType.PR)).RunCommand();
+                                        break;
+                                    case "SELFBAN":
+                                        new DiscordCommand(CommandHandler.UserCommands.SelfBan(message, commandParser.GetCommandParameters())).RunCommand();
+                                        break;
+                                    case "HELP":
+                                        new DiscordCommand(CommandHandler.UserCommands.HelpUser(message, commandParser.GetCommandParameters())).RunCommand();
+                                        break;
+                                }
+                            }
+                            else if (BotCore.MusicCommands().Contains(command))
+                            {
+                                switch (command)
+                                {
+                                    case "SUMMON":
+                                        await CommandHandler.MusicCommands.JoinChannel(message);
+                                        break;
+                                }
+                            }
+                            else if (BotCore.OtherCommands().Contains(command))
+                            {
+                                switch (command)
+                                {
+                                    case "КУСЬ":
+                                        new DiscordCommand(CommandHandler.OtherCommands.Bite(message, commandParser.GetCommandParameters())).RunCommand();
+                                        break;
+                                    case "БАН":
+                                        new DiscordCommand(CommandHandler.OtherCommands.Ban(message)).RunCommand();
                                         break;
                                 }
                             }
                             else
                             {
-                                await channel.SendMessageAsync($"Недостаточно прав на команду.");
+                                await message.DeleteAsync();
                             }
                         }
-                        else if (settings.userCommands.Contains(command.ToUpper()))
+                        catch (Exception e)
                         {
-                            switch (command.ToUpper())
-                            {
-                                case "PARTY":
-                                    await CommandHandler.UserCommands.CreateParty(systemData.groups, message, args);
-                                    break;
-                                case "RAID":
-                                    await CommandHandler.UserCommands.CreateRaid(systemData.groups, message, args);
-                                    break;
-                                case "LIST":
-                                    await CommandHandler.UserCommands.ListGroups(message, systemData.groups);
-                                    break;
-                                case "GVG":
-                                    await CommandHandler.UserCommands.CreateGuildFight(systemData.groups, message, args);
-                                    break;
-                                case "HELP":
-                                    await CommandHandler.UserCommands.HelpUser(message.Author, args);
-                                    try
-                                    {
-                                        await message.DeleteAsync();
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        await ConsoleWriter.Write(ex.Message, ConsoleWriter.InfoType.Error);
-                                    }
-                                    break;
-                            }
-                        }
-                        else if (settings.musicCommands.Contains(command.ToUpper()))
-                        {
-                            switch (command.ToUpper())
-                            {
-                                case "SUMMON":
-                                    await CommandHandler.MusicCommands.JoinChannel(message);
-                                    break;
-                            }
-                        }
-                        else if (settings.otherCommands.Contains(command.ToUpper()))
-                        {
-                            switch (command.ToUpper())
-                            {
-                                case "КУСЬ":
-                                    await CommandHandler.OtherCommands.Bite(message, args);
-                                    break;
-                                case "БАН":
-                                    await CommandHandler.OtherCommands.Ban(message);
-                                    break;
-                            }
-                        }
-                        else
-                        {
-                            await message.DeleteAsync();
+                            await ConsoleWriter.Write($"{e.Message} : [{e.InnerException?.Message}]", ConsoleWriter.InfoType.Error);
                         }
                     }
                 }
@@ -183,43 +202,26 @@ namespace DiscordAngryBot.WebhookEventHandlers
         /// <returns></returns>
         public static async Task ReactionAddedHandler(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel messageChannel, SocketReaction reaction)
         {
-            await ConsoleWriter.Write($"{reaction.User} reacted message {cache.Id} with {reaction.Emote.Name}", ConsoleWriter.InfoType.Info); 
-            DataHandler systemData = Program.FetchData();
+            await ConsoleWriter.Write($"{reaction.User} reacted message {cache.Id} with {reaction.Emote.Name}", ConsoleWriter.InfoType.Info);
             if (reaction.ValidateReaction(new Emoji("\u2705"))) // white_check_mark
             {
-                var message = await messageChannel.GetMessageAsync(cache.Id);
-                Group group = systemData.groups.Where(x => x.targetMessage.Id == message.Id).SingleOrDefault();
-                if (group != null)
-                {
-                    await ReactionHandler.PartyReactionHandler.JoinGroup(group, message, reaction, systemData.groups);
-                }
+                new DiscordCommand(ReactionHandler.PartyReactionHandler.JoinGroup(reaction)).RunCommand();
             }
             if (reaction.ValidateReaction(new Emoji("\u274C"))) // cross_mark
             {
-                var message = await messageChannel.GetMessageAsync(cache.Id);
-                Group group = systemData.groups.Where(x => x.targetMessage.Id == message.Id).SingleOrDefault();
-                if (group != null)
-                {
-                    await ReactionHandler.PartyReactionHandler.TerminateGroup(group, message, reaction, systemData.groups);
-                }
+                new DiscordCommand(ReactionHandler.PartyReactionHandler.TerminateGroup(reaction)).RunCommand();
             }
             if (reaction.ValidateReaction(new Emoji("\u2757"))) // exclamation
             {
-                var message = await messageChannel.GetMessageAsync(cache.Id);
-                Group group = systemData.groups.Where(x => x.targetMessage.Id == message.Id).SingleOrDefault();
-                if (group != null)
-                {
-                    await ReactionHandler.PartyReactionHandler.GroupCallout(group, reaction);
-                }
+                new DiscordCommand(ReactionHandler.PartyReactionHandler.GroupCallout(reaction)).RunCommand();
             }
             if (reaction.ValidateReaction(new Emoji("🐾")) || reaction.ValidateReaction(new Emoji("🐷")) || reaction.ValidateReaction(new Emoji("❓")))
             {
-                var message = await messageChannel.GetMessageAsync(cache.Id);
-                Group group = systemData.groups.Where(x => x.targetMessage.Id == message.Id).SingleOrDefault();
-                if (group != null)
-                {
-                    await ReactionHandler.PartyReactionHandler.JoinGuildFight(group, message, reaction, systemData.groups);
-                }
+                new DiscordCommand(ReactionHandler.PartyReactionHandler.JoinGuildFight(reaction)).RunCommand();
+            }
+            if (reaction.ValidateReaction(new Emoji("❎")) || reaction.ValidateReaction(new Emoji("☑️")) || reaction.ValidateReaction(new Emoji("🇽")))
+            {
+                new DiscordCommand(ReactionHandler.PartyReactionHandler.JoinGuildFight(reaction)).RunCommand();
             }
         }
         /// <summary>
@@ -232,24 +234,17 @@ namespace DiscordAngryBot.WebhookEventHandlers
         public static async Task ReactionRemovedHandler(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel messageChannel, SocketReaction reaction)
         {
             await ConsoleWriter.Write($"{reaction.User} removed reaction {reaction.Emote.Name} from {cache.Id}", ConsoleWriter.InfoType.Info);
-            DataHandler systemData = Program.FetchData();
             if (reaction.ValidateReaction(new Emoji("\u2705"))) // white_check_mark
             {
-                var message = await messageChannel.GetMessageAsync(cache.Id);
-                Group group = systemData.groups.Where(x => x.targetMessage.Id == message.Id).SingleOrDefault();
-                if (group != null)
-                {
-                    await ReactionHandler.PartyReactionHandler.LeaveGroup(group, message, reaction, systemData.groups);
-                }
+                new DiscordCommand(ReactionHandler.PartyReactionHandler.LeaveGroup(reaction)).RunCommand();
             }
             if (reaction.ValidateReaction(new Emoji("🐾")) || reaction.ValidateReaction(new Emoji("🐷")) || reaction.ValidateReaction(new Emoji("❓")))
             {
-                var message = await messageChannel.GetMessageAsync(cache.Id);
-                Group group = systemData.groups.Where(x => x.targetMessage.Id == message.Id).SingleOrDefault();
-                if (group != null)
-                {
-                    await ReactionHandler.PartyReactionHandler.LeaveGuildFight(group, message, reaction, systemData.groups);
-                }
+                new DiscordCommand(ReactionHandler.PartyReactionHandler.LeaveGuildFight(reaction)).RunCommand();
+            }
+            if (reaction.ValidateReaction(new Emoji("❎")) || reaction.ValidateReaction(new Emoji("☑️")) || reaction.ValidateReaction(new Emoji("🇽")))
+            {
+                new DiscordCommand(ReactionHandler.PartyReactionHandler.LeaveGuildFight(reaction)).RunCommand();
             }
         }
         /// <summary>
@@ -315,6 +310,7 @@ namespace DiscordAngryBot.WebhookEventHandlers
         /// <returns></returns>
         public static async Task GuildAvailableHandler(SocketGuild guild)
         {
+            await BotCore.CreateGuildCache(guild);
             await ConsoleWriter.Write($"{guild.Name} is available", ConsoleWriter.InfoType.Notice);
         }
         /// <summary>
@@ -343,6 +339,7 @@ namespace DiscordAngryBot.WebhookEventHandlers
         /// <returns></returns>
         public static async Task GuildUnavailableHandler(SocketGuild guild)
         {
+            await BotCore.RemoveGuildCache(guild);
             await ConsoleWriter.Write($"{guild.Name} is unavailable", ConsoleWriter.InfoType.Notice);
         }
         /// <summary>
@@ -362,6 +359,7 @@ namespace DiscordAngryBot.WebhookEventHandlers
         /// <returns></returns>
         public static async Task JoinedGuildHandler(SocketGuild guild)
         {
+            await BotCore.CreateGuildCache(guild);
             await ConsoleWriter.Write($"Joined \"{guild.Name}\" guild", ConsoleWriter.InfoType.Notice);
         }
         /// <summary>
@@ -474,7 +472,7 @@ namespace DiscordAngryBot.WebhookEventHandlers
         /// </summary>
         /// <param name="user"></param>
         /// <returns></returns>
-        public static async Task RecipientAddedHandler(SocketGroupUser user) 
+        public static async Task RecipientAddedHandler(SocketGroupUser user)
         {
             await ConsoleWriter.Write($"{user.Username} was added to {user.Channel.Name}", ConsoleWriter.InfoType.Notice);
         }

@@ -25,49 +25,39 @@ namespace DiscordAngryBot.ReactionHandlers
             /// <param name="groupObject"></param>
             /// <param name="message"></param>
             /// <param name="reaction"></param>
-            public async static Task JoinGroup(Group groupObject, IMessage message, SocketReaction reaction, List<Group> groups)
+            public async static Task JoinGroup(SocketReaction reaction)
             {
-                if (groupObject.isActive)
+                var group = BotCore.GetDiscordGuildGroups(((SocketGuildUser)reaction.User).Guild.Id).Where(x => x.TargetMessage.Id == reaction.MessageId).FirstOrDefault();
+                if (group is Party)
                 {
-                    if (groupObject.IsParty())
+                    var party = group as Party;
+                    if (party.Users.Count < party.UserLimit)
                     {
-                        var party = (Party)groupObject;
-                        if (party.users.Count < party.userLimit)
-                        {
-                            party.AddUser((SocketUser)reaction.User);
-                            await party.UpdateAtDB();
-                            await party.RewriteMessage();
-                        }
-                        if (party.users.Count == 6)
-                        {
-                            //party.isActive = false;
-                            await party.author.SendMessageAsync($"Ваш группа [{party.destination}] была собрана");
-                            //await party.UpdateAtDBIfFull();
-                        }
+                        party.Users.Add((SocketGuildUser)reaction.User);
+                        await party.UpdateAtDB();
+                        await party.RewriteMessage();
                     }
-                    else if (groupObject.IsRaid())
+                    if (party.Users.Count == 6)
                     {
-                        var raid = (Raid)groupObject;
-                        if (raid.users.Count < raid.userLimit)
-                        {
-                            raid.AddUser((SocketUser)reaction.User);
-                            await raid.UpdateAtDB();
-                            await raid.RewriteMessage();
-                        }
-                        if (raid.users.Count == 12)
-                        {
-                            //raid.isActive = false;
-                            //await raid.author.SendMessageAsync($"Ваш рейд [{raid.destination}] был собран");
-                            //await raid.UpdateAtDBIfFull();
-                        }
+                        await party.Author.SendMessageAsync($"Ваш группа [{party.Destination}] была собрана");
                     }
-                    else if (groupObject.IsGuildFight())
+                }
+                else if (group is Raid)
+                {
+                    var raid = group as Raid;
+                    if (raid.Users.Count < raid.UserLimit)
                     {
-                        var guildFight = (GuildFight)groupObject;
-                        guildFight.AddUser((SocketUser)reaction.User);
-                        await guildFight.UpdateAtDB();
-                        await guildFight.RewriteMessage();
+                        raid.Users.Add((SocketGuildUser)reaction.User);
+                        await raid.UpdateAtDB();
+                        await raid.RewriteMessage();
                     }
+                }
+                else if (group is GuildFight)
+                {
+                    var guildFight = group as GuildFight;
+                    guildFight.Users.Add((SocketGuildUser)reaction.User);
+                    await guildFight.UpdateAtDB();
+                    await guildFight.RewriteMessage();
                 }
             }
 
@@ -77,47 +67,41 @@ namespace DiscordAngryBot.ReactionHandlers
             /// <param name="groupObject"></param>
             /// <param name="message"></param>
             /// <param name="reaction"></param>
-            public async static Task LeaveGroup(Group groupObject, IMessage message, SocketReaction reaction, List<Group> groups)
+            public async static Task LeaveGroup(SocketReaction reaction)
             {
-                if (groupObject.isActive)
+                var group = BotCore.GetDiscordGuildGroups(((SocketGuildUser)reaction.User).Guild.Id).Where(x => x.TargetMessage.Id == reaction.MessageId).FirstOrDefault();
+                if (group is Party)
                 {
-                    if (groupObject.IsParty())
+                    var party = group as Party;
+                    if (party.Users.Contains((SocketGuildUser)reaction.User))
                     {
-                        var party = (Party)groupObject;
-                        bool isInParty = groups.Where(x => x.users.Contains((SocketUser)reaction.User.Value)).Count() > 0 == true;
-                        if (isInParty)
-                        {
-                            party.RemoveUser((SocketUser)reaction.User);
-                            await party.UpdateAtDB();
-                            await party.RewriteMessage();
-                            return;
-                        }
+                        party.Users.Remove((SocketGuildUser)reaction.User);
+                        await party.UpdateAtDB();
+                        await party.RewriteMessage();
+                        return;
                     }
-                    else if (groupObject.IsRaid())
+                }
+                else if (group is Raid)
+                {
+                    var raid = group as Raid;
+                    if (raid.Users.Contains((SocketGuildUser)reaction.User))
                     {
-                        var raid = (Raid)groupObject;
-                        bool isInRaid = groups.Where(x => x.users.Contains((SocketUser)reaction.User.Value)).Count() > 0 == true;
-                        if (isInRaid)
-                        {
-                            raid.RemoveUser((SocketUser)reaction.User);
-                            await raid.UpdateAtDB();
-                            await raid.RewriteMessage();
-                            return;
-                        }
+                        raid.Users.Remove((SocketGuildUser)reaction.User);
+                        await raid.UpdateAtDB();
+                        await raid.RewriteMessage();
+                        return;
                     }
-                    else if (groupObject.IsGuildFight())
+                }
+                else if (group is GuildFight)
+                {
+                    var guildFight = group as GuildFight;
+                    if (guildFight.Users.Contains((SocketGuildUser)reaction.User))
                     {
-                        var guildFight = (GuildFight)groupObject;
-                        bool isInFight = groups.Where(x => x.users.Contains((SocketUser)reaction.User.Value)).Count() > 0 == true;
-                        if (isInFight)
-                        {
-                            guildFight.RemoveUser((SocketUser)reaction.User);
-                            await guildFight.UpdateAtDB();
-                            await guildFight.RewriteMessage();
-                            return;
-                        }
+                        guildFight.Users.Remove((SocketGuildUser)reaction.User);
+                        await guildFight.UpdateAtDB();
+                        await guildFight.RewriteMessage();
+                        return;
                     }
-
                 }
             }
 
@@ -127,43 +111,37 @@ namespace DiscordAngryBot.ReactionHandlers
             /// <param name="groupObject"></param>
             /// <param name="message"></param>
             /// <param name="reaction"></param>
-            public async static Task TerminateGroup(Group groupObject, IMessage message, SocketReaction reaction, List<Group> groups)
+            public async static Task TerminateGroup(SocketReaction reaction)
             {
-                if (groupObject.IsParty())
+                var group = BotCore.GetDiscordGuildGroups(((SocketGuildUser)reaction.User).Guild.Id).Where(x => x.TargetMessage.Id == reaction.MessageId).FirstOrDefault();
+                if (group is Party)
                 {
-                    var party = groups.Where(x => x.targetMessage.Id == reaction.MessageId).SingleOrDefault();
-
-                    if (party != null && (party.author.Id == reaction.UserId || Program.FetchSettings().admins.Contains(reaction.UserId)))
+                    var party = group as Party;
+                    if (party != null && (party.Author.Id == reaction.UserId || BotCore.GetDiscordGuildSettings(party.Channel.Guild.Id).adminsID.Contains(reaction.UserId)))
                     {
-                        //await party.targetMessage.DeleteAsync();
-                        //await message.Channel.SendMessageAsync($"Сбор группы {party.author.Mention} ({party.destination}) закончен");
                         await party.RewriteMessageOnCancel();
                         await party.RemoveFromDB();
-                        groups.Remove(party);
+                        BotCore.GetDiscordGuildGroups(((SocketGuildUser)reaction.User).Guild.Id).Remove(party);
                     }
                 }
-                else if (groupObject.IsRaid())
+                else if (group is Raid)
                 {
-                    var raid = groups.Where(x => x.targetMessage.Id == reaction.MessageId).SingleOrDefault();
-                    if (raid != null && (raid.author.Id == reaction.UserId || Program.FetchSettings().admins.Contains(reaction.UserId)))
+                    var raid = group as Raid;
+                    if (raid != null && (raid.Author.Id == reaction.UserId || BotCore.GetDiscordGuildSettings(raid.Channel.Guild.Id).adminsID.Contains(reaction.UserId)))
                     {
-                        //await raid.targetMessage.DeleteAsync();
-                        //await message.Channel.SendMessageAsync($"Сбор рейда {raid.author.Mention} ({raid.destination}) закончен");
                         await raid.RewriteMessageOnCancel();
                         await raid.RemoveFromDB();
-                        groups.Remove(raid);
+                        BotCore.GetDiscordGuildGroups(((SocketGuildUser)reaction.User).Guild.Id).Remove(raid);
                     }
                 }
-                else if (groupObject.IsGuildFight())
+                else if (group is GuildFight)
                 {
-                    var guildFight = groups.Where(x => x.targetMessage.Id == reaction.MessageId).SingleOrDefault();
-                    if (guildFight != null && (guildFight.author.Id == reaction.UserId || Program.FetchSettings().admins.Contains(reaction.UserId)))
+                    var guildFight = group as GuildFight;
+                    if (guildFight != null && (guildFight.Author.Id == reaction.UserId || BotCore.GetDiscordGuildSettings(guildFight.Channel.Guild.Id).adminsID.Contains(reaction.UserId)))
                     {
-                        //await guildFight.targetMessage.DeleteAsync();
-                        //await message.Channel.SendMessageAsync($"Сбор на битвы БШ {guildFight.destination} закончен");
                         await guildFight.RewriteMessageOnCancel();
                         await guildFight.RemoveFromDB();
-                        groups.Remove(guildFight);
+                        BotCore.GetDiscordGuildGroups(((SocketGuildUser)reaction.User).Guild.Id).Remove(guildFight);
                     }
                 }
             }
@@ -174,28 +152,29 @@ namespace DiscordAngryBot.ReactionHandlers
             /// <param name="groupObject"></param>
             /// <param name="reaction"></param>
             /// <returns></returns>
-            public async static Task GroupCallout(Group groupObject, SocketReaction reaction)
+            public async static Task GroupCallout(SocketReaction reaction)
             {
-                if (reaction.UserId == groupObject.author.Id || Program.FetchSettings().admins.Contains(reaction.UserId))
+                var group = BotCore.GetDiscordGuildGroups(((SocketGuildUser)reaction.User).Guild.Id).Where(x => x.TargetMessage.Id == reaction.MessageId).FirstOrDefault();
+                if (reaction.UserId == group.Author.Id || BotCore.GetDiscordGuildSettings(group.Channel.Guild.Id).adminsID.Contains(reaction.UserId))
                 {
-                    if (!groupObject.IsGuildFight())
+                    if (!(group is GuildFight))
                     {
                         StringBuilder calloutText = new StringBuilder();
-                        calloutText.AppendLine($"{groupObject.author.Mention} объявляет сбор группы");
-                        foreach (var user in groupObject.users)
+                        calloutText.AppendLine($"{reaction.User.Value?.Mention} объявляет сбор группы");
+                        foreach (var user in group.Users)
                         {
                             calloutText.AppendLine($"{user.Mention}");
                         }
-                        await groupObject.targetMessage.Channel.SendMessageAsync(calloutText.ToString());
+                        await group.TargetMessage.Channel.SendMessageAsync(calloutText.ToString());
                     }
-                    else 
+                    else
                     {
                         StringBuilder calloutText = new StringBuilder();
                         calloutText.AppendLine($"__**Сбор на битвы БШ!**__\nСостав:");
                         int memberCount = 0;
                         // Пробег по первому списку юзеров
-                        foreach (var user in groupObject.users)
-                        {                           
+                        foreach (var user in group.Users)
+                        {
                             if (memberCount < 6)
                             {
                                 calloutText.AppendLine($"> {user.Mention}");
@@ -204,10 +183,9 @@ namespace DiscordAngryBot.ReactionHandlers
                             else if (memberCount == 6)
                                 goto A;
                         }
- 
                         // Пробег по второму списку
-                        foreach (var user in ((GuildFight)groupObject).noGearUsers)
-                        {                            
+                        foreach (var user in ((GuildFight)group).noGearUsers)
+                        {
                             if (memberCount < 6)
                             {
                                 calloutText.AppendLine($"> {user.Mention}");
@@ -216,8 +194,17 @@ namespace DiscordAngryBot.ReactionHandlers
                             if (memberCount == 6)
                                 goto A;
                         }
-
-                        foreach (var user in ((GuildFight)groupObject).unwillingUsers)
+                        foreach (var user in ((GuildFight)group).unwillingUsers)
+                        {
+                            if (memberCount < 6)
+                            {
+                                calloutText.AppendLine($"> {user.Mention}");
+                                memberCount++;
+                            }
+                            if (memberCount == 6)
+                                goto A;
+                        }
+                        foreach (var user in ((GuildFight)group).unsureUsers)
                         {
                             if (memberCount < 6)
                             {
@@ -228,20 +215,9 @@ namespace DiscordAngryBot.ReactionHandlers
                                 goto A;
                         }
 
-                        foreach (var user in ((GuildFight)groupObject).unsureUsers)
-                        {
-                            if (memberCount < 6)
-                            {
-                                calloutText.AppendLine($"> {user.Mention}");
-                                memberCount++;
-                            }
-                            if (memberCount == 6)
-                                goto A;
-                        }
-
-                        A: await groupObject.targetMessage.Channel.SendMessageAsync(calloutText.ToString());
+                        A: await group.TargetMessage.Channel.SendMessageAsync(calloutText.ToString());
                     }
-                }           
+                }
             }
 
             /// <summary>
@@ -252,42 +228,78 @@ namespace DiscordAngryBot.ReactionHandlers
             /// <param name="reaction"></param>
             /// <param name="groups"></param>
             /// <returns></returns>
-            public async static Task JoinGuildFight(Group groupObject, IMessage message, SocketReaction reaction, List<Group> groups)
+            public async static Task JoinGuildFight(SocketReaction reaction)
             {
-                if (groupObject.isActive)
+                var group = BotCore.GetDiscordGuildGroups(((SocketGuildUser)reaction.User).Guild.Id).Where(x => x.TargetMessage.Id == reaction.MessageId).FirstOrDefault();
+                if (group is GuildFight)
                 {
-                    if (groupObject.IsGuildFight())
+                    var guildFight = group as GuildFight;
+                    var user = (SocketGuildUser)reaction.User;
+                    if (guildFight.GuildFightType == GuildFightType.PR)
                     {
                         switch (reaction.Emote.Name)
                         {
                             case "🐾":
-                                if (!((GuildFight)groupObject).users.Contains((SocketUser)reaction.User) &&
-                                    !((GuildFight)groupObject).unwillingUsers.Contains((SocketUser)reaction.User) &&
-                                    !((GuildFight)groupObject).unsureUsers.Contains((SocketUser)reaction.User))
+                                if (!guildFight.Users.Contains(user)
+                                    && !guildFight.unwillingUsers.Contains(user)
+                                    && !guildFight.unsureUsers.Contains(user))
                                 {
-                                    ((GuildFight)groupObject).noGearUsers.Add((SocketUser)reaction.User);
+                                    guildFight.noGearUsers.Add(user);
                                 }
                                 break;
                             case "🐷":
-                                if (!((GuildFight)groupObject).users.Contains((SocketUser)reaction.User) &&
-                                    !((GuildFight)groupObject).noGearUsers.Contains((SocketUser)reaction.User) &&
-                                    !((GuildFight)groupObject).unsureUsers.Contains((SocketUser)reaction.User))
+                                if (!guildFight.Users.Contains(user) &&
+                                    !guildFight.noGearUsers.Contains(user) &&
+                                    !guildFight.unsureUsers.Contains(user))
                                 {
-                                    ((GuildFight)groupObject).unwillingUsers.Add((SocketUser)reaction.User); 
+                                    guildFight.unwillingUsers.Add(user);
                                 }
                                 break;
                             case "❓":
-                                if (!((GuildFight)groupObject).users.Contains((SocketUser)reaction.User) &&
-                                    !((GuildFight)groupObject).unwillingUsers.Contains((SocketUser)reaction.User) &&
-                                    !((GuildFight)groupObject).noGearUsers.Contains((SocketUser)reaction.User))
+                                if (!guildFight.Users.Contains(user) &&
+                                    !guildFight.unwillingUsers.Contains(user) &&
+                                    !guildFight.noGearUsers.Contains(user))
                                 {
-                                    ((GuildFight)groupObject).unsureUsers.Add((SocketUser)reaction.User);
+                                    guildFight.unsureUsers.Add(user);
                                 }
                                 break;
                         }
-                        await groupObject.UpdateAtDB();
-                        await groupObject.RewriteMessage();
+                        await group.UpdateAtDB();
+                        await group.RewriteMessage();
                     }
+                    else if (guildFight.GuildFightType == GuildFightType.EV)
+                    {
+                        switch (reaction.Emote.Name)
+                        {
+                            case "❎":
+                                if (!guildFight.Users.Contains(user) &&
+                                    !guildFight.unwillingUsers.Contains(user) &&
+                                    !guildFight.unsureUsers.Contains(user))
+                                {
+                                    guildFight.noGearUsers.Add(user);
+                                }
+                                break;
+                            case "☑️":
+                                if (!guildFight.Users.Contains(user) &&
+                                    !guildFight.noGearUsers.Contains(user) &&
+                                    !guildFight.unsureUsers.Contains(user))
+                                {
+                                    guildFight.unwillingUsers.Add(user);
+                                }
+                                break;
+                            case "🇽":
+                                if (!guildFight.Users.Contains(user) &&
+                                    !guildFight.unwillingUsers.Contains(user) &&
+                                    !guildFight.noGearUsers.Contains(user))
+                                {
+                                    guildFight.unsureUsers.Add(user);
+                                }
+                                break;
+                        }
+                        await group.UpdateAtDB();
+                        await group.RewriteMessage();
+                    }
+
                 }
             }
 
@@ -299,26 +311,48 @@ namespace DiscordAngryBot.ReactionHandlers
             /// <param name="reaction"></param>
             /// <param name="groups"></param>
             /// <returns></returns>
-            public async static Task LeaveGuildFight(Group groupObject, IMessage message, SocketReaction reaction, List<Group> groups)
+            public async static Task LeaveGuildFight(SocketReaction reaction)
             {
-                if (groupObject.isActive)
+                var group = BotCore.GetDiscordGuildGroups(((SocketGuildUser)reaction.User).Guild.Id).Where(x => x.TargetMessage.Id == reaction.MessageId).FirstOrDefault();
+                if (group is GuildFight)
                 {
-                    if (groupObject.IsGuildFight())
+                    var guildFight = group as GuildFight;
+                    var user = (SocketGuildUser)reaction.User;
+
+                    if (guildFight.GuildFightType == GuildFightType.PR)
                     {
                         switch (reaction.Emote.Name)
                         {
                             case "🐾":
-                                ((GuildFight)groupObject).noGearUsers.Remove((SocketUser)reaction.User);
+                                guildFight.noGearUsers.Remove(user);
                                 break;
                             case "🐷":
-                                ((GuildFight)groupObject).unwillingUsers.Remove((SocketUser)reaction.User);
+                                guildFight.unwillingUsers.Remove(user);
                                 break;
                             case "❓":
-                                ((GuildFight)groupObject).unsureUsers.Remove((SocketUser)reaction.User);
+                                guildFight.unsureUsers.Remove(user);
                                 break;
                         }
-                        await groupObject.UpdateAtDB();
-                        await groupObject.RewriteMessage();
+                        await guildFight.UpdateAtDB();
+                        await guildFight.RewriteMessage();
+                    }
+                    else if (guildFight.GuildFightType == GuildFightType.EV)
+                    {
+                        switch (reaction.Emote.Name)
+                        {
+                            case "❎":
+                                guildFight.noGearUsers.Remove(user);
+                                break;
+                            case "☑️":
+                                guildFight.unwillingUsers.Remove(user);
+                                break;
+                            case "🇽":
+                                guildFight.unsureUsers.Remove(user);
+                                break;
+                        }
+                        await guildFight.UpdateAtDB();
+                        await guildFight.RewriteMessage();
+
                     }
                 }
             }

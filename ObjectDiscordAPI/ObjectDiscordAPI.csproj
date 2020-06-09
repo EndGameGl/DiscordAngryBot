@@ -60,7 +60,11 @@
     <Compile Include="CacheData\ObjectComparer.cs" />
     <Compile Include="DiscordClient.cs" />
     <Compile Include="Extensions\Convertes.cs" />
+    <Compile Include="Extensions\DELETEMethods.cs" />
     <Compile Include="Extensions\GETMethods.cs" />
+    <Compile Include="Extensions\PATCHMethods.cs" />
+    <Compile Include="Extensions\POSTMethods.cs" />
+    <Compile Include="Extensions\PUTMethods.cs" />
     <Compile Include="GatewayData\ClientStatus.cs" />
     <Compile Include="GatewayData\Gateway.cs" />
     <Compile Include="GatewayData\GatewayCommands\GatewayRequestGuildMembers.cs" />

@@ -14,40 +14,33 @@ namespace DiscordAngryBot.CustomObjects.Bans
     public class DiscordBan
     {
         /// <summary>
-        /// Канал, в котором выдан бан
-        /// </summary>
-        public ISocketMessageChannel channel { get; set; }
-        /// <summary>
-        /// Цель бана
-        /// </summary>
-        public SocketGuildUser banTarget { get; set; }
-        /// <summary>
-        /// Роль бана
-        /// </summary>
-        public SocketRole roleToBan { get; set; }
-        /// <summary>
-        /// Объект System.Threading.Timer бана
-        /// </summary>
-        public Timer timer { get; set; }
-        /// <summary>
-        /// Длина бана
-        /// </summary>
-        public int? length { get; set; }
-        /// <summary>
-        /// Признак конечности бана
-        /// </summary>
-        public bool isInfinite { get; set; }
-        /// <summary>
         /// Уникальный идентификатор бана
         /// </summary>
         public string GUID { get; set; }
+
+        /// <summary>
+        /// Канал гильдии, в котором был выдан бан
+        /// </summary>
+        public SocketTextChannel Channel { get; set; }
+
+        /// <summary>
+        /// Цель бана
+        /// </summary>
+        public SocketGuildUser BanTarget { get; set; }
+
+        /// <summary>
+        /// Объект System.Threading.Timer бана
+        /// </summary>
+        public Timer BanTimer { get; set; }
+        
         /// <summary>
         /// Дата создания бана
         /// </summary>
-        public DateTime createdAt { get; set; }
+        public DateTime CreatedAt { get; set; }
+
         /// <summary>
         /// Дата окончания бана
         /// </summary>
-        public DateTime? endsAt { get; set; }
+        public DateTime? EndsAt { get; set; }
     }
 }

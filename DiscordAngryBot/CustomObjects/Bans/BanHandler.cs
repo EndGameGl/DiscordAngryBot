@@ -26,30 +26,54 @@ namespace DiscordAngryBot.CustomObjects.Bans
         /// <param name="role">Роль, которая попадает под бан</param>
         /// <param name="channel">Канал, в котором забанен пользователь</param>
         /// <returns></returns>
-        public static async Task<DiscordBan> Ban(this SocketGuildUser user, int? time, SocketRole role, ISocketMessageChannel channel, bool isAuto)
+        public static async Task Ban(this SocketGuildUser user, int? time, SocketRole role, SocketTextChannel channel, bool isAuto, bool isSelf = false)
         {
-            DiscordBan ban = await BanBuilder.BuildDiscordBan(user, time, role, channel);
+            DiscordBan ban = await BanBuilder.BuildDiscordBan(user, time, channel);
 
-            if (ban.isInfinite)
+            if (ban.EndsAt == null)
             {
-                await ban.banTarget.RemoveRoleAsync(ban.roleToBan);
-                await ban.channel.SendMessageAsync($"Выдан бан пользователю {ban.banTarget.Mention}");
+                await ban.BanTarget.RemoveRoleAsync(role);
+                await ban.Channel.SendMessageAsync($"Выдан бан пользователю {ban.BanTarget.Mention}");
             }
             else
             {
-                await ban.banTarget.RemoveRoleAsync(ban.roleToBan);
-                ban.timer = new Timer(BanTimerCallBack, ban, (int)time, Timeout.Infinite);
+                await ban.BanTarget.RemoveRoleAsync(role);
+
+                ban.BanTimer = new Timer(BanTimerCallBack, ban, (int)time, Timeout.Infinite);
+
                 if (isAuto == false)
                 {
-                    await ban.channel.SendMessageAsync($"Выдан бан пользователю {ban.banTarget.Mention} на {time / 60 / 1000} минут");
+                    if (isSelf == false)
+                    {
+                        await ban.Channel.SendMessageAsync($"Выдан бан пользователю {ban.BanTarget.Mention} на {time / 60 / 1000} минут");
+                    }
+                    else 
+                    {
+                        await ban.Channel.SendMessageAsync($"Пользователь {ban.BanTarget.Mention} выпросил у хомяка себе бан на {time / 60 / 1000} минут");
+                    }
                 }
                 else 
                 {
-                    await ban.channel.SendMessageAsync($"Выдан автоматический бан за мат пользователю {ban.banTarget.Mention}, если вы считаете его ошибочным, напишите администраторам");
+                    await ban.Channel.SendMessageAsync($"Выдан автоматический бан за мат пользователю {ban.BanTarget.Mention}, если вы считаете его ошибочным, напишите администраторам");
                 }
             }
-            
-            return ban;
+            BotCore.GetDiscordGuildBans(channel.Guild.Id).Add(ban);
+            await ban.SaveBanToDB();
+        }
+
+        /// <summary>
+        /// Разбан пользователя
+        /// </summary>
+        /// <param name="ban"></param>
+        /// <returns></returns>
+        public static async Task Unban(this DiscordBan ban)
+        {
+            var roleID = BotCore.GetGuildDataCache(ban.Channel.Guild.Id).Settings.BanRoleID;
+            await ban.BanTarget.AddRoleAsync(ban.Channel.Guild.GetRole(roleID.Value));
+            ban.BanTimer?.Dispose();
+            string sqlQuery = $"DELETE FROM Bans WHERE GUID = '{ban.GUID}'";
+            await SQLiteDataManager.PushToDB($"locals/Databases/{ban.Channel.Guild.Id}/Bans.sqlite", sqlQuery);
+            BotCore.GetDiscordGuildBans(ban.Channel.Guild.Id).Remove(ban);
         }
 
         /// <summary>
@@ -59,12 +83,14 @@ namespace DiscordAngryBot.CustomObjects.Bans
         public static async void BanTimerCallBack(object ban)
         {
             DiscordBan objBan = (DiscordBan)ban;
-            await objBan.banTarget.AddRoleAsync(objBan.roleToBan);
-            await objBan.channel.SendMessageAsync($"Возвращена роль {objBan.roleToBan.Name} пользователю {objBan.banTarget.Username}");
-            objBan.timer.Change(Timeout.Infinite, Timeout.Infinite);
-            objBan.timer.Dispose();
+            var roleID = BotCore.GetGuildDataCache(objBan.Channel.Guild.Id).Settings.BanRoleID;
+            var role = objBan.Channel.Guild.GetRole(roleID.Value);
+            await objBan.BanTarget.AddRoleAsync(role);
+            await objBan.Channel.SendMessageAsync($"Возвращена роль {role.Name} пользователю {objBan.BanTarget.Username}");
+            objBan.BanTimer.Change(Timeout.Infinite, Timeout.Infinite);
+            objBan.BanTimer.Dispose();
             string sqlQuery = $"DELETE FROM Bans WHERE GUID = '{objBan.GUID}'";
-            await SQLiteDataManager.PushToDB(Groups.configs.groups_dbPath, sqlQuery);
+            await SQLiteDataManager.PushToDB($"locals/Databases/{objBan.Channel.Guild.Id}/Bans.sqlite", sqlQuery);
         }     
 
         /// <summary>
@@ -75,11 +101,8 @@ namespace DiscordAngryBot.CustomObjects.Bans
         public static async Task SaveBanToDB(this DiscordBan ban)
         {
             string jsonString = await ban.SerializeToJson();
-            int isInfinite = 0;
-            if (ban.isInfinite)
-                isInfinite = 1;
-            string sqlQuery = $"INSERT INTO Bans (GUID, JSON, isInfinite) VALUES ('{ban.GUID}', '{jsonString}', {isInfinite})"; 
-            await SQLiteDataManager.PushToDB(Groups.configs.groups_dbPath, sqlQuery);
+            string sqlQuery = $"INSERT INTO Bans (GUID, BanJSON) VALUES ('{ban.GUID}', '{jsonString}')"; 
+            await SQLiteDataManager.PushToDB($"locals/Databases/{ban.Channel.Guild.Id}/Bans.sqlite", sqlQuery);
         }
 
         /// <summary>
@@ -103,13 +126,12 @@ namespace DiscordAngryBot.CustomObjects.Bans
         /// <param name="jsonText"></param>
         /// <param name="client"></param>
         /// <returns></returns>
-        public static async Task<DiscordBan> DeserializeFromJson(string jsonText, DiscordSocketClient client)
+        public static async Task<DiscordBan> DeserializeFromJson(string jsonText, SocketGuild guild)
         {
-            await ConsoleWriter.Write($"Deserializing ban from JSON", ConsoleWriter.InfoType.Notice);
             using (MemoryStream serializationStream = new MemoryStream(Encoding.UTF8.GetBytes(jsonText)))
             {
                 var banDataObject = await JsonSerializer.DeserializeAsync<BanJSONobject>(serializationStream);
-                var ban = await banDataObject.ConvertToDiscordBan(client.GetGuild(636208919114547212));
+                var ban = await banDataObject.ConvertToDiscordBan(guild);
                 return ban;
             }
         }
@@ -119,81 +141,17 @@ namespace DiscordAngryBot.CustomObjects.Bans
         /// </summary>
         /// <param name="client"></param>
         /// <returns></returns>
-        public static async Task<List<DiscordBan>> LoadAllBansFromDB(DiscordSocketClient client)
+        public static async Task<List<DiscordBan>> LoadBansFromGuildDB(SocketGuild guild)
         {
-            await ConsoleWriter.Write($"Loading bans from database", ConsoleWriter.InfoType.Notice);
-            string query = "SELECT * FROM Bans WHERE isInfinite = 0";
-            DataTable data = await SQLiteDataManager.GetDataFromDB(Groups.configs.groups_dbPath, query);
+            string query = "SELECT * FROM Bans";
+            DataTable data = await SQLiteDataManager.GetDataFromDB($"locals/Databases/{guild.Id}/Bans.sqlite", query);
             List<DiscordBan> bans = new List<DiscordBan>();
-            await ConsoleWriter.Write($"Filling list with bans", ConsoleWriter.InfoType.Notice);
             foreach (DataRow row in data.AsEnumerable())
             {
-                bans.Add(await BanBuilder.BuildLoadedDiscordBan(client, row["GUID"].ToString(), row["JSON"].ToString()));
+                bans.Add(await BanBuilder.BuildLoadedDiscordBan(row["GUID"].ToString(), row["BanJSON"].ToString(), guild));
             }
             return bans;
         }
     }
-
-    /// <summary>
-    /// Класс-конструктор банов
-    /// </summary>
-    public static class BanBuilder
-    {
-        /// <summary>
-        /// Конструктор бана дискорда
-        /// </summary>
-        /// <param name="target"></param>
-        /// <param name="time"></param>
-        /// <param name="role"></param>
-        /// <param name="channel"></param>
-        /// <returns></returns>
-        public static async Task<DiscordBan> BuildDiscordBan(SocketGuildUser target, int? time, SocketRole role, ISocketMessageChannel channel)
-        {
-            DateTime createdAt = DateTime.Now;
-            DateTime? endsAt = null;
-            if (time != null)
-            {
-                endsAt = createdAt.AddMilliseconds((double)time);
-            }
-            DiscordBan ban = new DiscordBan()
-            {
-                channel = channel,
-                banTarget = target,
-                GUID = Guid.NewGuid().ToString(),
-                isInfinite = time == null,
-                length = time,
-                roleToBan = role,
-                timer = null,
-                createdAt = createdAt,
-                endsAt = endsAt
-            };
-            return ban;
-        }
-
-        /// <summary>
-        /// Конструктор бана дискорда на основе данных из базы
-        /// </summary>
-        /// <param name="client"></param>
-        /// <param name="GUID"></param>
-        /// <param name="JSON"></param>
-        /// <returns></returns>
-        public static async Task<DiscordBan> BuildLoadedDiscordBan(DiscordSocketClient client, string GUID, string JSON)
-        {
-            await ConsoleWriter.Write($"Building ban {GUID}", ConsoleWriter.InfoType.Notice);
-            DiscordBan ban = await BanHandler.DeserializeFromJson(JSON, client);
-            ban.GUID = GUID;
-            DateTime currentTime = DateTime.Now;
-
-            if (ban.endsAt.Value > currentTime) 
-            {
-                TimeSpan timeLeft = ban.endsAt.Value - currentTime;
-                ban.timer = new Timer(BanHandler.BanTimerCallBack, ban, (int)timeLeft.TotalMilliseconds, Timeout.Infinite); 
-            }
-            else
-            {
-                ban.timer = new Timer(BanHandler.BanTimerCallBack, ban, 0, Timeout.Infinite);
-            }
-            return ban;
-        }
-    }
+    
 }

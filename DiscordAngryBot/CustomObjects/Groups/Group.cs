@@ -1,4 +1,5 @@
-﻿using Discord.Rest;
+﻿using Discord;
+using Discord.Rest;
 using Discord.WebSocket;
 using Microsoft.Win32.SafeHandles;
 using System;
@@ -13,7 +14,7 @@ namespace DiscordAngryBot.CustomObjects.Groups
     /// <summary>
     /// Абстрактный класс, предстравляющий группу пользователей
     /// </summary>
-    public abstract class Group : IDisposable
+    public class Group : IDisposable
     {
         /// <summary>
         /// Признак того, был ли удален объект
@@ -23,6 +24,7 @@ namespace DiscordAngryBot.CustomObjects.Groups
         /// Объект SafeFileHandle
         /// </summary>
         SafeHandle handle = new SafeFileHandle(IntPtr.Zero, true);
+
         /// <summary>
         /// Уникальный идентификатор группы
         /// </summary>
@@ -30,35 +32,32 @@ namespace DiscordAngryBot.CustomObjects.Groups
         /// <summary>
         /// Пользователь, создавший группу
         /// </summary>
-        public SocketUser author { get; set; }
+        public SocketGuildUser Author { get; set; }
         /// <summary>
         /// Канал, в котором была создана группа
         /// </summary>
-        public ISocketMessageChannel channel { get; set; }
+        public SocketTextChannel Channel { get; set; }
         /// <summary>
         /// Список пользователей, состоящих в группе
         /// </summary>
-        public List<SocketUser> users { get; set; }
+        public List<SocketGuildUser> Users { get; set; }
         /// <summary>
         /// Ограничение на количество пользователей в группе
         /// </summary>
-        public int userLimit { get; set; } 
+        public int? UserLimit { get; set; } 
         /// <summary>
         /// Сообщение, представляющее группу в дискорде
         /// </summary>
-        public RestUserMessage targetMessage { get; set; }
+        public RestUserMessage TargetMessage { get; set; }
         /// <summary>
         /// Дата создания группы
         /// </summary>
-        public DateTime createdAt { get; set; }
+        public DateTime CreatedAt { get; set; }
         /// <summary>
         /// Описание цели сбора группы
         /// </summary>
-        public string destination { get; set; }
-        /// <summary>
-        /// Признак того, ведется ли набор в группе
-        /// </summary>
-        public bool isActive { get; set; }
+        public string Destination { get; set; }
+
         /// <summary>
         /// Метод вызова сбора памяти
         /// </summary>

@@ -30,7 +30,7 @@ namespace ObjectDiscordAPI.Extensions
         /// <returns></returns>
         public async static Task<Guild> GetGuildAsync(this DiscordClient client, ulong ID)
         {
-            return JsonConvert.DeserializeObject<Guild>(await client.GET($"guilds/{ID}"));
+            return JsonConvert.DeserializeObject<Guild>(await DiscordClient.GET($"guilds/{ID}"));
         }
 
         /// <summary>
@@ -41,7 +41,7 @@ namespace ObjectDiscordAPI.Extensions
         /// <returns></returns>
         public async static Task<User> GetUserAsync(this DiscordClient client, ulong ID)
         {
-            return JsonConvert.DeserializeObject<User>(await client.GET($"users/{ID}"));
+            return JsonConvert.DeserializeObject<User>(await DiscordClient.GET($"users/{ID}"));
         }
 
         /// <summary>
@@ -54,7 +54,7 @@ namespace ObjectDiscordAPI.Extensions
         /// <returns></returns>
         public async static Task<List<GuildMember>> GetGuildMembersAsync(this DiscordClient client, ulong ID, int maxAmount = 1, int afterUser = 0)
         {
-            return JsonConvert.DeserializeObject<List<GuildMember>>(await client.GET($"guilds/{ID}/members?limit={maxAmount}&after{afterUser}"));
+            return JsonConvert.DeserializeObject<List<GuildMember>>(await DiscordClient.GET($"guilds/{ID}/members?limit={maxAmount}&after{afterUser}"));
         }
 
         /// <summary>
@@ -66,7 +66,7 @@ namespace ObjectDiscordAPI.Extensions
         /// <returns></returns>
         public async static Task<GuildMember> GetGuildMemberAsync(this DiscordClient client, ulong guildID, ulong memberID)
         {
-            return JsonConvert.DeserializeObject<GuildMember>(await client.GET($"guilds/{guildID}/members/{memberID}"));
+            return JsonConvert.DeserializeObject<GuildMember>(await DiscordClient.GET($"guilds/{guildID}/members/{memberID}"));
         }
 
         /// <summary>
@@ -77,7 +77,7 @@ namespace ObjectDiscordAPI.Extensions
         /// <returns></returns>
         public async static Task<Channel[]> GetGuildChannelsAsync(this DiscordClient client, ulong ID)
         {
-            return JsonConvert.DeserializeObject<Channel[]>(await client.GET($"guilds/{ID}/channels"));
+            return JsonConvert.DeserializeObject<Channel[]>(await DiscordClient.GET($"guilds/{ID}/channels"));
         }
 
         /// <summary>
@@ -88,7 +88,7 @@ namespace ObjectDiscordAPI.Extensions
         /// <returns></returns>
         public async static Task<GuildBan[]> GetGuildBansAsync(this DiscordClient client, ulong guildID)
         {
-            return JsonConvert.DeserializeObject<GuildBan[]>(await client.GET($"guilds/{guildID}/bans"));
+            return JsonConvert.DeserializeObject<GuildBan[]>(await DiscordClient.GET($"guilds/{guildID}/bans"));
         }
 
         /// <summary>
@@ -100,7 +100,7 @@ namespace ObjectDiscordAPI.Extensions
         /// <returns></returns>
         public async static Task<GuildBan> GetGuildBanAsync(this DiscordClient client, ulong guildID, ulong userID)
         {
-            return JsonConvert.DeserializeObject<GuildBan>(await client.GET($"guilds/{guildID}/bans/{userID}"));
+            return JsonConvert.DeserializeObject<GuildBan>(await DiscordClient.GET($"guilds/{guildID}/bans/{userID}"));
         }
 
         /// <summary>
@@ -111,7 +111,7 @@ namespace ObjectDiscordAPI.Extensions
         /// <returns></returns>
         public async static Task<GuildRole[]> GetGuildRolesAsync(this DiscordClient client, ulong guildID)
         {
-            return JsonConvert.DeserializeObject<GuildRole[]>(await client.GET($"guilds/{guildID}/roles"));
+            return JsonConvert.DeserializeObject<GuildRole[]>(await DiscordClient.GET($"guilds/{guildID}/roles"));
         }
 
         /// <summary>
@@ -123,7 +123,7 @@ namespace ObjectDiscordAPI.Extensions
         /// <returns></returns>
         public async static Task<GuildRole> GetGuildRoleAsync(this DiscordClient client, ulong guildID, ulong roleID)
         {
-            return JsonConvert.DeserializeObject<GuildRole>(await client.GET($"guilds/{guildID}/roles/{roleID}"));
+            return JsonConvert.DeserializeObject<GuildRole>(await DiscordClient.GET($"guilds/{guildID}/roles/{roleID}"));
         }
 
         /// <summary>
@@ -134,7 +134,7 @@ namespace ObjectDiscordAPI.Extensions
         /// <returns></returns>
         public async static Task<VoiceRegion[]> GetGuildVoiceRegionsAsync(this DiscordClient client, ulong guildID)
         {
-            return JsonConvert.DeserializeObject<VoiceRegion[]>(await client.GET($"guilds/{guildID}/regions"));
+            return JsonConvert.DeserializeObject<VoiceRegion[]>(await DiscordClient.GET($"guilds/{guildID}/regions"));
         }
 
         /// <summary>
@@ -146,7 +146,7 @@ namespace ObjectDiscordAPI.Extensions
         /// <returns></returns>
         public async static Task<GuildPrune> GetGuildPruneAsync(this DiscordClient client, ulong guildID, int days = 7)
         {
-            return JsonConvert.DeserializeObject<GuildPrune>(await client.GET($"guilds/{guildID}/prune?days={days}"));
+            return JsonConvert.DeserializeObject<GuildPrune>(await DiscordClient.GET($"guilds/{guildID}/prune?days={days}"));
         }
 
         /// <summary>
@@ -157,7 +157,7 @@ namespace ObjectDiscordAPI.Extensions
         /// <returns></returns>
         public async static Task<Invite[]> GetGuildInvitesAsync(this DiscordClient client, ulong guildID)
         {
-            return JsonConvert.DeserializeObject<Invite[]>(await client.GET($"guilds/{guildID}/invites"));
+            return JsonConvert.DeserializeObject<Invite[]>(await DiscordClient.GET($"guilds/{guildID}/invites"));
         }
 
         /// <summary>
@@ -168,22 +168,22 @@ namespace ObjectDiscordAPI.Extensions
         /// <returns></returns>
         public async static Task<Integration[]> GetGuildIntegrationsAsync(this DiscordClient client, ulong guildID)
         {
-            return JsonConvert.DeserializeObject<Integration[]>(await client.GET($"guilds/{guildID}/integrations"));
+            return JsonConvert.DeserializeObject<Integration[]>(await DiscordClient.GET($"guilds/{guildID}/integrations"));
         }
 
         public async static Task<GuildEmbed> GetGuildEmbedAsync(this DiscordClient client, ulong guildID)
         {
-            return JsonConvert.DeserializeObject<GuildEmbed>(await client.GET($"guilds/{guildID}/embed"));
+            return JsonConvert.DeserializeObject<GuildEmbed>(await DiscordClient.GET($"guilds/{guildID}/embed"));
         }
 
         public async static Task<Invite> GetVanityURLAsync(this DiscordClient client, ulong guildID)
         {
-            return JsonConvert.DeserializeObject<Invite>(await client.GET($"guilds/{guildID}/vanity-url"));
+            return JsonConvert.DeserializeObject<Invite>(await DiscordClient.GET($"guilds/{guildID}/vanity-url"));
         }
 
         public async static Task<Image> GetGuildWidgetImageAsync(this DiscordClient client, ulong guildID)
         {
-            byte[] data = await client.GETFile($"guilds/{guildID}/widget.png");
+            byte[] data = await DiscordClient.GETFile($"guilds/{guildID}/widget.png");
             if (data != null)
             {
                 using (var ms = new MemoryStream(data))
@@ -204,18 +204,18 @@ namespace ObjectDiscordAPI.Extensions
         /// <returns></returns>
         public async static Task<GuildPreview> GetGuildPreviewAsync(this DiscordClient client, ulong guildID)
         {
-            return JsonConvert.DeserializeObject<GuildPreview>(await client.GET($"guilds/{guildID}/preview"));
+            return JsonConvert.DeserializeObject<GuildPreview>(await DiscordClient.GET($"guilds/{guildID}/preview"));
         }
 
         #endregion
         public async static Task<Gateway> GetGatewayAsync(this DiscordClient client)
         {
-            return JsonConvert.DeserializeObject<Gateway>(await client.GET("gateway/bot"));
+            return JsonConvert.DeserializeObject<Gateway>(await DiscordClient.GET("gateway/bot"));
         }
 
         public async static Task<Message[]> GetChannelMessagesAsync(this DiscordClient client, ulong ChannelID, int MessagesAmount)
         {
-            return JsonConvert.DeserializeObject<Message[]>(await client.GET($"channels/{ChannelID}/messages?limit={MessagesAmount}"));
+            return JsonConvert.DeserializeObject<Message[]>(await DiscordClient.GET($"channels/{ChannelID}/messages?limit={MessagesAmount}"));
         }
     }
 }

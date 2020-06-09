@@ -11,6 +11,10 @@ using System.Data.SQLite;
 using System.Data;
 using DiscordAngryBot.CustomObjects.SQLIteHandler;
 using DiscordAngryBot.CustomObjects.ConsoleOutput;
+using System.Threading;
+using System.Diagnostics;
+using System.Net.Sockets;
+using Discord.Rest;
 
 namespace DiscordAngryBot.CustomObjects.Groups
 {
@@ -20,40 +24,6 @@ namespace DiscordAngryBot.CustomObjects.Groups
     public static class GroupHandler
     {
         /// <summary>
-        /// Добавить пользователя в группу
-        /// </summary>
-        /// <param name="group">Группа</param>
-        /// <param name="user">Пользователь, добавляемый в группу</param>
-        public static void AddUser(this Group group, SocketUser user)
-        {
-            if (group.users.Contains(user))
-            {
-                return;
-            }
-            else
-            {
-                group.users.Add(user);
-            }
-        }
-
-        /// <summary>
-        /// Удалить пользователя из группы
-        /// </summary>
-        /// <param name="group">Группа</param>
-        /// <param name="user">Пользователь, удаляемый из группы</param>
-        public static void RemoveUser(this Group group, SocketUser user)
-        {
-            if (group.users.Contains(user))
-            {
-                group.users.Remove(user);
-            }
-            else
-            {
-                return;
-            }
-        }
-
-        /// <summary>
         /// Отправить первичное сообщение о сборе группы
         /// </summary>
         /// <param name="group">Группа</param>
@@ -61,29 +31,40 @@ namespace DiscordAngryBot.CustomObjects.Groups
         public static async Task SendMessage(this Group group)
         {
             StringBuilder messageBuilder = new StringBuilder();
-            if (group.IsParty())
+            if (group is Party)
             {
-                messageBuilder.Append($"Собирается пати пользователем {group.author.Mention}: {group.destination}\n__**Осталось {group.userLimit - group.users.Count()} мест**__\nСостав группы:\n");
+                messageBuilder.Append($"Собирается пати пользователем {group.Author.Mention}: {group.Destination}\n__**Осталось {group.UserLimit - group.Users.Count()} мест**__\nСостав группы:\n");
             }
-            else if (group.IsRaid())
+            else if (group is Raid)
             {
-                messageBuilder.Append($"Собирается рейд пользователем {group.author.Mention}: {group.destination}\n__**Осталось {group.userLimit - group.users.Count()} мест**__\nСостав группы:\n");
+                messageBuilder.Append($"Собирается рейд пользователем {group.Author.Mention}: {group.Destination}\n__**Осталось {group.UserLimit - group.Users.Count()} мест**__\nСостав группы:\n");
             }
-            else if (group.IsGuildFight())
+            else if (group is GuildFight && ((GuildFight)group).GuildFightType == GuildFightType.PR)
             {
-                messageBuilder.Append($"Собирается группа на битвы БШ: {group.destination}.\nСостав группы:\n");
-            }           
-            group.targetMessage = await group.channel.SendMessageAsync(messageBuilder.ToString());
-            await group.targetMessage.AddReactionAsync(new Emoji("✅")); // галочка           
-            if (!group.IsGuildFight())
-                await group.targetMessage.AddReactionAsync(new Emoji("\u2757")); // восклицательный знак
-            if (group.IsGuildFight())
-            {
-                await group.targetMessage.AddReactionAsync(new Emoji("🐾"));
-                await group.targetMessage.AddReactionAsync(new Emoji("🐷"));
-                await group.targetMessage.AddReactionAsync(new Emoji("❓"));
+                messageBuilder.Append($"Собирается группа на битвы БШ: {group.Destination}.\nСостав группы:\n");
             }
-            await group.targetMessage.AddReactionAsync(new Emoji("\u274C")); // крестик
+            else if (group is GuildFight && ((GuildFight)group).GuildFightType == GuildFightType.EV)
+            {
+                messageBuilder.Append($"Опрос готовности участия в битве БШ: {group.Destination}.\nОтмечаемся!\n");
+            } 
+            group.TargetMessage = await group.Channel.SendMessageAsync(messageBuilder.ToString());
+
+            await group.TargetMessage.AddReactionAsync(new Emoji("✅")); // галочка           
+            if (!(group is GuildFight))
+                await group.TargetMessage.AddReactionAsync(new Emoji("\u2757")); // восклицательный знак
+            if (group is GuildFight && ((GuildFight)group).GuildFightType == GuildFightType.PR)
+            {
+                await group.TargetMessage.AddReactionAsync(new Emoji("🐾"));
+                await group.TargetMessage.AddReactionAsync(new Emoji("🐷"));
+                await group.TargetMessage.AddReactionAsync(new Emoji("❓"));
+            }
+            else if (group is GuildFight && ((GuildFight)group).GuildFightType == GuildFightType.EV)
+            {
+                await group.TargetMessage.AddReactionAsync(new Emoji("❎"));
+                await group.TargetMessage.AddReactionAsync(new Emoji("☑️"));
+                await group.TargetMessage.AddReactionAsync(new Emoji("🇽"));
+            }
+            await group.TargetMessage.AddReactionAsync(new Emoji("\u274C")); // крестик
         }
 
         /// <summary>
@@ -96,29 +77,33 @@ namespace DiscordAngryBot.CustomObjects.Groups
             StringBuilder messageBuilder = new StringBuilder();
             if (group is Party)
             {
-                messageBuilder.Append($"Собирается пати пользователем {group.author.Mention}: {group.destination}\n__**Осталось {group.userLimit - group.users.Count()} мест**__\nСостав группы:\n");
+                messageBuilder.Append($"Собирается пати пользователем {group.Author.Mention}: {group.Destination}\n__**Осталось {group.UserLimit - group.Users.Count()} мест**__\nСостав группы:\n");
             }
             else if (group is Raid)
             {
-                messageBuilder.Append($"Собирается рейд пользователем {group.author.Mention}: {group.destination}\n__**Осталось {group.userLimit - group.users.Count()} мест**__\nСостав группы:\n");
+                messageBuilder.Append($"Собирается рейд пользователем {group.Author.Mention}: {group.Destination}\n__**Осталось {group.UserLimit - group.Users.Count()} мест**__\nСостав группы:\n");
             }
-            else if (group.IsGuildFight())
+            else if (group is GuildFight && ((GuildFight)group).GuildFightType == GuildFightType.PR)
             {
-                messageBuilder.Append($"__**Собирается группа на битвы БШ: {group.destination} **__\nОтмечаемся!\n");
+                messageBuilder.Append($"__**Собирается группа на битвы БШ: {group.Destination} **__\nОтмечаемся!\n");
             }
-            if (!group.IsGuildFight())
+            else if (group is GuildFight && ((GuildFight)group).GuildFightType == GuildFightType.EV)
             {
-                for (int i = 0; i < group.users.Where(x => x != null).Count(); i++)
+                messageBuilder.Append($"Опрос готовности участия в битве БШ: {group.Destination}.\nОтмечаемся!\n");
+            }
+            if (!(group is GuildFight))
+            {
+                for (int i = 0; i < group.Users.Where(x => x != null).Count(); i++)
                 {
-                    messageBuilder.AppendLine($"{i + 1}: {group.users[i].Mention}");
+                    messageBuilder.AppendLine($"{i + 1}: {group.Users[i].Mention}");
                 }
             }
-            else
+            else if (group is GuildFight && ((GuildFight)group).GuildFightType == GuildFightType.PR)
             {
                 messageBuilder.Append($"**Иду, гир есть**: \u2705\n");
-                for (int i = 0; i < ((GuildFight)group).users.Where(x => x != null).Count(); i++)
+                for (int i = 0; i < ((GuildFight)group).Users.Where(x => x != null).Count(); i++)
                 {
-                    messageBuilder.AppendLine($"> {i + 1}: {group.users[i].Mention}");
+                    messageBuilder.AppendLine($"> {i + 1}: {group.Users[i].Mention}");
                 }
                 messageBuilder.Append($"\n**Иду, но гир слабый/нет вообще**: 🐾\n");
                 for (int i = 0; i < ((GuildFight)group).noGearUsers.Where(x => x != null).Count(); i++)
@@ -137,7 +122,30 @@ namespace DiscordAngryBot.CustomObjects.Groups
                 }
                 messageBuilder.Append($"\n**Не могу пойти**: \u274C");
             }
-            await group.targetMessage.ModifyAsync(m => { m.Content = messageBuilder.ToString(); });
+            else if (group is GuildFight && ((GuildFight)group).GuildFightType == GuildFightType.EV)
+            {
+                messageBuilder.Append($"Основной состав буду: ✅\n");
+                for (int i = 0; i < ((GuildFight)group).Users.Where(x => x != null).Count(); i++)
+                {
+                    messageBuilder.AppendLine($"> {i + 1}: {group.Users[i].Mention}");
+                }
+                messageBuilder.Append($"\nОсновной состав не смогу: ❎\n");
+                for (int i = 0; i < ((GuildFight)group).noGearUsers.Where(x => x != null).Count(); i++)
+                {
+                    messageBuilder.AppendLine($"> {i + 1}: {((GuildFight)group).noGearUsers[i].Mention}");
+                }
+                messageBuilder.Append($"\nРезерв готов помочь: ☑️\n");
+                for (int i = 0; i < ((GuildFight)group).unwillingUsers.Where(x => x != null).Count(); i++)
+                {
+                    messageBuilder.AppendLine($"> {i + 1}: {((GuildFight)group).unwillingUsers[i].Mention}");
+                }
+                messageBuilder.Append($"\nРезерв не смогу: 🇽\n");
+                for (int i = 0; i < ((GuildFight)group).unsureUsers.Where(x => x != null).Count(); i++)
+                {
+                    messageBuilder.AppendLine($"> {i + 1}: {((GuildFight)group).unsureUsers[i].Mention}");
+                }
+            }
+            await group.TargetMessage.ModifyAsync(m => { m.Content = messageBuilder.ToString(); });
         }
 
         /// <summary>
@@ -148,20 +156,20 @@ namespace DiscordAngryBot.CustomObjects.Groups
         public static async Task RewriteMessageOnCancel(this Group group)
         {
             StringBuilder messageBuilder = new StringBuilder();
-            if (group.IsParty()) 
+            if (group is Party)
             {
-                messageBuilder.Append($"Сбор группы {group.author.Mention} ({group.destination}) завершен.");
+                messageBuilder.Append($"Сбор группы {group.Author.Mention} ({group.Destination}) завершен.");
             }
-            else if (group.IsRaid())
+            else if (group is Raid)
             {
-                messageBuilder.Append($"Сбор рейда {group.author.Mention} ({group.destination}) завершен.");
+                messageBuilder.Append($"Сбор рейда {group.Author.Mention} ({group.Destination}) завершен.");
             }
-            else if (group.IsGuildFight())
+            else if (group is GuildFight)
             {
-                messageBuilder.Append($"Сбор битв БШ ({group.destination}) завершен.");
-            }             
-            await group.targetMessage.ModifyAsync(m => { m.Content = messageBuilder.ToString(); });
-            await group.targetMessage.RemoveAllReactionsAsync();
+                messageBuilder.Append($"Сбор битв БШ ({group.Destination}) завершен.");
+            }
+            await group.TargetMessage.ModifyAsync(m => { m.Content = messageBuilder.ToString(); });
+            await group.TargetMessage.RemoveAllReactionsAsync();
         }
 
         /// <summary>
@@ -169,7 +177,7 @@ namespace DiscordAngryBot.CustomObjects.Groups
         /// </summary>
         /// <param name="group"></param>
         /// <returns></returns>
-        public static async Task<string> SerializeToJson(this Group group) 
+        public static async Task<string> SerializeToJson(this Group group)
         {
             using (MemoryStream serializationStream = new MemoryStream())
             {
@@ -185,55 +193,14 @@ namespace DiscordAngryBot.CustomObjects.Groups
         /// <param name="jsonText">Строка, представляющая файл</param>
         /// <param name="client">Клиент бота</param>
         /// <returns></returns>
-        public static async Task<Group> DeserializeFromJson(string jsonText, DiscordSocketClient client)
+        public static async Task<Group> DeserializeFromJson(SocketGuild guild, string jsonText)
         {
-            await ConsoleWriter.Write($"Deserializing Group info object from JSON", ConsoleWriter.InfoType.Notice);
             using (MemoryStream serializationStream = new MemoryStream(Encoding.UTF8.GetBytes(jsonText)))
             {
                 var groupDataObject = await JsonSerializer.DeserializeAsync<GroupJSONObject>(serializationStream);
-                var group = await groupDataObject.ConvertToGroup(client.GetGuild(636208919114547212));
+                var group = await groupDataObject.ConvertToGroup(guild);
                 return group;
             }
-        }
-
-        /// <summary>
-        /// Метод, определяющий, является ли группа рейдом
-        /// </summary>
-        /// <param name="group">Группа</param>
-        /// <returns></returns>
-        public static bool IsRaid(this Group group)
-        {
-            if (group is Raid)
-            {
-                return true;
-            }
-            else
-                return false;
-        }
-
-        /// <summary>
-        /// Метод, определяющий, является ли группа простой группой
-        /// </summary>
-        /// <param name="group"></param>
-        /// <returns></returns>
-        public static bool IsParty(this Group group)
-        {
-            if (group is Party)
-            {
-                return true;
-            }
-            else
-                return false;
-        }
-
-        /// <summary>
-        /// Метод, определяющий, является ли группа битвой БШ
-        /// </summary>
-        /// <param name="group"></param>
-        /// <returns></returns>
-        public static bool IsGuildFight(this Group group)
-        {
-            return group is GuildFight;
         }
 
         /// <summary>
@@ -244,11 +211,8 @@ namespace DiscordAngryBot.CustomObjects.Groups
         public static async Task SaveToDB(this Group group)
         {
             var jsonString = await group.SerializeToJson();
-            int isActive = 0;
-            if (group.isActive == true)
-                isActive = 1;
-            string query = $"INSERT INTO Groups (GUID, JSON, isActive) VALUES('{group.GUID}', '{jsonString}', {isActive})";
-            await SQLiteDataManager.PushToDB(configs.groups_dbPath, query);
+            string query = $"INSERT INTO Groups (GUID, GroupJSON) VALUES('{group.GUID}', '{jsonString}')";
+            await SQLiteDataManager.PushToDB($"locals/Databases/{group.Channel.Guild.Id}/Groups.sqlite", query);
         }
 
         /// <summary>
@@ -259,26 +223,8 @@ namespace DiscordAngryBot.CustomObjects.Groups
         public static async Task UpdateAtDB(this Group group)
         {
             var jsonString = await group.SerializeToJson();
-            int isActive = 0;
-            if (group.isActive == true)
-                isActive = 1;
-            string query = $"UPDATE Groups SET JSON = '{jsonString}' WHERE GUID = '{group.GUID}'";
-            await SQLiteDataManager.PushToDB(configs.groups_dbPath, query);
-        }
-
-        /// <summary>
-        /// Обновление записи в случае, если группа заполнилась
-        /// </summary>
-        /// <param name="group">Группа</param>
-        /// <returns></returns>
-        public static async Task UpdateAtDBIfFull(this Group group)
-        {
-            var jsonString = await group.SerializeToJson();
-            int isActive = 0;
-            if (group.isActive == true)
-                isActive = 1;
-            string query = $"UPDATE Groups SET JSON = '{jsonString}', isActive = {isActive} WHERE GUID = '{group.GUID}'";
-            await SQLiteDataManager.PushToDB(configs.groups_dbPath, query);
+            string query = $"UPDATE Groups SET GroupJSON = '{jsonString}' WHERE GUID = '{group.GUID}'";
+            await SQLiteDataManager.PushToDB($"locals/Databases/{group.Channel.Guild.Id}/Groups.sqlite", query);
         }
 
         /// <summary>
@@ -289,11 +235,8 @@ namespace DiscordAngryBot.CustomObjects.Groups
         public static async Task RemoveFromDB(this Group group)
         {
             var jsonString = await group.SerializeToJson();
-            int isActive = 0;
-            if (group.isActive == true)
-                isActive = 1;
             string query = $"DELETE FROM Groups WHERE GUID = '{group.GUID}'";
-            await SQLiteDataManager.PushToDB(configs.groups_dbPath, query);
+            await SQLiteDataManager.PushToDB($"locals/Databases/{group.Channel.Guild.Id}/Groups.sqlite", query);
         }
 
         /// <summary>
@@ -301,33 +244,30 @@ namespace DiscordAngryBot.CustomObjects.Groups
         /// </summary>
         /// <param name="client"></param>
         /// <returns></returns>
-        public static async Task<List<Group>> LoadAllGroupsFromDB(DiscordSocketClient client)
+        public static async Task<List<Group>> LoadAllGroupsFromDB(SocketGuild guild)
         {
-            await ConsoleWriter.Write($"Loading all groups from database", ConsoleWriter.InfoType.Notice);
-            string query = "SELECT * FROM Groups WHERE isActive = 1";
-            DataTable data = await SQLiteDataManager.GetDataFromDB(configs.groups_dbPath, query);
-            await ConsoleWriter.Write($"Created empty Group list", ConsoleWriter.InfoType.Notice);
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            string query = "SELECT * FROM Groups";
+            DataTable data = await SQLiteDataManager.GetDataFromDB($"locals/Databases/{guild.Id}/Groups.sqlite", query);
             List<Group> groups = new List<Group>();
-            await ConsoleWriter.Write($"Filling list with groups", ConsoleWriter.InfoType.Notice);
+            List<Thread> threads = new List<Thread>();
             foreach (DataRow row in data.AsEnumerable())
             {
-                groups.Add(await GroupBuilder.BuildLoadedGroup(client, row["GUID"].ToString(), row["JSON"].ToString(), (int)row["isActive"]));
+                Thread loadThread = new Thread(() =>
+                {
+                    groups.Add(GroupBuilder.BuildLoadedGroup(guild, row["GUID"].ToString(), row["GroupJSON"].ToString()).Result);
+                });
+                loadThread.Start();
+                threads.Add(loadThread);
             }
+            foreach (var thread in threads)
+            {
+                thread.Join();
+            }
+            sw.Stop();
+            await ConsoleWriter.Write($"Group loading took {sw.ElapsedMilliseconds} ms.", ConsoleWriter.InfoType.Notice);
             return groups;
-        }
-
-        /// <summary>
-        /// Загрузка группы из рейда по GUID'у
-        /// </summary>
-        /// <param name="client">Клиент бота</param>
-        /// <param name="GUID">Уникальный идентификатор группы</param>
-        /// <returns></returns>
-        public static async Task<Group> LoadGroupFromDBByGUID(DiscordSocketClient client, string GUID)
-        {
-            string query = $"SELECT * FROM Groups WHERE GUID = '{GUID}'";
-            DataTable data = await SQLiteDataManager.GetDataFromDB(configs.groups_dbPath, query);
-            DataRow row = data.Rows[0];
-            return await GroupBuilder.BuildLoadedGroup(client, row["GUID"].ToString(), row["JSON"].ToString(), (int)row["isActive"]);
         }
 
         /// <summary>
@@ -336,235 +276,141 @@ namespace DiscordAngryBot.CustomObjects.Groups
         /// <param name="groups"></param>
         /// <param name="client"></param>
         /// <returns></returns>
-        public static async Task ActualizeReactionsOnGroups(List<Group> groups, DiscordSocketClient client)
+        public static async Task ActualizeReactionsOnGroups(SocketGuild guild)
         {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
             await ConsoleWriter.Write($"Actualizing group members", ConsoleWriter.InfoType.Notice);
-            foreach (var group in groups)
+            List<Thread> threadList = new List<Thread>();
+            foreach (var group in BotCore.GetDiscordGuildGroups(guild.Id))
             {
-                await ConsoleWriter.Write($"Checking group {group.GUID}", ConsoleWriter.InfoType.Notice);
-
-                if (group.targetMessage != null)
+                Thread actThread = new Thread(() =>
                 {
-                    if (!group.IsGuildFight())
+                    if (group.TargetMessage != null)
                     {
-                        var usersReacted = group.targetMessage.GetReactionUsersAsync(new Emoji("\u2705"), 13).ToEnumerable().FirstOrDefault();
-
-                        foreach (var user in usersReacted)
+                        if (!(group is GuildFight))
                         {
-                            try
+                            var usersReacted = group.TargetMessage.GetReactionUsersAsync(new Emoji("\u2705"), (group.UserLimit + 1).Value).ToEnumerable().FirstOrDefault();
+                            foreach (var user in usersReacted)
                             {
-                                if (user != null && group.users.Where(x => x.Id == user.Id).Count() == 0 && !user.IsBot)
+                                try
                                 {
-                                    if (group.users.Count < group.userLimit)
+                                    if (user != null && group.Users.Where(x => x.Id == user.Id).Count() == 0 && !user.IsBot)
                                     {
-                                        await ConsoleWriter.Write($"Adding user {user.Username}", ConsoleWriter.InfoType.Notice);
-                                        group.AddUser((SocketUser)client.GetGuild(636208919114547212).GetUser(user.Id));
-                                        await group.UpdateAtDB();
+                                        if (group.Users.Count < group.UserLimit)
+                                        {
+                                            ConsoleWriter.Write($"Adding user {user.Username} at group {group.GUID} in channel {group.Channel.Name}", ConsoleWriter.InfoType.Notice).GetAwaiter().GetResult();
+                                            var guildUser = ((SocketGuildChannel)group.Channel).Guild.Users.Where(x => x.Id == user.Id)?.SingleOrDefault();
+                                            if (guildUser != null)
+                                            {
+                                                
+                                                group.Users.Add(guildUser);
+                                                group.UpdateAtDB().GetAwaiter().GetResult();
+                                            }            
+                                            else
+                                                ConsoleWriter.Write($"User {user.Username} at message {group.TargetMessage.Id} in channel {group.Channel.Name} is no longer a server member, check reactions", ConsoleWriter.InfoType.Notice).GetAwaiter().GetResult();
+                                        }
                                     }
                                 }
+                                catch (Exception ex)
+                                {
+                                    ConsoleWriter.Write($"{ex.Message}", ConsoleWriter.InfoType.Error).GetAwaiter().GetResult();
+                                    continue;
+                                }
                             }
-                            catch (Exception ex)
-                            {
-                                await ConsoleWriter.Write($"{ex.Message}", ConsoleWriter.InfoType.Error);
-                                continue;
-                            }
+                            group.RewriteMessage().GetAwaiter().GetResult();
                         }
-                        await group.RewriteMessage();
+                        else
+                        {
+                            var usersReacted = group.TargetMessage.GetReactionUsersAsync(new Emoji("\u2705"), 30).ToEnumerable().FirstOrDefault();
+                            IReadOnlyCollection<IUser> noGearUsersReacted = null;
+                            IReadOnlyCollection<IUser> unwillingUsersReacted = null;
+                            IReadOnlyCollection<IUser> unsureUsersReacted = null;
+                            if (((GuildFight)group).GuildFightType == GuildFightType.PR)
+                            {
+                                noGearUsersReacted = group.TargetMessage.GetReactionUsersAsync(new Emoji("🐾"), 30).ToEnumerable().FirstOrDefault();
+                                unwillingUsersReacted = group.TargetMessage.GetReactionUsersAsync(new Emoji("🐷"), 30).ToEnumerable().FirstOrDefault();
+                                unsureUsersReacted = group.TargetMessage.GetReactionUsersAsync(new Emoji("❓"), 30).ToEnumerable().FirstOrDefault();
+                            }
+                            else
+                            {
+                                noGearUsersReacted = group.TargetMessage.GetReactionUsersAsync(new Emoji("❎"), 30).ToEnumerable().FirstOrDefault();
+                                unwillingUsersReacted = group.TargetMessage.GetReactionUsersAsync(new Emoji("☑️"), 30).ToEnumerable().FirstOrDefault();
+                                unsureUsersReacted = group.TargetMessage.GetReactionUsersAsync(new Emoji("🇽"), 30).ToEnumerable().FirstOrDefault();
+                            }
+                            foreach (var user in unsureUsersReacted)
+                            {
+                                if (!user.IsBot &&
+                                    (group.Users.Where(x => x.Id == user.Id).Count() == 0 &&
+                                    ((GuildFight)group).noGearUsers.Where(x => x.Id == user.Id).Count() == 0 &&
+                                    ((GuildFight)group).unwillingUsers.Where(x => x.Id == user.Id).Count() == 0) &&
+                                    ((GuildFight)group).unsureUsers.Where(x => x.Id == user.Id).Count() == 0)
+                                {
+                                    ConsoleWriter.Write($"Adding user {user.Username}", ConsoleWriter.InfoType.Notice).GetAwaiter().GetResult();
+                                    ((GuildFight)group).unsureUsers.Add(group.Channel.Guild.GetUser(user.Id));
+                                    group.UpdateAtDB().GetAwaiter().GetResult();
+                                }
+                            }
+                            foreach (var user in unwillingUsersReacted)
+                            {
+                                if (!user.IsBot &&
+                                    (group.Users.Where(x => x.Id == user.Id).Count() == 0 &&
+                                    ((GuildFight)group).noGearUsers.Where(x => x.Id == user.Id).Count() == 0 &&
+                                    ((GuildFight)group).unwillingUsers.Where(x => x.Id == user.Id).Count() == 0) &&
+                                    ((GuildFight)group).unsureUsers.Where(x => x.Id == user.Id).Count() == 0)
+                                {
+                                    ConsoleWriter.Write($"Adding user {user.Username}", ConsoleWriter.InfoType.Notice).GetAwaiter().GetResult();
+                                    ((GuildFight)group).unwillingUsers.Add(group.Channel.Guild.GetUser(user.Id));
+                                    group.UpdateAtDB().GetAwaiter().GetResult();
+                                }
+                            }
+                            foreach (var user in usersReacted)
+                            {
+                                if (!user.IsBot &&
+                                    (group.Users.Where(x => x.Id == user.Id).Count() == 0 &&
+                                    ((GuildFight)group).noGearUsers.Where(x => x.Id == user.Id).Count() == 0 &&
+                                    ((GuildFight)group).unwillingUsers.Where(x => x.Id == user.Id).Count() == 0) &&
+                                    ((GuildFight)group).unsureUsers.Where(x => x.Id == user.Id).Count() == 0)
+                                {
+                                    ConsoleWriter.Write($"Adding user {user.Username}", ConsoleWriter.InfoType.Notice).GetAwaiter().GetResult();
+                                    group.Users.Add(group.Channel.Guild.GetUser(user.Id));
+                                    group.UpdateAtDB().GetAwaiter().GetResult();
+                                }
+                            }
+                            foreach (var user in noGearUsersReacted)
+                            {
+                                if (!user.IsBot &&
+                                    (group.Users.Where(x => x.Id == user.Id).Count() == 0 &&
+                                    ((GuildFight)group).noGearUsers.Where(x => x.Id == user.Id).Count() == 0 &&
+                                    ((GuildFight)group).unwillingUsers.Where(x => x.Id == user.Id).Count() == 0) &&
+                                    ((GuildFight)group).unsureUsers.Where(x => x.Id == user.Id).Count() == 0)
+                                {
+                                    ConsoleWriter.Write($"Adding user {user.Username}", ConsoleWriter.InfoType.Notice).GetAwaiter().GetResult();
+                                    ((GuildFight)group).noGearUsers.Add(group.Channel.Guild.GetUser(user.Id));
+                                    group.UpdateAtDB().GetAwaiter().GetResult();
+                                }
+                            }
+                            group.RewriteMessage().GetAwaiter().GetResult();
+                        }
                     }
                     else
                     {
-                        var usersReacted = group.targetMessage.GetReactionUsersAsync(new Emoji("\u2705"), 30).ToEnumerable().FirstOrDefault();
-                        var noGearUsersReacted = group.targetMessage.GetReactionUsersAsync(new Emoji("🐾"), 30).ToEnumerable().FirstOrDefault();
-                        var unwillingUsersReacted = group.targetMessage.GetReactionUsersAsync(new Emoji("🐷"), 30).ToEnumerable().FirstOrDefault();
-                        var unsureUsersReacted = group.targetMessage.GetReactionUsersAsync(new Emoji("❓"), 30).ToEnumerable().FirstOrDefault();
-
-                        foreach (var user in unsureUsersReacted)
-                        {
-                            if (!user.IsBot &&
-                                (group.users.Where(x => x.Id == user.Id).Count() == 0 &&
-                                ((GuildFight)group).noGearUsers.Where(x => x.Id == user.Id).Count() == 0 &&
-                                ((GuildFight)group).unwillingUsers.Where(x => x.Id == user.Id).Count() == 0) &&
-                                ((GuildFight)group).unsureUsers.Where(x => x.Id == user.Id).Count() == 0)
-                            {
-                                await ConsoleWriter.Write($"Adding user {user.Username}", ConsoleWriter.InfoType.Notice);
-                                ((GuildFight)group).unsureUsers.Add(client.GetGuild(636208919114547212).GetUser(user.Id));
-                                await group.UpdateAtDB();
-                            }
-                        }
-
-                        foreach (var user in unwillingUsersReacted)
-                        {
-                            if (!user.IsBot &&
-                                (group.users.Where(x => x.Id == user.Id).Count() == 0 &&
-                                ((GuildFight)group).noGearUsers.Where(x => x.Id == user.Id).Count() == 0 &&
-                                ((GuildFight)group).unwillingUsers.Where(x => x.Id == user.Id).Count() == 0) &&
-                                ((GuildFight)group).unsureUsers.Where(x => x.Id == user.Id).Count() == 0)
-                            {
-                                await ConsoleWriter.Write($"Adding user {user.Username}", ConsoleWriter.InfoType.Notice);
-                                ((GuildFight)group).unwillingUsers.Add(client.GetGuild(636208919114547212).GetUser(user.Id));
-                                await group.UpdateAtDB();
-                            }
-                        }
-
-                        foreach (var user in usersReacted)
-                        {
-                            if (!user.IsBot && 
-                                (group.users.Where(x => x.Id == user.Id).Count() == 0 &&
-                                ((GuildFight)group).noGearUsers.Where(x => x.Id == user.Id).Count() == 0 &&
-                                ((GuildFight)group).unwillingUsers.Where(x => x.Id == user.Id).Count() == 0) &&
-                                ((GuildFight)group).unsureUsers.Where(x => x.Id == user.Id).Count() == 0)
-                            {
-                                await ConsoleWriter.Write($"Adding user {user.Username}", ConsoleWriter.InfoType.Notice);
-                                group.AddUser(client.GetGuild(636208919114547212).GetUser(user.Id));
-                                await group.UpdateAtDB();
-                            }
-                        }
-
-                        foreach (var user in noGearUsersReacted)
-                        {
-                            if (!user.IsBot &&
-                                (group.users.Where(x => x.Id == user.Id).Count() == 0 &&
-                                ((GuildFight)group).noGearUsers.Where(x => x.Id == user.Id).Count() == 0 &&
-                                ((GuildFight)group).unwillingUsers.Where(x => x.Id == user.Id).Count() == 0) &&
-                                ((GuildFight)group).unsureUsers.Where(x => x.Id == user.Id).Count() == 0)
-                            {
-                                await ConsoleWriter.Write($"Adding user {user.Username}", ConsoleWriter.InfoType.Notice);
-                                ((GuildFight)group).noGearUsers.Add(client.GetGuild(636208919114547212).GetUser(user.Id));
-                                await group.UpdateAtDB();
-                            }
-                        }
-                                              
-                        await group.RewriteMessage();
+                        ConsoleWriter.Write("Found broken party, deleting entry...", ConsoleWriter.InfoType.Error).GetAwaiter().GetResult();
+                        SQLiteDataManager.PushToDB($"locals/Databases/{group.Channel.Guild.Id}", $"DELETE FROM Groups WHERE GUID = '{group.GUID}'").GetAwaiter().GetResult();
                     }
-                }
-                else
-                {
-                    await ConsoleWriter.Write("Found broken party, deleting entry...", ConsoleWriter.InfoType.Error);
-                    await SQLiteDataManager.PushToDB(configs.groups_dbPath, $"DELETE FROM Groups WHERE GUID = '{group.GUID}'");
-                }
-
+                });
+                actThread.Start();
+                threadList.Add(actThread);
             }
+            foreach (var thread in threadList)
+            {
+                thread.Join();
+            }
+            sw.Stop();
+            await ConsoleWriter.Write($"Actualizing group members took {sw.Elapsed.Milliseconds} ms", ConsoleWriter.InfoType.Notice);
         }
+
     }
 
-    /// <summary>
-    /// Класс, предназначенный для инициализации групп
-    /// </summary>
-    public static class GroupBuilder
-    {
-        /// <summary>
-        /// Конструктор простой группы
-        /// </summary>
-        /// <param name="sourceMessage">Сообщение, запустившее конструктор</param>
-        /// <param name="args">Параметры</param>
-        /// <returns></returns>
-        public static async Task<Party> BuildParty(SocketMessage sourceMessage, string[] args)
-        {
-            var groupDestination = string.Empty;
-            foreach (var word in args)
-            {
-                groupDestination += (" " + word);
-            }
-            Party party = new Party()
-            {
-                author = sourceMessage.Author,
-                channel = sourceMessage.Channel,
-                createdAt = DateTime.Now,
-                destination = groupDestination,
-                GUID = Guid.NewGuid().ToString(),
-                users = new List<SocketUser>(),
-                isActive = true,
-                userLimit = 6
-            };
-            await sourceMessage.DeleteAsync();           
-            return party;
-        }
-
-        /// <summary>
-        /// Конструктор рейда
-        /// </summary>
-        /// <param name="sourceMessage">Сообщение, запустившее конструктор</param>
-        /// <param name="args">Параметры</param>
-        /// <returns></returns>
-        public async static Task<Raid> BuildRaid(SocketMessage sourceMessage, string[] args)
-        {
-            var groupDestination = string.Empty;
-            foreach (var word in args)
-            {
-                groupDestination += (" " + word);
-            }
-            Raid raid = new Raid()
-            {
-                author = sourceMessage.Author,
-                channel = sourceMessage.Channel,
-                createdAt = DateTime.Now,
-                destination = groupDestination,
-                GUID = Guid.NewGuid().ToString(),
-                users = new List<SocketUser>(),
-                isActive = true,
-                userLimit = 12
-            };
-            await sourceMessage.DeleteAsync();
-            return raid;
-        }
-
-        /// <summary>
-        /// Конструктор битвы БШ
-        /// </summary>
-        /// <param name="sourceMessage"></param>
-        /// <param name="args"></param>
-        /// <returns></returns>
-        public async static Task<GuildFight> BuildGuildFight(SocketMessage sourceMessage, string[] args)
-        {
-            var groupDestination = string.Empty;
-            foreach (var word in args)
-            {
-                groupDestination += (" " + word);
-            }
-            GuildFight guildFight = new GuildFight()
-            {
-                author = sourceMessage.Author,
-                channel = sourceMessage.Channel,
-                createdAt = DateTime.Now,
-                destination = groupDestination,
-                GUID = Guid.NewGuid().ToString(),
-                users = new List<SocketUser>(),
-                noGearUsers = new List<SocketUser>(),
-                unwillingUsers = new List<SocketUser>(),
-                unsureUsers = new List<SocketUser>(),
-                isActive = true,
-                userLimit = 100
-            };
-            await sourceMessage.DeleteAsync();
-            return guildFight;
-        }
-
-        /// <summary>
-        /// Конструктор группы, на основе данных, полученных из базы данных
-        /// </summary>
-        /// <param name="client">Клиент бота</param>
-        /// <param name="GUID">Уникальный идентификатор</param>
-        /// <param name="json">JSON-данные группы</param>
-        /// <param name="isActive">Признак активности группы</param>
-        /// <returns></returns>
-        public static async Task<Group> BuildLoadedGroup(DiscordSocketClient client, string GUID, string json, int isActive)
-        {
-            await ConsoleWriter.Write($"Building group {GUID}", ConsoleWriter.InfoType.Notice);
-            Group group = await GroupHandler.DeserializeFromJson(json, client);
-            group.GUID = GUID;
-            group.isActive = true;
-            if (group is Party)
-            {
-                return (Party)group;
-            }
-            else if (group is Raid)
-            {
-                return (Raid)group;
-            }
-            else 
-            {
-                return (GuildFight)group;
-            }
-        }      
-    } 
+    
 }

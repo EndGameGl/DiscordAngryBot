@@ -7,9 +7,18 @@ using System.Threading.Tasks;
 
 namespace DiscordAngryBot.CustomObjects.Filters
 {
+    /// <summary>
+    /// Счетчик матов
+    /// </summary>
     public class SwearCounter
-    {
-        public SocketUser author { get; set; }
+    { 
+        /// <summary>
+        /// Цель проверок
+        /// </summary>
+        public SocketGuildUser author { get; set; }
+        /// <summary>
+        /// Найденные сообщения с матами
+        /// </summary>
         public List<SocketMessage> reasons { get; set; }
     }
 }

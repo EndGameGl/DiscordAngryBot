@@ -19,7 +19,7 @@ namespace DiscordAngryBot.APIHandlers
 
         public void ConfigServer(string serverAddress, MediaTypeHeaderValue mediaTypeHeaderValue, bool needIndent)
         {
-            ConsoleWriter.Write($"Setting up API configs to {serverAddress} | {mediaTypeHeaderValue.MediaType} | indent: {needIndent}", ConsoleWriter.InfoType.Notice);
+            ConsoleWriter.Write($"Setting up API configs to {serverAddress} | {mediaTypeHeaderValue.MediaType} | indent: {needIndent}", ConsoleWriter.InfoType.Notice).GetAwaiter().GetResult();
             this.serverConfig = new HttpSelfHostConfiguration(serverAddress);
             this.serverConfig.MapHttpAttributeRoutes();
             this.serverConfig.Formatters.JsonFormatter.SerializerSettings.Formatting = Newtonsoft.Json.Formatting.Indented;

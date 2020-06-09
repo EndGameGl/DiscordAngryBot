@@ -45,13 +45,20 @@ namespace ObjectDiscordAPI
 
         public async static Task DisplayNewMessage(Message e)
         {
-            var guild = await discordClient.GetGuildByIDAsync(e.GuildID.GetValueOrDefault());
-            var channel = guild.Channels.Where(x => x.ID == e.ChannelID).SingleOrDefault();
-            var memberSent = guild.Members.Where(x => x.User.ID == e.Author.ID).SingleOrDefault();
-            if (memberSent.Nickname != null && memberSent.Nickname != "")
-                await Task.Run(() => Console.WriteLine($"[{DateTime.Now}] [{guild.Name}] [{channel.Name}] [{memberSent.Nickname}]: {e.Content}"));
-            else
-                await Task.Run(() => Console.WriteLine($"[{DateTime.Now}] [{guild.Name}] [{channel.Name}] [{memberSent.User.Username}]: {e.Content}"));
+            if (e.GuildID != null)
+            {
+                var guild = await discordClient.GetGuildByIDAsync(e.GuildID.GetValueOrDefault());
+                var channel = guild.Channels.Where(x => x.ID == e.ChannelID).SingleOrDefault();
+                var memberSent = guild.Members.Where(x => x.User.ID == e.Author.ID).SingleOrDefault();
+                if (memberSent.Nickname != null && memberSent.Nickname != "")
+                    await Task.Run(() => Console.WriteLine($"[{DateTime.Now}] [{guild.Name}] [{channel.Name}] [{memberSent.Nickname}]: {e.Content}"));
+                else
+                    await Task.Run(() => Console.WriteLine($"[{DateTime.Now}] [{guild.Name}] [{channel.Name}] [{memberSent.User.Username}]: {e.Content}"));
+            }
+            if (e.Content == "ping")
+            {
+                await new Channel() { ID = e.ChannelID }.SendMessage("pong");
+            }
         }
 
         public async static Task DisplayUpdatedMessage(Message e)

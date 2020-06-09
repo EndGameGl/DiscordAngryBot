@@ -15,11 +15,11 @@ namespace DiscordAngryBot
         /// <summary>
         /// Префикс команд бота
         /// </summary>
-        public char commandPrefix { get; set; } = '_';
+        public char defaultCommandPrefix { get; set; } = '_';
         /// <summary>
         /// Список запрещенных команд
         /// </summary>
-        public string[] forbiddenCommands { get; set; } = new string[] 
+        public List<string> forbiddenCommands { get; set; } = new List<string>() 
         { 
             ".br all",
             ".$",
@@ -30,46 +30,52 @@ namespace DiscordAngryBot
         /// <summary>
         /// Список команд администраторов
         /// </summary>
-        public string[] systemCommands { get; set;} = new string[] 
+        public List<string> systemCommands { get; set;} = new List<string>()
         { 
             "BAN",
-            "CLEAR"
+            "CLEAR",
+            "UNBAN",
+            "SETPREFIX",
+            "NEWS",
+            "BANROLE"
         };
         /// <summary>
         /// Список пользовательских команд
         /// </summary>
-        public string[] userCommands { get; set; } = new string[] 
+        public List<string> userCommands { get; set; } = new List<string>()
         { 
             "PARTY", 
             "RAID", 
             "LIST", 
-            "GVG", 
-            "HELP" 
+            "GVGEV",
+            "GVGPR",
+            "HELP",
+            "SELFBAN"
         };
-        public string[] musicCommands { get; set; } = new string[] 
+        public List<string> musicCommands { get; set; } = new List<string>()
         {
             "SUMMON"
         };
-        public string[] otherCommands { get; set; } = new string[] 
+        public List<string> otherCommands { get; set; } = new List<string>()
         { 
             "КУСЬ", 
             "БАН" 
         };
-        public string[] swearFilterWords { get; set; } = new string[] 
+        public List<string> swearFilterWords { get; set; } = new List<string>()
         {
              "NAHOOU", "PIDOR", "ХУЙ", "ХУЕ", "ХУЁ", "БЛЯ", "ЕБИ", "ЕБА", "ПИЗД", "ДОЛБОЕБ", "ДОЛБОЁБ", "ШЛЮХ", "СОСИ", "СОСА", "СОСОВ", "ПИДОР", "ПИДР", "ПОРН", "СПЕРМ", "ПИДАР",
-             "ШАЛАВ", "ДАУН", "ХУЛЕ", "ХУЛИ", "УБЛЮД"
+             "ШАЛАВ", "ДАУН", "ХУЛЕ", "ХУЛИ", "УБЛЮД", "DICK", "BASTARD"
         };
         /// <summary>
         /// Список администраторов бота
         /// </summary>
-        public ulong[] admins { get; set; } = new ulong[] 
+        public List<ulong> admins { get; set; } = new List<ulong>()
         { 
             261497385274966026, 
             261496784336060417, 
-            279716516595892235 
+            279716516595892235,
+            395211796354433025
         };
-        public bool needsDeepLog { get; set; } = true;
         /// <summary>
         /// Пустой конструктор класса
         /// </summary>

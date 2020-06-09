@@ -16,23 +16,19 @@ namespace DiscordAngryBot.CustomObjects.Bans
         /// <summary>
         /// Идентификатор канала, где был выдан бан
         /// </summary>
-        public ulong channel_id { get; set; }
+        public ulong _ChannelID { get; set; }
         /// <summary>
         /// Юзер, у которого забрана роль
         /// </summary>
-        public ulong banTarget_id { get; set; }
-        /// <summary>
-        /// Идентификатор роли, которую забрали
-        /// </summary>
-        public ulong role_id { get; set; }
+        public ulong _BanTargetID { get; set; }
         /// <summary>
         /// Дата выдачи бана
         /// </summary>
-        public DateTime createdAt { get; set; }
+        public DateTime _CreatedAt { get; set; }
         /// <summary>
         /// Дата окончания бана
         /// </summary>
-        public DateTime? endsAt { get; set; }
+        public DateTime? _EndsAt { get; set; }
 
         /// <summary>
         /// Пустой конструктор бана
@@ -45,11 +41,10 @@ namespace DiscordAngryBot.CustomObjects.Bans
         /// <param name="ban"></param>
         public BanJSONobject(DiscordBan ban)
         {
-            channel_id = ban.channel.Id;
-            banTarget_id = ban.banTarget.Id;
-            role_id = ban.roleToBan.Id;
-            createdAt = ban.createdAt;
-            endsAt = ban.endsAt;
+            _ChannelID = ban.Channel.Id;
+            _BanTargetID = ban.BanTarget.Id;
+            _CreatedAt = ban.CreatedAt;
+            _EndsAt = ban.EndsAt;
         }
 
         /// <summary>
@@ -59,16 +54,17 @@ namespace DiscordAngryBot.CustomObjects.Bans
         /// <returns></returns>
         public async Task<DiscordBan> ConvertToDiscordBan(SocketGuild guild)
         {
-            await ConsoleWriter.Write($"Converting into DiscordBan", ConsoleWriter.InfoType.Notice);
-            DiscordBan ban = new DiscordBan()
+            return await Task.Run(() =>
             {
-                banTarget = guild.GetUser(banTarget_id),
-                channel = (ISocketMessageChannel)guild.GetChannel(channel_id),
-                createdAt = createdAt,
-                endsAt = endsAt,
-                roleToBan = guild.GetRole(role_id)
-            };
-            return ban;
+                DiscordBan ban = new DiscordBan()
+                {
+                    BanTarget = guild.GetUser(_BanTargetID),
+                    Channel = (SocketTextChannel)guild.GetChannel(_ChannelID),
+                    CreatedAt = _CreatedAt,
+                    EndsAt = _EndsAt              
+                };
+                return ban;
+            });
         }
     }
 }
