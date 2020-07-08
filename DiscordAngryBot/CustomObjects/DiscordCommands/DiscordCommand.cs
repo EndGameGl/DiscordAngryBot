@@ -1,23 +1,46 @@
 ﻿using DiscordAngryBot.CustomObjects.ConsoleOutput;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace DiscordAngryBot.CustomObjects.DiscordCommands
 {
+    public enum CommandType
+    {
+        Ban,
+        Unban,
+        Clear,
+        SetPrefix,
+        News,
+        BanRole,
+        Admin,
+        Deadmin,
+        Party,
+        Raid,
+        List,
+        GvgEV,
+        GvgPR,
+        Help,
+        Selfban,
+        Bite,
+        NotBan,
+        TestingPlaceholder,
+        JoinGroup,
+        LeaveGroup,
+        CallGroup,
+        TerminateGroup,
+        EnableSwear,
+        DisableSwear
+    }
     public class DiscordCommand
     {
         private Task TaskToRun { get; set; }
+        private CommandType Type { get; set; }
 
-        public DiscordCommand(Task task)
+        public DiscordCommand(Task task, CommandType commandType)
         {
             TaskToRun = task;
+            Type = commandType;
         }
 
         public void RunCommand()
@@ -29,6 +52,7 @@ namespace DiscordAngryBot.CustomObjects.DiscordCommands
                 {
                     try
                     {
+                        await ConsoleWriter.Write($"Executing command {Type}", ConsoleWriter.InfoType.CommandInfo);
                         await TaskToRun;
                     }
                     catch (Exception e)
@@ -38,16 +62,6 @@ namespace DiscordAngryBot.CustomObjects.DiscordCommands
                 });
                 thread.Start();                
             }
-        }
-
-        private static string GetMethodName([CallerMemberName]string methodName = "")
-        {
-            var method = new StackTrace()
-                .GetFrames()
-                .Select(frame => frame.GetMethod())
-                .FirstOrDefault(item => item.Name == methodName);
-
-            return method.Name;
         }
     }
 }

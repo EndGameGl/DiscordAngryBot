@@ -1,9 +1,4 @@
-﻿using Discord.WebSocket;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace DiscordAngryBot.CustomObjects.Caches
 {
@@ -14,6 +9,7 @@ namespace DiscordAngryBot.CustomObjects.Caches
         public ulong? BanRoleID { get; set; }
         public ulong? NewsChannelID { get; set; }
         public string APIToken { get; set; }
+        public bool? IsSwearFilterEnabled { get; set; }
     }
 }
  

@@ -1,5 +1,4 @@
 ﻿using Discord.WebSocket;
-using DiscordAngryBot.CustomObjects.ConsoleOutput;
 using DiscordAngryBot.CustomObjects.SQLIteHandler;
 using System;
 using System.Collections.Generic;

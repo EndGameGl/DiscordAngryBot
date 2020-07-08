@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace DiscordAngryBot
 {
@@ -32,12 +27,17 @@ namespace DiscordAngryBot
         /// </summary>
         public List<string> systemCommands { get; set;} = new List<string>()
         { 
+            "EMBEDTEST",
             "BAN",
             "CLEAR",
             "UNBAN",
             "SETPREFIX",
             "NEWS",
-            "BANROLE"
+            "BANROLE",
+            "ADMIN",
+            "DEADMIN",
+            "FILTERENABLE",
+            "FILTERDISABLE"
         };
         /// <summary>
         /// Список пользовательских команд

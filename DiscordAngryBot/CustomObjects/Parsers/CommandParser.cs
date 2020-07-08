@@ -2,8 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DiscordAngryBot.CustomObjects.Parsers
 {
@@ -13,21 +11,27 @@ namespace DiscordAngryBot.CustomObjects.Parsers
         private char? _Prefix { get; set; }
         private string Command { get; set; }
         private string[] Parameters { get; set; }
+        private string[] Arguments { get; set; }
 
         public CommandParser(SocketMessage message, char? prefix)
         {
-            _Message = message;
             _Prefix = prefix;
-            ParseCommand();
+            _Message = message;
+            ParseCommand(message);
         }
-        private void ParseCommand()
+        private void ParseCommand(SocketMessage message)
         {
             if (_Prefix != null && _Message.Content[0] == _Prefix)
             {
                 var commandText = _Message.Content.Remove(0, 1);
-                var words = commandText.Split(new char[] { ' ' });
-                Command = words[0];
-                Parameters = new List<string>(words).GetRange(1, words.Length - 1).ToArray();
+                var commandWords = commandText.Split(new char[] { ' ' });
+                Command = commandWords[0];
+                Arguments = new List<string>(commandWords).GetRange(1, commandWords.Length - 1).ToArray();
+                if (Command.Contains('.'))
+                {
+                    var commandParams = Command.Split(new char[] { '.' });
+                    Parameters = new List<string>(commandParams).GetRange(1, commandParams.Length - 1).ToArray();
+                }
             }
         }
 
@@ -43,7 +47,12 @@ namespace DiscordAngryBot.CustomObjects.Parsers
             }
         }
 
-        public string[] GetCommandParameters()
+        public string[] GetCommandArgs()
+        {
+            return Arguments;
+        }
+
+        public string[] GetCommandParams()
         {
             return Parameters;
         }

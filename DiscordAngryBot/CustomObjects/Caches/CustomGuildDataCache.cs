@@ -2,11 +2,7 @@
 using DiscordAngryBot.CustomObjects.Bans;
 using DiscordAngryBot.CustomObjects.Filters;
 using DiscordAngryBot.CustomObjects.Groups;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DiscordAngryBot.CustomObjects.Caches
 {

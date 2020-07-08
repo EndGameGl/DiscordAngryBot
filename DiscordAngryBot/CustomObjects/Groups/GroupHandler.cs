@@ -7,14 +7,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Text.Json;
 using System.IO;
-using System.Data.SQLite;
 using System.Data;
 using DiscordAngryBot.CustomObjects.SQLIteHandler;
 using DiscordAngryBot.CustomObjects.ConsoleOutput;
 using System.Threading;
 using System.Diagnostics;
-using System.Net.Sockets;
-using Discord.Rest;
 
 namespace DiscordAngryBot.CustomObjects.Groups
 {

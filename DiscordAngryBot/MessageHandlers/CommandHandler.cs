@@ -7,7 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Discord.Commands;
 using DiscordAngryBot.CustomObjects.SQLIteHandler;
@@ -25,6 +24,60 @@ namespace DiscordAngryBot.MessageHandlers
         /// </summary>
         public static class SystemCommands
         {
+            /// <summary>
+            /// Добавление нового админа в бота
+            /// </summary>
+            /// <param name="message"></param>
+            /// <returns></returns>
+            public async static Task AddAdmin(SocketMessage message)
+            {
+                await Task.Run(async () => 
+                {
+                    ulong guildID = ((SocketGuildChannel)message.Channel).Guild.Id;
+                    var settings = BotCore.GetDiscordGuildSettings(guildID);
+                    var adminID = message.MentionedUsers.FirstOrDefault()?.Id;
+                    if (adminID != null)
+                    {
+                        if (!settings.adminsID.Contains(adminID.Value))
+                        {
+                            settings.adminsID.Add(adminID.Value);
+                            await message.Channel.SendMessageAsync($"Добавлен новый администратор бота на сервере: '{BotCore.GetGuildDataCache(guildID).Guild.GetUser(adminID.Value)}'");
+                            await SQLiteDataManager.PushToDB("locals/GuildSettings.sqlite", $"UPDATE Settings SET SettingsJSON = '{JsonConvert.SerializeObject(settings)}' WHERE GuildID = '{guildID}'");
+                        }
+                        else 
+                        {
+                            await message.Channel.SendMessageAsync("Данный пользователь уже является администратором");
+                        }
+                    }
+                });
+            }
+            /// <summary>
+            /// Удаление админа из бота
+            /// </summary>
+            /// <param name="message"></param>
+            /// <returns></returns>
+            public async static Task RemoveAdmin(SocketMessage message)
+            {
+                await Task.Run(async () =>
+                {
+                    ulong guildID = ((SocketGuildChannel)message.Channel).Guild.Id;
+                    var settings = BotCore.GetDiscordGuildSettings(guildID);
+                    var adminID = message.MentionedUsers.FirstOrDefault()?.Id;
+                    if (adminID != null)
+                    {
+                        if (settings.adminsID.Contains(adminID.Value))
+                        {
+                            settings.adminsID.Remove(adminID.Value);
+                            await message.Channel.SendMessageAsync($"Забраны администраторские права у: '{BotCore.GetGuildDataCache(guildID).Guild.GetUser(adminID.Value)}'");
+                            await SQLiteDataManager.PushToDB("locals/GuildSettings.sqlite", $"UPDATE Settings SET SettingsJSON = '{JsonConvert.SerializeObject(settings)}' WHERE GuildID = '{guildID}'");
+                        }
+                        else
+                        {
+                            await message.Channel.SendMessageAsync("Данный пользователь не является администратором");
+                        }
+                    }
+                });
+            }
             /// <summary>
             /// Установка префикса для команд
             /// </summary>
@@ -188,6 +241,87 @@ namespace DiscordAngryBot.MessageHandlers
                     await message.Channel.SendMessageAsync("Данная команда предназначена для использования на сервере.");
                 }
             }
+            /// <summary>
+            /// Тестовая штука
+            /// </summary>
+            /// <param name="message"></param>
+            /// <param name="args"></param>
+            /// <returns></returns>
+            public async static Task EmbedTesting(SocketMessage message, string[] args)
+            {
+                if (message.Channel is SocketGuildChannel)
+                {                  
+                    Party party = await GroupBuilder.BuildParty(message, args);
+                    var embedbuilder = new EmbedBuilder();
+                    var embed =
+                        embedbuilder
+                        .WithTitle($"{string.Join(" ", args)}")
+                        .WithTimestamp(party.CreatedAt)
+                        .WithColor(Color.Blue)
+                        .WithAuthor($"Лидер: {party.Author.Username}")
+                        .AddField("Поле 1", "Тестовое значение 1")
+                        .AddField("Поле 2", "Тестовое значение 2")
+                        .AddField("Поле 3", "Тестовое значение 3")
+                        .AddField("Поле 4", "Тестовое значение 4")
+                        .AddField("Поле 5", "Тестовое значение 5")
+                        .AddField("Поле 6", "Тестовое значение 6")
+                        .Build();
+                    party.TargetMessage = await party.Channel.SendMessageAsync(null, false, embed);
+                    var messageEmbed = party.TargetMessage.Embeds.FirstOrDefault();
+                }
+                
+            }
+            /// <summary>
+            /// Включение мат-фильтра на сервере
+            /// </summary>
+            /// <param name="message"></param>
+            /// <returns></returns>
+            public async static Task EnableSwearFilter(SocketMessage message)
+            {
+                if (message.Channel is SocketGuildChannel)
+                {
+                    try
+                    {
+                        var channel = (SocketGuildChannel)message.Channel;
+                        BotCore.GetDiscordGuildSettings(channel.Guild.Id).IsSwearFilterEnabled = true;
+                        await message.Channel.SendMessageAsync($"Матфильтр на этом сервере включен");
+                    }
+                    catch (Exception e)
+                    {
+                        await ConsoleWriter.Write($"{e.Message}", ConsoleWriter.InfoType.Error);
+                    }
+                }
+                else
+                {
+                    await message.Channel.SendMessageAsync("Данная команда предназначена для использования на сервере.");
+                }
+            }
+            /// <summary>
+            /// Выключение мат-фильтра на сервере
+            /// </summary>
+            /// <param name="message"></param>
+            /// <returns></returns>
+            public async static Task DisableSwearFilter(SocketMessage message)
+            {
+                if (message.Channel is SocketGuildChannel)
+                {
+                    try
+                    {
+                        var channel = (SocketGuildChannel)message.Channel;
+                        BotCore.GetDiscordGuildSettings(channel.Guild.Id).IsSwearFilterEnabled = false;
+                        await message.Channel.SendMessageAsync($"Матфильтр на этом сервере выключен");
+                    }
+                    catch (Exception e)
+                    {
+                        await ConsoleWriter.Write($"{e.Message}", ConsoleWriter.InfoType.Error);
+                    }
+                }
+                else
+                {
+                    await message.Channel.SendMessageAsync("Данная команда предназначена для использования на сервере.");
+                }
+            }
+
         }
 
         /// <summary>

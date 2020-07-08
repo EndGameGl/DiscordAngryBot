@@ -2,7 +2,6 @@
 using Discord.WebSocket;
 using DiscordAngryBot.CustomObjects.Groups;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;

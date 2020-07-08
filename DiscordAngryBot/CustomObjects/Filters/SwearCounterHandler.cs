@@ -1,13 +1,8 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using DiscordAngryBot.CustomObjects.Bans;
-using System;
 using System.Collections.Generic;
-using System.ComponentModel.Design.Serialization;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace DiscordAngryBot.CustomObjects.Filters
@@ -53,16 +48,17 @@ namespace DiscordAngryBot.CustomObjects.Filters
 
         public static async Task RunSwearFilter(this SocketMessage message)
         {
-            var userSwearCounters = BotCore.GetDiscordGuildSwearCounters(((SocketTextChannel)message.Channel).Guild.Id).Where(x => x.author == message.Author);
-            if (await message.CheckPhrase() && userSwearCounters.Count() == 0)
-            {
-                BotCore.GetDiscordGuildSwearCounters(((SocketTextChannel)message.Channel).Guild.Id).Add(await message.CreateSwearCounter());
+                var userSwearCounters = BotCore.GetDiscordGuildSwearCounters(((SocketTextChannel)message.Channel).Guild.Id).Where(x => x.author == message.Author);
+                if (await message.CheckPhrase() && userSwearCounters.Count() == 0)
+                {
+                    BotCore.GetDiscordGuildSwearCounters(((SocketTextChannel)message.Channel).Guild.Id).Add(await message.CreateSwearCounter());
 
-            }
-            else if (await message.CheckPhrase() && userSwearCounters.Count() == 1)
-            {
-                await userSwearCounters.SingleOrDefault().AddReason(message);
-            }
+                }
+                else if (await message.CheckPhrase() && userSwearCounters.Count() == 1)
+                {
+                    await userSwearCounters.SingleOrDefault().AddReason(message);
+                }
+            
         }
     }
 }

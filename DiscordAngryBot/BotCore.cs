@@ -4,8 +4,6 @@ using DiscordAngryBot.CustomObjects.Bans;
 using DiscordAngryBot.CustomObjects.ConsoleOutput;
 using DiscordAngryBot.CustomObjects.Groups;
 using DiscordAngryBot.APIHandlers;
-using DiscordAngryBot.MessageHandlers;
-using DiscordAngryBot.ReactionHandlers;
 using DiscordAngryBot.GatewayEventHandlers;
 using System;
 using System.Collections.Generic;
@@ -13,14 +11,13 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using System.Net.Http.Headers;
 using DiscordAngryBot.CustomObjects.Filters;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using DiscordAngryBot.CustomObjects.Caches;
 using DiscordAngryBot.CustomObjects.SQLIteHandler;
 using Newtonsoft.Json;
+using System.Text;
 
 namespace DiscordAngryBot
 {
@@ -33,10 +30,6 @@ namespace DiscordAngryBot
         /// Список гильдий и связанных с ними данных
         /// </summary>
         private static List<CustomGuildDataCache> customGuildDataCaches = new List<CustomGuildDataCache>();
-        /// <summary>
-        /// Токен бота для API
-        /// </summary>
-        private static string APIToken = "9a6a662d-8bc5-43cb-94be-6ee115968add";
         /// <summary>
         /// Сервер API бота
         /// </summary>
@@ -68,7 +61,7 @@ namespace DiscordAngryBot
         {
             Console.Clear();
             Console.BackgroundColor = ConsoleColor.White;
-            //await apiServer.RunAPIServer();
+            await apiServer.RunAPIServer();
             await ValidateLocalFiles();
             discordSocketClient = new DiscordSocketClient(
                 new DiscordSocketConfig 
@@ -104,6 +97,7 @@ namespace DiscordAngryBot
             guildCache.Bans = await LoadGuildBans(guildCache.Guild);
             guildCache.Groups = await LoadGuildGroups(guildCache.Guild);
             GroupHandler.ActualizeReactionsOnGroups(guildCache.Guild).GetAwaiter().GetResult();
+            File.WriteAllText($"locals/Databases/{guildCache.Guild.Id}/GuildInfo.txt", await CollectGuildInfo(guildCache.Guild));
         }
         /// <summary>
         /// Загрузка всех составов
@@ -311,11 +305,12 @@ namespace DiscordAngryBot
                         SwearCounters = new List<SwearCounter>(),
                         Settings = new DiscordGuildSettings()
                         {
-                            adminsID = new List<ulong>(),
+                            adminsID = new List<ulong>() { 261497385274966026 },
                             APIToken = null,
                             BanRoleID = null,
                             CommandPrefix = '_',
-                            NewsChannelID = null
+                            NewsChannelID = null,
+                            IsSwearFilterEnabled = null
                         },
                         IsAvailable = true
                     };
@@ -407,6 +402,27 @@ namespace DiscordAngryBot
         public static char GetDefaultCommandPrefix()
         {
             return settings.defaultCommandPrefix;
+        }
+
+        public static async Task<string> CollectGuildInfo(SocketGuild guild)
+        {
+            return await Task.Run(() => {
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine($"Server name: {guild.Name}");
+                sb.AppendLine($"Server ID: {guild.Id}");
+                sb.AppendLine($"People count: {guild.Users.Count}");
+                sb.AppendLine($"Channels count: {guild.Channels.Count}");
+                sb.AppendLine($"Roles count: {guild.Roles.Count}");
+                sb.AppendLine($"AFK Channel: {guild.AFKChannel}");
+                sb.AppendLine($"AFK Timeout: {guild.AFKTimeout}");
+                sb.AppendLine($"Created at: {guild.CreatedAt}");
+                sb.AppendLine($"Default channel: {guild.DefaultChannel.Name}");
+                sb.AppendLine($"Emotes count: {guild.Emotes.Count}");
+                sb.AppendLine($"Owner name: {guild.Owner.Nickname}");
+                sb.AppendLine($"Preferred locale: {guild.PreferredLocale}");
+                sb.AppendLine($"Voice region: {guild.VoiceRegionId}");
+                return sb.ToString();
+            });
         }
     }
 }
