@@ -1,7 +1,9 @@
-﻿using DiscordAngryBot.CustomObjects.ConsoleOutput;
+﻿using Discord.WebSocket;
+using DiscordAngryBot.CustomObjects.ConsoleOutput;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.System;
 
 namespace DiscordAngryBot.CustomObjects.DiscordCommands
 {
@@ -30,17 +32,20 @@ namespace DiscordAngryBot.CustomObjects.DiscordCommands
         CallGroup,
         TerminateGroup,
         EnableSwear,
-        DisableSwear
+        DisableSwear,
+        Roll
     }
     public class DiscordCommand
     {
         private Task TaskToRun { get; set; }
         private CommandType Type { get; set; }
+        private SocketUser User { get; set; }
 
-        public DiscordCommand(Task task, CommandType commandType)
+        public DiscordCommand(Task task, CommandType commandType, SocketUser user)
         {
             TaskToRun = task;
             Type = commandType;
+            User = user;
         }
 
         public void RunCommand()
@@ -53,10 +58,12 @@ namespace DiscordAngryBot.CustomObjects.DiscordCommands
                     try
                     {
                         await ConsoleWriter.Write($"Executing command {Type}", ConsoleWriter.InfoType.CommandInfo);
+                        BotCore.GetDataLogs().Add(new Logs.DataLog() { LogType = "Command", Message = $"Executed command {Type} for {User.Username} ({User.Id})" });
                         await TaskToRun;
                     }
                     catch (Exception e)
                     {
+                        BotCore.GetDataLogs().Add(new CustomObjects.Logs.DataLog() { Exception = e, LogType = "Error" });
                         await ConsoleWriter.Write($"Task got an error: [{e.Message}: {e.InnerException?.Message}]", ConsoleWriter.InfoType.Error);
                     }
                 });

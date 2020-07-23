@@ -299,8 +299,7 @@ namespace DiscordAngryBot.CustomObjects.Groups
                                             ConsoleWriter.Write($"Adding user {user.Username} at group {group.GUID} in channel {group.Channel.Name}", ConsoleWriter.InfoType.Notice).GetAwaiter().GetResult();
                                             var guildUser = ((SocketGuildChannel)group.Channel).Guild.Users.Where(x => x.Id == user.Id)?.SingleOrDefault();
                                             if (guildUser != null)
-                                            {
-                                                
+                                            {                                                
                                                 group.Users.Add(guildUser);
                                                 group.UpdateAtDB().GetAwaiter().GetResult();
                                             }            
@@ -393,7 +392,7 @@ namespace DiscordAngryBot.CustomObjects.Groups
                     else
                     {
                         ConsoleWriter.Write("Found broken party, deleting entry...", ConsoleWriter.InfoType.Error).GetAwaiter().GetResult();
-                        SQLiteDataManager.PushToDB($"locals/Databases/{group.Channel.Guild.Id}", $"DELETE FROM Groups WHERE GUID = '{group.GUID}'").GetAwaiter().GetResult();
+                        SQLiteDataManager.PushToDB($"locals/Databases/{group.Channel.Guild.Id}/Groups.sqlite", $"DELETE FROM Groups WHERE GUID = '{group.GUID}'").GetAwaiter().GetResult();
                     }
                 });
                 actThread.Start();
@@ -406,8 +405,5 @@ namespace DiscordAngryBot.CustomObjects.Groups
             sw.Stop();
             await ConsoleWriter.Write($"Actualizing group members took {sw.Elapsed.Milliseconds} ms", ConsoleWriter.InfoType.Notice);
         }
-
-    }
-
-    
+    }   
 }

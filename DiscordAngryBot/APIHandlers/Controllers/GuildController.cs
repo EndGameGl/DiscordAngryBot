@@ -1,16 +1,20 @@
 ﻿using Discord.WebSocket;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web.Http;
 
 namespace DiscordAngryBot.APIHandlers.Controllers
 {
+    /// <summary>
+    /// API контроллер гильдий 
+    /// </summary>
     [RoutePrefix("api/Guilds")]
     public class GuildController : ApiController
     {
+        /// <summary>
+        /// Получение списка всех гильдий в формате JSON
+        /// </summary>
+        /// <returns></returns>
         [HttpGet, Route("")]
         public List<object> GetGuildsForAPI()
         {
@@ -22,7 +26,11 @@ namespace DiscordAngryBot.APIHandlers.Controllers
             }
             return returnList;
         }
-
+        /// <summary>
+        /// Получение конкретной гильдии в формате JSON
+        /// </summary>
+        /// <param name="guildID"></param>
+        /// <returns></returns>
         [HttpGet, Route("{guildID}")]
         public object GetGuildForAPI(string guildID)
         {

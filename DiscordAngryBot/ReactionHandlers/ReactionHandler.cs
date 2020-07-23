@@ -32,9 +32,16 @@ namespace DiscordAngryBot.ReactionHandlers
                     var party = group as Party;
                     if (party.Users.Count < party.UserLimit)
                     {
-                        party.Users.Add((SocketGuildUser)reaction.User);
-                        await party.UpdateAtDB();
-                        await party.RewriteMessage();
+                        if (party.Users.Where(x => x.Id == reaction.UserId).Count() == 0)
+                        {
+                            party.Users.Add((SocketGuildUser)reaction.User);
+                            await party.UpdateAtDB();
+                            await party.RewriteMessage();
+                        }
+                        else
+                        {
+                            await reaction.Message.Value.RemoveReactionAsync(reaction.Emote, reaction.UserId);
+                        }
                     }
                     if (party.Users.Count == 6)
                     {
@@ -46,9 +53,16 @@ namespace DiscordAngryBot.ReactionHandlers
                     var raid = group as Raid;
                     if (raid.Users.Count < raid.UserLimit)
                     {
-                        raid.Users.Add((SocketGuildUser)reaction.User);
-                        await raid.UpdateAtDB();
-                        await raid.RewriteMessage();
+                        if (raid.Users.Where(x => x.Id == reaction.UserId).Count() == 0)
+                        {
+                            raid.Users.Add((SocketGuildUser)reaction.User);
+                            await raid.UpdateAtDB();
+                            await raid.RewriteMessage();
+                        }
+                        else
+                        {
+                            await reaction.Message.Value.RemoveReactionAsync(reaction.Emote, reaction.UserId);
+                        }
                     }
                 }
                 else if (group is GuildFight)

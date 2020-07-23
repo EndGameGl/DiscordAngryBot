@@ -1,20 +1,6 @@
-﻿using Discord;
-using Discord.WebSocket;
-using DiscordAngryBot.CustomObjects.ConsoleOutput;
-using DiscordAngryBot.CustomObjects.Groups;
-using DiscordAngryBot.CustomObjects.News;
-using Newtonsoft.Json;
-using System;
+﻿using DiscordAngryBot.CustomObjects.Groups;
 using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.ServiceModel.Channels;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web.Http;
 
 namespace DiscordAngryBot.APIHandlers.Controllers
@@ -26,6 +12,11 @@ namespace DiscordAngryBot.APIHandlers.Controllers
     [RoutePrefix("api/Guilds")]
     public class GroupController : ApiController
     {
+        /// <summary>
+        /// Получение всех групп сервера в формате JSON
+        /// </summary>
+        /// <param name="guildID"></param>
+        /// <returns></returns>
         [HttpGet, Route("{guildID}/Groups")]
         public List<GroupJSONObject> GetGroups(string guildID)
         {
@@ -37,7 +28,12 @@ namespace DiscordAngryBot.APIHandlers.Controllers
             }
             return returnData;
         }
-
+        /// <summary>
+        /// Получение конкретной группы сервера
+        /// </summary>
+        /// <param name="guildID"></param>
+        /// <param name="GUID"></param>
+        /// <returns></returns>
         [HttpGet, Route("{guildID}/Groups/{GUID}")]
         public object GetGroupByGUID(string guildID, string GUID)
         {

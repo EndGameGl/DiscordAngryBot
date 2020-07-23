@@ -6,15 +6,21 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web.Http;
 
 namespace DiscordAngryBot.APIHandlers.Controllers
 {
+    /// <summary>
+    /// API контроллер для отображения новостей
+    /// </summary>
     [RoutePrefix("api/News")]
     public class NewsController : ApiController
     {
+        /// <summary>
+        /// Обработка присланных данных и отображение их в дискорд
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
         [HttpPost, Route("")]
         public string PostNews(object data)
         {

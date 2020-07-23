@@ -1,50 +1,22 @@
-﻿using DiscordAngryBot.CustomObjects.Groups;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
-using System.Threading.Tasks;
 using System.Web.Http;
 
 namespace DiscordAngryBot.APIHandlers.Controllers
 {
+    /// <summary>
+    /// API контроллер для генерации веб страниц
+    /// </summary>
     [RoutePrefix("Web")]
     public class WebController : ApiController
     {
-        private string APIAddress = "http://217.114.147.159:20001/";
-
-        [HttpGet, Route("MainMenu")]
-        public HttpResponseMessage GetMainMenu()
-        {
-            var response = new HttpResponseMessage();
-            string htmlCode =
-                new WebPage()
-                .SetDoctype()
-                .AddHeaderLink("stylesheet", @"https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css", "sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk", "anonymous")
-                .AddStyle("div {padding: 20px;}")
-                .AddOpenDiv("container p-3 my-3 bg-dark text-white")
-                    .AddBodyHeader("Основное меню API", 1)
-                    .AddParagraph("Пройдите по ссылкам для получения нужных данных")
-                .AddCloseDiv()
-                .AddOpenDiv("Container")
-                    .AddOpenList()
-                    .AddListElement($"<p><a href=\"{APIAddress + "web/Groups"}\">Список пати (Табличка)<p> / <p><a href=\"{APIAddress + "api / Groups"}\">Список пати (JSON)<p></p>")
-                    .AddListElement($"<a href=\"{APIAddress + "api/Groups/SimpleGroups"}\">Список упрощенных пати")
-                    .AddListElement($"<a href =\"{APIAddress + "api/Users/SimpleUsers"}\">Список участников дискорда")
-                    .AddCloseList()
-                .AddCloseDiv()
-                .Build();
-
-            response.Content = new StringContent(htmlCode);
-            response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/html");
-            response.Content.Headers.ContentType.CharSet = Encoding.UTF8.HeaderName;
-            response.Content.Headers.Add("CodePage", Encoding.UTF8.CodePage.ToString());
-
-            return response;
-        }
-
+        /// <summary>
+        /// Получение списка групп сервера в виде веб-страницы
+        /// </summary>
+        /// <param name="guildID"></param>
+        /// <returns></returns>
         [HttpGet, Route("{guildID}/Groups")]
         public HttpResponseMessage GetFullGroupsWeb(string guildID)
         {
@@ -82,8 +54,11 @@ namespace DiscordAngryBot.APIHandlers.Controllers
 
             return response;
         }
-
-
+        /// <summary>
+        /// Получение списка пользователей сервера в виде веб-страницы
+        /// </summary>
+        /// <param name="guildID"></param>
+        /// <returns></returns>
         [HttpGet, Route("{guildID}/Users/Test")]
         public HttpResponseMessage GetUsersWebTest(string guildID)
         {

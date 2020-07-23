@@ -82,9 +82,9 @@
     <Compile Include="APIHandlers\Controllers\BansController.cs" />
     <Compile Include="APIHandlers\Controllers\GroupController.cs" />
     <Compile Include="APIHandlers\Controllers\GuildController.cs" />
+    <Compile Include="APIHandlers\Controllers\LogsController.cs" />
     <Compile Include="APIHandlers\Controllers\NewsController.cs" />
     <Compile Include="APIHandlers\Controllers\UserController.cs" />
-    <Compile Include="APIHandlers\Controllers\UtilsController.cs" />
     <Compile Include="APIHandlers\Controllers\WebController.cs" />
     <Compile Include="APIHandlers\WebPage.cs" />
     <Compile Include="APIHandlers\WebpageBuilder.cs" />
@@ -107,6 +107,7 @@
     <Compile Include="CustomObjects\Groups\GuildFight.cs" />
     <Compile Include="CustomObjects\Groups\Party.cs" />
     <Compile Include="CustomObjects\Groups\Raid.cs" />
+    <Compile Include="CustomObjects\Logs\DataLog.cs" />
     <Compile Include="CustomObjects\News\NewsData.cs" />
     <Compile Include="CustomObjects\Notifications\PushNotificator.cs" />
     <Compile Include="CustomObjects\Parsers\CommandParser.cs" />

@@ -50,7 +50,8 @@ namespace DiscordAngryBot
             "GVGEV",
             "GVGPR",
             "HELP",
-            "SELFBAN"
+            "SELFBAN",
+            "ROLL"
         };
         public List<string> musicCommands { get; set; } = new List<string>()
         {
@@ -64,7 +65,7 @@ namespace DiscordAngryBot
         public List<string> swearFilterWords { get; set; } = new List<string>()
         {
              "NAHOOU", "PIDOR", "ХУЙ", "ХУЕ", "ХУЁ", "БЛЯ", "ЕБИ", "ЕБА", "ПИЗД", "ДОЛБОЕБ", "ДОЛБОЁБ", "ШЛЮХ", "СОСИ", "СОСА", "СОСОВ", "ПИДОР", "ПИДР", "ПОРН", "СПЕРМ", "ПИДАР",
-             "ШАЛАВ", "ДАУН", "ХУЛЕ", "ХУЛИ", "УБЛЮД", "DICK", "BASTARD"
+             "ШАЛАВ", "ДАУН", "ХУЛЕ", "ХУЛИ", "УБЛЮД", "DICK", "BASTARD", "АНАЛ"
         };
         /// <summary>
         /// Список администраторов бота

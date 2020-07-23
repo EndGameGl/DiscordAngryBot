@@ -30,17 +30,19 @@ namespace DiscordAngryBot.GatewayEventHandlers
             switch (message.Severity)
             {
                 case LogSeverity.Error:
+                    BotCore.GetDataLogs().Add(new CustomObjects.Logs.DataLog() { Exception = message.Exception, LogType = "Error" });
                     await ConsoleWriter.Write($"{message.Message}: {message.Exception}", ConsoleWriter.InfoType.Error);
                     await PushNotificator.Notify(message);
                     break;
                 case LogSeverity.Warning:
-                    await ConsoleWriter.Write($"{message.Message}: {message.Exception}", ConsoleWriter.InfoType.Error);
-                    await PushNotificator.Notify(message);
+                    //await ConsoleWriter.Write($"{message.Message}: {message.Exception}", ConsoleWriter.InfoType.Error);
+                    //await PushNotificator.Notify(message);
                     break;
                 case LogSeverity.Info:
                     await ConsoleWriter.Write($"{message.Message}", ConsoleWriter.InfoType.Info);
                     break;
                 case LogSeverity.Critical:
+                    BotCore.GetDataLogs().Add(new CustomObjects.Logs.DataLog() { Exception = message.Exception, LogType = "Error" });
                     await ConsoleWriter.Write($"{message.Message}: {message.Exception}", ConsoleWriter.InfoType.Error);
                     await PushNotificator.Notify(message);
                     break;
@@ -106,67 +108,78 @@ namespace DiscordAngryBot.GatewayEventHandlers
                                             case "BAN":
                                                 new DiscordCommand(
                                                     CommandHandler.SystemCommands.BanUser(message, commandParser.GetCommandArgs()),
-                                                    CommandType.Ban)
+                                                    CommandType.Ban,
+                                                    message.Author)
                                                     .RunCommand();
                                                 break;
                                             case "UNBAN":
                                                 new DiscordCommand(
                                                     CommandHandler.SystemCommands.UnbanUser(message, commandParser.GetCommandArgs()),
-                                                    CommandType.Unban)
+                                                    CommandType.Unban,
+                                                    message.Author)
                                                     .RunCommand();
                                                 break;
                                             case "CLEAR":
                                                 new DiscordCommand(
                                                     CommandHandler.SystemCommands.ClearMessages(message, commandParser.GetCommandArgs()),
-                                                    CommandType.Clear)
+                                                    CommandType.Clear,
+                                                    message.Author)
                                                     .RunCommand();
                                                 break;
                                             case "SETPREFIX":
                                                 new DiscordCommand(
                                                     CommandHandler.SystemCommands.SetPrefix(message, commandParser.GetCommandArgs()),
-                                                    CommandType.SetPrefix)
+                                                    CommandType.SetPrefix,
+                                                    message.Author)
                                                     .RunCommand();
                                                 break;
                                             case "NEWS":
                                                 new DiscordCommand(
                                                     CommandHandler.SystemCommands.SetNews(message),
-                                                    CommandType.News)
+                                                    CommandType.News,
+                                                    message.Author)
                                                     .RunCommand();
                                                 break;
                                             case "BANROLE":
                                                 new DiscordCommand(
                                                     CommandHandler.SystemCommands.SetBanRole(message),
-                                                    CommandType.BanRole)
+                                                    CommandType.BanRole,
+                                                    message.Author)
                                                     .RunCommand();
                                                 break;
                                             case "EMBEDTEST":
                                                 new DiscordCommand(
                                                     CommandHandler.SystemCommands.EmbedTesting(message, commandParser.GetCommandArgs()),
-                                                    CommandType.TestingPlaceholder)
+                                                    CommandType.TestingPlaceholder,
+                                                    message.Author)
                                                     .RunCommand();
                                                 break;
                                             case "ADMIN":
                                                 new DiscordCommand(
                                                     CommandHandler.SystemCommands.AddAdmin(message),
-                                                    CommandType.Admin)
+                                                    CommandType.Admin,
+                                                    message.Author)
                                                     .RunCommand();
                                                 break;
                                             case "DEADMIN":
                                                 new DiscordCommand(
                                                     CommandHandler.SystemCommands.RemoveAdmin(message),
-                                                    CommandType.Deadmin)
+                                                    CommandType.Deadmin,
+                                                    message.Author)
                                                     .RunCommand();
                                                 break;
                                             case "FILTERENABLE":
                                                 new DiscordCommand(
                                                     CommandHandler.SystemCommands.EnableSwearFilter(message),
-                                                    CommandType.EnableSwear)
+                                                    CommandType.EnableSwear,
+                                                    message.Author)
                                                     .RunCommand();
                                                 break;
                                             case "FILTERDISABLE":
                                                 new DiscordCommand(
                                                     CommandHandler.SystemCommands.DisableSwearFilter(message),
-                                                    CommandType.DisableSwear)
+                                                    CommandType.DisableSwear,
+                                                    message.Author)
                                                     .RunCommand();
                                                 break;
                                         }
@@ -184,46 +197,60 @@ namespace DiscordAngryBot.GatewayEventHandlers
                                         case "PARTY":
                                             new DiscordCommand(
                                                 CommandHandler.UserCommands.CreateParty(message, commandParser.GetCommandArgs()),
-                                                CommandType.Party)
+                                                CommandType.Party,
+                                                    message.Author)
                                                 .RunCommand();
                                             break;
                                         case "RAID":
                                             new DiscordCommand(
                                                 CommandHandler.UserCommands.CreateRaid(message, commandParser.GetCommandArgs()),
-                                                CommandType.Raid)
+                                                CommandType.Raid,
+                                                    message.Author)
                                                 .RunCommand();
                                             break;
                                         case "LIST":
                                             new DiscordCommand(
                                                 CommandHandler.UserCommands.ListGroups(message),
-                                                CommandType.List)
+                                                CommandType.List,
+                                                    message.Author)
                                                 .RunCommand();
                                             break;
                                         case "GVGEV":
                                             new DiscordCommand(
                                                 CommandHandler.UserCommands.CreateGuildFight(message, commandParser.GetCommandArgs(), GuildFightType.EV),
-                                                CommandType.GvgEV)
+                                                CommandType.GvgEV,
+                                                    message.Author)
                                                 .RunCommand();
                                             break;
                                         case "GVGPR":
                                             new DiscordCommand(
                                                 CommandHandler.UserCommands.CreateGuildFight(message, commandParser.GetCommandArgs(), GuildFightType.PR),
-                                                CommandType.GvgPR)
+                                                CommandType.GvgPR,
+                                                    message.Author)
                                                 .RunCommand();
                                             break;
                                         case "SELFBAN":
                                             new DiscordCommand(
                                                 CommandHandler.UserCommands.SelfBan(message, commandParser.GetCommandArgs()),
-                                                CommandType.Selfban)
+                                                CommandType.Selfban,
+                                                    message.Author)
                                                 .RunCommand();
                                             break;
                                         case "HELP":
                                             new DiscordCommand(
                                                 CommandHandler.UserCommands.HelpUser(message, commandParser.GetCommandArgs()),
-                                                CommandType.Help)
+                                                CommandType.Help,
+                                                    message.Author)
                                                 .RunCommand();
                                             break;
-                                    }
+                                    case "ROLL":
+                                        new DiscordCommand(
+                                            CommandHandler.UserCommands.Roll(message, commandParser.GetCommandArgs()),
+                                            CommandType.Roll,
+                                                    message.Author)
+                                            .RunCommand();
+                                        break;
+                                }
                                 
                             }
                             else if (BotCore.MusicCommands().Contains(command))
@@ -242,13 +269,15 @@ namespace DiscordAngryBot.GatewayEventHandlers
                                     case "КУСЬ":
                                         new DiscordCommand(
                                             CommandHandler.OtherCommands.Bite(message, commandParser.GetCommandArgs()),
-                                            CommandType.Bite)
+                                            CommandType.Bite,
+                                            message.Author)
                                             .RunCommand();
                                         break;
                                     case "БАН":
                                         new DiscordCommand(
                                             CommandHandler.OtherCommands.Ban(message),
-                                            CommandType.NotBan)
+                                            CommandType.NotBan,
+                                            message.Author)
                                             .RunCommand();
                                         break;
                                 }
@@ -284,35 +313,40 @@ namespace DiscordAngryBot.GatewayEventHandlers
             {
                 new DiscordCommand(
                     ReactionHandler.PartyReactionHandler.JoinGroup(reaction),
-                    CommandType.JoinGroup)
+                    CommandType.JoinGroup,
+                    (SocketUser)reaction.User)
                     .RunCommand();
             }
             if (reaction.ValidateReaction(new Emoji("\u274C"))) // cross_mark
             {
                 new DiscordCommand(
                     ReactionHandler.PartyReactionHandler.TerminateGroup(reaction),
-                    CommandType.TerminateGroup)
+                    CommandType.TerminateGroup,
+                    (SocketUser)reaction.User)
                     .RunCommand();
             }
             if (reaction.ValidateReaction(new Emoji("\u2757"))) // exclamation
             {
                 new DiscordCommand(
                     ReactionHandler.PartyReactionHandler.GroupCallout(reaction),
-                    CommandType.CallGroup)
+                    CommandType.CallGroup,
+                    (SocketUser)reaction.User)
                     .RunCommand();
             }
             if (reaction.ValidateReaction(new Emoji("🐾")) || reaction.ValidateReaction(new Emoji("🐷")) || reaction.ValidateReaction(new Emoji("❓")))
             {
                 new DiscordCommand(
                     ReactionHandler.PartyReactionHandler.JoinGuildFight(reaction),
-                    CommandType.JoinGroup)
+                    CommandType.JoinGroup,
+                    (SocketUser)reaction.User)
                     .RunCommand();
             }
             if (reaction.ValidateReaction(new Emoji("❎")) || reaction.ValidateReaction(new Emoji("☑️")) || reaction.ValidateReaction(new Emoji("🇽")))
             {
                 new DiscordCommand(
                     ReactionHandler.PartyReactionHandler.JoinGuildFight(reaction),
-                    CommandType.JoinGroup)
+                    CommandType.JoinGroup,
+                    (SocketUser)reaction.User)
                     .RunCommand();
             }
         }
@@ -330,21 +364,24 @@ namespace DiscordAngryBot.GatewayEventHandlers
             {
                 new DiscordCommand(
                     ReactionHandler.PartyReactionHandler.LeaveGroup(reaction),
-                    CommandType.LeaveGroup)
+                    CommandType.LeaveGroup,
+                    (SocketUser)reaction.User)
                     .RunCommand();
             }
             if (reaction.ValidateReaction(new Emoji("🐾")) || reaction.ValidateReaction(new Emoji("🐷")) || reaction.ValidateReaction(new Emoji("❓")))
             {
                 new DiscordCommand(
                     ReactionHandler.PartyReactionHandler.LeaveGuildFight(reaction),
-                    CommandType.LeaveGroup)
+                    CommandType.LeaveGroup,
+                    (SocketUser)reaction.User)
                     .RunCommand();
             }
             if (reaction.ValidateReaction(new Emoji("❎")) || reaction.ValidateReaction(new Emoji("☑️")) || reaction.ValidateReaction(new Emoji("🇽")))
             {
                 new DiscordCommand(
                     ReactionHandler.PartyReactionHandler.LeaveGuildFight(reaction),
-                    CommandType.LeaveGroup)
+                    CommandType.LeaveGroup,
+                    (SocketUser)reaction.User)
                     .RunCommand();
             }
         }

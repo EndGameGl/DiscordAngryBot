@@ -1,16 +1,20 @@
 ﻿using DiscordAngryBot.CustomObjects.Bans;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web.Http;
 
 namespace DiscordAngryBot.APIHandlers.Controllers
 {
+    /// <summary>
+    /// API контроллер банов
+    /// </summary>
     [RoutePrefix("api/Bans")]
     public class BansController : ApiController
     {
+        /// <summary>
+        /// Возврат списка банов в формате JSON
+        /// </summary>
+        /// <param name="guildID"></param>
+        /// <returns></returns>
         [HttpGet, Route("{guildID}")]
         public List<BanJSONobject> GetBans(string guildID)
         {

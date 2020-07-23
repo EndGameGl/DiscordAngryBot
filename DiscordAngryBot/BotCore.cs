@@ -18,6 +18,7 @@ using DiscordAngryBot.CustomObjects.Caches;
 using DiscordAngryBot.CustomObjects.SQLIteHandler;
 using Newtonsoft.Json;
 using System.Text;
+using DiscordAngryBot.CustomObjects.Logs;
 
 namespace DiscordAngryBot
 {
@@ -27,13 +28,17 @@ namespace DiscordAngryBot
     public class BotCore
     {
         /// <summary>
+        /// Логи для вывода на сайт
+        /// </summary>
+        private static List<DataLog> dataLogs = new List<DataLog>();
+        /// <summary>
         /// Список гильдий и связанных с ними данных
         /// </summary>
         private static List<CustomGuildDataCache> customGuildDataCaches = new List<CustomGuildDataCache>();
         /// <summary>
         /// Сервер API бота
         /// </summary>
-        private static APIServer apiServer = new APIServer();
+        private static APIServer apiServer;
         /// <summary>
         /// Клиент дискорда
         /// </summary>
@@ -42,6 +47,10 @@ namespace DiscordAngryBot
         /// Объект, содержащий настройки бота дискорда
         /// </summary>
         private static BotSettings settings = new BotSettings();
+        /// <summary>
+        /// Рандом, используемый в боте
+        /// </summary>
+        public static Random Random = new Random(Guid.NewGuid().GetHashCode());
 
         /// <summary>
         /// Функция запуска бота
@@ -49,7 +58,7 @@ namespace DiscordAngryBot
         /// <param name="args"></param>
         static void Main(string[] args) 
         {
-            apiServer.ConfigServer("http://192.168.1.9:20001", new MediaTypeHeaderValue("text/html"), true);           
+            apiServer = new APIServer("http://192.168.1.9:20001", new MediaTypeHeaderValue("text/html"));           
             MainAsync().GetAwaiter().GetResult(); 
         }
        
@@ -214,6 +223,14 @@ namespace DiscordAngryBot
         public static List<SwearCounter> GetDiscordGuildSwearCounters(ulong guildID)
         {
             return customGuildDataCaches.Where(x => x.Guild.Id == guildID).FirstOrDefault().SwearCounters;
+        }
+        /// <summary>
+        /// Вернуть логи команд/ошибок, произошедших за время работы бота
+        /// </summary>
+        /// <returns></returns>
+        public static List<DataLog> GetDataLogs()
+        {
+            return dataLogs;
         }
 
 
@@ -403,7 +420,11 @@ namespace DiscordAngryBot
         {
             return settings.defaultCommandPrefix;
         }
-
+        /// <summary>
+        /// Сбор краткой сводки о работе гильдии
+        /// </summary>
+        /// <param name="guild"></param>
+        /// <returns></returns>
         public static async Task<string> CollectGuildInfo(SocketGuild guild)
         {
             return await Task.Run(() => {

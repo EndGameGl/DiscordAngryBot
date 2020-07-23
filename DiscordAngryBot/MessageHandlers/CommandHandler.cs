@@ -552,6 +552,21 @@ namespace DiscordAngryBot.MessageHandlers
                     await message.Channel.SendMessageAsync("Данная команда предназначена для использования на сервере.");
                 }
             }
+            public static async Task Roll(SocketMessage message, string[] args)
+            {
+                if (message.Channel is SocketGuildChannel)
+                {
+                    if (Int32.TryParse(args[0], out int num))
+                    {
+                        await message.Channel.SendMessageAsync($"Пользователь {message.Author.Mention} выкинул {BotCore.Random.Next(0, num)} из {num}");
+                    }
+                    await message.DeleteAsync();
+                }
+                else
+                {
+                    await message.Channel.SendMessageAsync("Данная команда предназначена для использования на сервере.");
+                }
+            }
         }
 
         /// <summary>
