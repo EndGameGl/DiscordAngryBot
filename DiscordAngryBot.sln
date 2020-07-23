@@ -5,6 +5,10 @@ VisualStudioVersion = 16.0.29509.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiscordAngryBot", "DiscordAngryBot\DiscordAngryBot.csproj", "{27BE156F-F7FC-4F14-B159-640703B25E29}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SQLiteDBManager", "SQLiteDBManager\SQLiteDBManager.csproj", "{D60AD32C-2434-47E7-84A9-A37CB06362C2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ObjectDiscordAPI", "ObjectDiscordAPI\ObjectDiscordAPI.csproj", "{08A10F70-4C23-4F83-A99E-F9418F00DEF5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{27BE156F-F7FC-4F14-B159-640703B25E29}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{27BE156F-F7FC-4F14-B159-640703B25E29}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{27BE156F-F7FC-4F14-B159-640703B25E29}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D60AD32C-2434-47E7-84A9-A37CB06362C2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D60AD32C-2434-47E7-84A9-A37CB06362C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D60AD32C-2434-47E7-84A9-A37CB06362C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D60AD32C-2434-47E7-84A9-A37CB06362C2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{08A10F70-4C23-4F83-A99E-F9418F00DEF5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{08A10F70-4C23-4F83-A99E-F9418F00DEF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{08A10F70-4C23-4F83-A99E-F9418F00DEF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{08A10F70-4C23-4F83-A99E-F9418F00DEF5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
