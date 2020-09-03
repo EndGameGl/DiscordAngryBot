@@ -1,5 +1,6 @@
 ﻿using Discord.WebSocket;
 using DiscordAngryBot.CustomObjects.SQLIteHandler;
+using DiscordAngryBot.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -28,34 +29,32 @@ namespace DiscordAngryBot.CustomObjects.Bans
         public static async Task Ban(this SocketGuildUser user, int? time, SocketRole role, SocketTextChannel channel, bool isAuto, bool isSelf = false)
         {
             DiscordBan ban = await BanBuilder.BuildDiscordBan(user, time, channel);
-
+            string banMessageText = string.Empty;
+            await ban.BanTarget.RemoveRoleAsync(role);
             if (ban.EndsAt == null)
             {
-                await ban.BanTarget.RemoveRoleAsync(role);
-                await ban.Channel.SendMessageAsync($"Выдан бан пользователю {ban.BanTarget.Mention}");
+                banMessageText = string.Format(BanResources.InfiniteBanLine, ban.BanTarget.Mention);               
             }
             else
-            {
-                await ban.BanTarget.RemoveRoleAsync(role);
-
+            {                
                 ban.BanTimer = new Timer(BanTimerCallBack, ban, (int)time, Timeout.Infinite);
-
                 if (isAuto == false)
                 {
                     if (isSelf == false)
                     {
-                        await ban.Channel.SendMessageAsync($"Выдан бан пользователю {ban.BanTarget.Mention} на {time / 60 / 1000} минут");
+                        banMessageText = string.Format(BanResources.FiniteBanLine, ban.BanTarget.Mention, time / 60 / 1000);
                     }
                     else 
                     {
-                        await ban.Channel.SendMessageAsync($"Пользователь {ban.BanTarget.Mention} выпросил у хомяка себе бан на {time / 60 / 1000} минут");
+                        banMessageText = string.Format(BanResources.FiniteSelfBanLine, ban.BanTarget.Mention, time / 60 / 1000);
                     }
                 }
                 else 
                 {
-                    await ban.Channel.SendMessageAsync($"Выдан автоматический бан за мат пользователю {ban.BanTarget.Mention}, если вы считаете его ошибочным, напишите администраторам");
+                    banMessageText = string.Format(BanResources.AutoBanLine, ban.BanTarget.Mention);
                 }
             }
+            await ban.Channel.SendMessageAsync(banMessageText);
             BotCore.GetDiscordGuildBans(channel.Guild.Id).Add(ban);
             await ban.SaveBanToDB();
         }
@@ -67,12 +66,16 @@ namespace DiscordAngryBot.CustomObjects.Bans
         /// <returns></returns>
         public static async Task Unban(this DiscordBan ban)
         {
-            var roleID = BotCore.GetGuildDataCache(ban.Channel.Guild.Id).Settings.BanRoleID;
-            await ban.BanTarget.AddRoleAsync(ban.Channel.Guild.GetRole(roleID.Value));
-            ban.BanTimer?.Dispose();
-            string sqlQuery = $"DELETE FROM Bans WHERE GUID = '{ban.GUID}'";
-            await SQLiteDataManager.PushToDB($"locals/Databases/{ban.Channel.Guild.Id}/Bans.sqlite", sqlQuery);
-            BotCore.GetDiscordGuildBans(ban.Channel.Guild.Id).Remove(ban);
+            if (BotCore.TryGetDiscordGuildSettings(ban.Channel.Guild.Id, out var settings))
+            {
+                var roleID = settings.BanRoleID;
+                await ban.BanTarget.AddRoleAsync(ban.Channel.Guild.GetRole(roleID.Value));
+                ban.BanTimer?.Dispose();
+                string sqlBanDeleteQuery = string.Format(SQLiteResources.DeleteBanByGUID, ban.GUID);
+                string dbPath = string.Format(SQLiteResources.BanDBPath, ban.Channel.Guild.Id);
+                await SQLiteDataManager.PushToDB(dbPath, sqlBanDeleteQuery);
+                BotCore.GetDiscordGuildBans(ban.Channel.Guild.Id).Remove(ban);
+            }
         }
 
         /// <summary>
@@ -81,15 +84,20 @@ namespace DiscordAngryBot.CustomObjects.Bans
         /// <param name="ban"></param>
         public static async void BanTimerCallBack(object ban)
         {
-            DiscordBan objBan = (DiscordBan)ban;
-            var roleID = BotCore.GetGuildDataCache(objBan.Channel.Guild.Id).Settings.BanRoleID;
-            var role = objBan.Channel.Guild.GetRole(roleID.Value);
-            await objBan.BanTarget.AddRoleAsync(role);
-            await objBan.Channel.SendMessageAsync($"Возвращена роль {role.Name} пользователю {objBan.BanTarget.Username}");
-            objBan.BanTimer.Change(Timeout.Infinite, Timeout.Infinite);
-            objBan.BanTimer.Dispose();
-            string sqlQuery = $"DELETE FROM Bans WHERE GUID = '{objBan.GUID}'";
-            await SQLiteDataManager.PushToDB($"locals/Databases/{objBan.Channel.Guild.Id}/Bans.sqlite", sqlQuery);
+            DiscordBan banObj = (DiscordBan)ban;
+            if (BotCore.TryGetDiscordGuildSettings(banObj.Channel.Guild.Id, out var settings))
+            {
+                var roleID = settings.BanRoleID;
+                var role = banObj.Channel.Guild.GetRole(roleID.Value);
+                await banObj.BanTarget.AddRoleAsync(role);
+                string ubanMessage = string.Format(BanResources.ReturnRoleLine, role.Name, banObj.BanTarget.Username);
+                await banObj.Channel.SendMessageAsync(ubanMessage);
+                banObj.BanTimer.Change(Timeout.Infinite, Timeout.Infinite);
+                banObj.BanTimer.Dispose();
+                string sqlBanDeleteQuery = string.Format(SQLiteResources.DeleteBanByGUID, banObj.GUID);
+                string dbPath = string.Format(SQLiteResources.BanDBPath, banObj.Channel.Guild.Id);
+                await SQLiteDataManager.PushToDB(dbPath, sqlBanDeleteQuery);
+            }
         }     
 
         /// <summary>
@@ -113,7 +121,7 @@ namespace DiscordAngryBot.CustomObjects.Bans
         {
             using (MemoryStream serializationStream = new MemoryStream())
             {
-                await JsonSerializer.SerializeAsync<BanJSONobject>(serializationStream, new BanJSONobject(ban));
+                await JsonSerializer.SerializeAsync(serializationStream, ban.GetReference());
                 var jsonResult = Encoding.UTF8.GetString(serializationStream.ToArray());
                 return jsonResult;
             }
@@ -125,12 +133,12 @@ namespace DiscordAngryBot.CustomObjects.Bans
         /// <param name="jsonText"></param>
         /// <param name="client"></param>
         /// <returns></returns>
-        public static async Task<DiscordBan> DeserializeFromJson(string jsonText, SocketGuild guild)
+        public static async Task<DiscordBan> DeserializeFromJson(string jsonText)
         {
             using (MemoryStream serializationStream = new MemoryStream(Encoding.UTF8.GetBytes(jsonText)))
             {
-                var banDataObject = await JsonSerializer.DeserializeAsync<BanJSONobject>(serializationStream);
-                var ban = await banDataObject.ConvertToDiscordBan(guild);
+                var banDataObject = await JsonSerializer.DeserializeAsync<BanReference>(serializationStream);
+                var ban = banDataObject.LoadOrigin();
                 return ban;
             }
         }
@@ -140,17 +148,16 @@ namespace DiscordAngryBot.CustomObjects.Bans
         /// </summary>
         /// <param name="client"></param>
         /// <returns></returns>
-        public static async Task<List<DiscordBan>> LoadBansFromGuildDB(SocketGuild guild)
+        public static async Task<List<DiscordBan>> LoadBansFromGuildDB(ulong guildID)
         {
-            string query = "SELECT * FROM Bans";
-            DataTable data = await SQLiteDataManager.GetDataFromDB($"locals/Databases/{guild.Id}/Bans.sqlite", query);
+            string dbPath = string.Format(SQLiteResources.BanDBPath, guildID);
+            DataTable data = await SQLiteDataManager.GetDataFromDB(dbPath, SQLiteResources.SelectAllBans);
             List<DiscordBan> bans = new List<DiscordBan>();
             foreach (DataRow row in data.AsEnumerable())
             {
-                bans.Add(await BanBuilder.BuildLoadedDiscordBan(row["GUID"].ToString(), row["BanJSON"].ToString(), guild));
+                bans.Add(await BanBuilder.BuildLoadedDiscordBan(row["GUID"].ToString(), row["BanJSON"].ToString()));
             }
             return bans;
         }
-    }
-    
+    }  
 }

@@ -20,6 +20,8 @@ namespace DiscordAngryBot.GatewayEventHandlers
     /// </summary>
     public static class GatewayEventHandler
     {
+        private static Emoji TerminateGroupEmoji = EmojiGetter.GetEmoji(Emojis.CrossMark);
+        private static Emoji CallGroupEmoji = EmojiGetter.GetEmoji(Emojis.ExclamationMark);
         /// <summary>
         /// Обработчик логгирования
         /// </summary>
@@ -31,7 +33,7 @@ namespace DiscordAngryBot.GatewayEventHandlers
             {
                 case LogSeverity.Error:
                     BotCore.GetDataLogs().Add(new CustomObjects.Logs.DataLog() { Exception = message.Exception, LogType = "Error" });
-                    await ConsoleWriter.Write($"{message.Message}: {message.Exception}", ConsoleWriter.InfoType.Error);
+                    await Debug.Log($"{message.Message}: {message.Exception}", Debug.InfoType.Error);
                     await PushNotificator.Notify(message);
                     break;
                 case LogSeverity.Warning:
@@ -39,11 +41,11 @@ namespace DiscordAngryBot.GatewayEventHandlers
                     //await PushNotificator.Notify(message);
                     break;
                 case LogSeverity.Info:
-                    await ConsoleWriter.Write($"{message.Message}", ConsoleWriter.InfoType.Info);
+                    await Debug.Log($"{message.Message}", Debug.InfoType.Info);
                     break;
                 case LogSeverity.Critical:
                     BotCore.GetDataLogs().Add(new CustomObjects.Logs.DataLog() { Exception = message.Exception, LogType = "Error" });
-                    await ConsoleWriter.Write($"{message.Message}: {message.Exception}", ConsoleWriter.InfoType.Error);
+                    await Debug.Log($"{message.Message}: {message.Exception}", Debug.InfoType.Error);
                     await PushNotificator.Notify(message);
                     break;
             }
@@ -60,26 +62,15 @@ namespace DiscordAngryBot.GatewayEventHandlers
             {
                 if (message.Content.Count() > 0)
                 {
-                    await ConsoleWriter.Write($"[#{message.Channel}] {message.Author.Username}: {message.Content}", ConsoleWriter.InfoType.Chat);
+                    await Debug.Log($"[#{message.Channel}] {message.Author.Username}: {message.Content}", Debug.InfoType.Chat);
                     if (message.Channel is SocketGuildChannel)
-                    {                       
-                        if (BotCore.GetDiscordGuildSettings(((SocketGuildChannel)message.Channel).Guild.Id).IsSwearFilterEnabled == true)
-                            await message.RunSwearFilter();
+                    {
+                        if (BotCore.TryGetDiscordGuildSettings(((SocketGuildChannel)message.Channel).Guild.Id, out var settings))
+                        {
+                            if (settings.IsSwearFilterEnabled == true)
+                                await message.RunSwearFilter();
+                        }
                     }
-                }
-                else
-                {
-                    await ConsoleWriter.Write($"[#{message.Channel}] {message.Author.Username}: Пустое сообщение", ConsoleWriter.InfoType.Chat);
-                }
-                // Проверка сообщения на запрещенные команды 
-                if (message.Channel.Name != "команды-ботам" && BotCore.ForbiddenCommands().Contains(message.Content))
-                {
-                    var mashiroMessage = $"{message.Author.Mention}, все команды ботам пишутся в этот канал: <#636226731459608576>";
-                    await message.Channel.SendMessageAsync(mashiroMessage);
-                    await message.DeleteAsync();
-                }
-                if (message.Content.Count() > 0)
-                {
                     char? prefix = null;
                     if (message.Channel is SocketGuildChannel)
                     {
@@ -94,205 +85,62 @@ namespace DiscordAngryBot.GatewayEventHandlers
                         try
                         {
                             CommandParser commandParser = new CommandParser(message, prefix);
-                            string command = commandParser.GetCommand();
-
-                            if (BotCore.SystemCommands().Contains(command))
+                            string commandName = commandParser.GetCommand();
+                            if (BotCore.TryGetCommand(commandName, out DiscordCommand command))
                             {
-                                if (message.Channel is SocketGuildChannel)
+                                if (command.CommandMetadata.Type == CommandType.StringCommand)
                                 {
-                                    if (BotCore.GetDiscordGuildSettings(((SocketGuildChannel)message.Channel).Guild.Id).adminsID.Contains(message.Author.Id))
+                                    if (command.CommandMetadata.CommandExecutionScope == CommandExecutionScope.All)
                                     {
-                                        // Перебор команд
-                                        switch (command)
+                                        command.Run(new DiscordCommandParameterSet(message).AddParameter(commandParser.GetCommandArgs()));
+                                    }
+                                    else if (message.Channel is SocketGuildChannel && command.CommandMetadata.CommandExecutionScope == CommandExecutionScope.Server)
+                                    {
+                                        switch (command.CommandMetadata.Scope)
                                         {
-                                            case "BAN":
-                                                new DiscordCommand(
-                                                    CommandHandler.SystemCommands.BanUser(message, commandParser.GetCommandArgs()),
-                                                    CommandType.Ban,
-                                                    message.Author)
-                                                    .RunCommand();
+                                            case CommandScope.Admin:
+                                                if (BotCore.TryGetDiscordGuildSettings(((SocketGuildChannel)message.Channel).Guild.Id, out var settings))
+                                                {
+                                                    if (settings.IsAdmin(message.Author.Id))
+                                                        command.Run(new DiscordCommandParameterSet(message).AddParameter(commandParser.GetCommandArgs()));
+                                                    else
+                                                        await message.Channel.SendMessageAsync($"Недостаточно прав на команду.");
+                                                }
+
                                                 break;
-                                            case "UNBAN":
-                                                new DiscordCommand(
-                                                    CommandHandler.SystemCommands.UnbanUser(message, commandParser.GetCommandArgs()),
-                                                    CommandType.Unban,
-                                                    message.Author)
-                                                    .RunCommand();
-                                                break;
-                                            case "CLEAR":
-                                                new DiscordCommand(
-                                                    CommandHandler.SystemCommands.ClearMessages(message, commandParser.GetCommandArgs()),
-                                                    CommandType.Clear,
-                                                    message.Author)
-                                                    .RunCommand();
-                                                break;
-                                            case "SETPREFIX":
-                                                new DiscordCommand(
-                                                    CommandHandler.SystemCommands.SetPrefix(message, commandParser.GetCommandArgs()),
-                                                    CommandType.SetPrefix,
-                                                    message.Author)
-                                                    .RunCommand();
-                                                break;
-                                            case "NEWS":
-                                                new DiscordCommand(
-                                                    CommandHandler.SystemCommands.SetNews(message),
-                                                    CommandType.News,
-                                                    message.Author)
-                                                    .RunCommand();
-                                                break;
-                                            case "BANROLE":
-                                                new DiscordCommand(
-                                                    CommandHandler.SystemCommands.SetBanRole(message),
-                                                    CommandType.BanRole,
-                                                    message.Author)
-                                                    .RunCommand();
-                                                break;
-                                            case "EMBEDTEST":
-                                                new DiscordCommand(
-                                                    CommandHandler.SystemCommands.EmbedTesting(message, commandParser.GetCommandArgs()),
-                                                    CommandType.TestingPlaceholder,
-                                                    message.Author)
-                                                    .RunCommand();
-                                                break;
-                                            case "ADMIN":
-                                                new DiscordCommand(
-                                                    CommandHandler.SystemCommands.AddAdmin(message),
-                                                    CommandType.Admin,
-                                                    message.Author)
-                                                    .RunCommand();
-                                                break;
-                                            case "DEADMIN":
-                                                new DiscordCommand(
-                                                    CommandHandler.SystemCommands.RemoveAdmin(message),
-                                                    CommandType.Deadmin,
-                                                    message.Author)
-                                                    .RunCommand();
-                                                break;
-                                            case "FILTERENABLE":
-                                                new DiscordCommand(
-                                                    CommandHandler.SystemCommands.EnableSwearFilter(message),
-                                                    CommandType.EnableSwear,
-                                                    message.Author)
-                                                    .RunCommand();
-                                                break;
-                                            case "FILTERDISABLE":
-                                                new DiscordCommand(
-                                                    CommandHandler.SystemCommands.DisableSwearFilter(message),
-                                                    CommandType.DisableSwear,
-                                                    message.Author)
-                                                    .RunCommand();
+                                            case CommandScope.User:
+                                                command.Run(new DiscordCommandParameterSet(message).AddParameter(commandParser.GetCommandArgs()));
                                                 break;
                                         }
                                     }
-                                    else
+                                    else if (message.Channel is SocketDMChannel && command.CommandMetadata.CommandExecutionScope == CommandExecutionScope.DM)
                                     {
-                                        await message.Channel.SendMessageAsync($"Недостаточно прав на команду.");
+                                        command.Run(new DiscordCommandParameterSet(message).AddParameter(commandParser.GetCommandArgs()));
                                     }
+                                    else
+                                        await message.Channel.SendMessageAsync(CommandResources.InvalidLocationScopeLine);
                                 }
-                            }
-                            else if (BotCore.UserCommands().Contains(command))
-                            {
-                                    switch (command.ToUpper())
-                                    {
-                                        case "PARTY":
-                                            new DiscordCommand(
-                                                CommandHandler.UserCommands.CreateParty(message, commandParser.GetCommandArgs()),
-                                                CommandType.Party,
-                                                    message.Author)
-                                                .RunCommand();
-                                            break;
-                                        case "RAID":
-                                            new DiscordCommand(
-                                                CommandHandler.UserCommands.CreateRaid(message, commandParser.GetCommandArgs()),
-                                                CommandType.Raid,
-                                                    message.Author)
-                                                .RunCommand();
-                                            break;
-                                        case "LIST":
-                                            new DiscordCommand(
-                                                CommandHandler.UserCommands.ListGroups(message),
-                                                CommandType.List,
-                                                    message.Author)
-                                                .RunCommand();
-                                            break;
-                                        case "GVGEV":
-                                            new DiscordCommand(
-                                                CommandHandler.UserCommands.CreateGuildFight(message, commandParser.GetCommandArgs(), GuildFightType.EV),
-                                                CommandType.GvgEV,
-                                                    message.Author)
-                                                .RunCommand();
-                                            break;
-                                        case "GVGPR":
-                                            new DiscordCommand(
-                                                CommandHandler.UserCommands.CreateGuildFight(message, commandParser.GetCommandArgs(), GuildFightType.PR),
-                                                CommandType.GvgPR,
-                                                    message.Author)
-                                                .RunCommand();
-                                            break;
-                                        case "SELFBAN":
-                                            new DiscordCommand(
-                                                CommandHandler.UserCommands.SelfBan(message, commandParser.GetCommandArgs()),
-                                                CommandType.Selfban,
-                                                    message.Author)
-                                                .RunCommand();
-                                            break;
-                                        case "HELP":
-                                            new DiscordCommand(
-                                                CommandHandler.UserCommands.HelpUser(message, commandParser.GetCommandArgs()),
-                                                CommandType.Help,
-                                                    message.Author)
-                                                .RunCommand();
-                                            break;
-                                    case "ROLL":
-                                        new DiscordCommand(
-                                            CommandHandler.UserCommands.Roll(message, commandParser.GetCommandArgs()),
-                                            CommandType.Roll,
-                                                    message.Author)
-                                            .RunCommand();
-                                        break;
-                                }
-                                
-                            }
-                            else if (BotCore.MusicCommands().Contains(command))
-                            {
-                                switch (command)
-                                {
-                                    case "SUMMON":
-                                        await CommandHandler.MusicCommands.JoinChannel(message);
-                                        break;
-                                }
-                            }
-                            else if (BotCore.OtherCommands().Contains(command))
-                            {
-                                switch (command)
-                                {
-                                    case "КУСЬ":
-                                        new DiscordCommand(
-                                            CommandHandler.OtherCommands.Bite(message, commandParser.GetCommandArgs()),
-                                            CommandType.Bite,
-                                            message.Author)
-                                            .RunCommand();
-                                        break;
-                                    case "БАН":
-                                        new DiscordCommand(
-                                            CommandHandler.OtherCommands.Ban(message),
-                                            CommandType.NotBan,
-                                            message.Author)
-                                            .RunCommand();
-                                        break;
-                                }
-                            }
-                            else
-                            {
                                 await message.DeleteAsync();
                             }
                         }
                         catch (Exception e)
                         {
-                            await ConsoleWriter.Write($"{e.Message} : [{e.InnerException?.Message}]", ConsoleWriter.InfoType.Error);
+                            await Debug.Log($"{e.Message} : [{e.InnerException?.Message}]", Debug.InfoType.Error);
                         }
-                    }
+                    }                   
                 }
+                else
+                {
+                    await Debug.Log($"[#{message.Channel}] {message.Author.Username}: Пустое сообщение", Debug.InfoType.Chat);
+                }
+                // Проверка сообщения на запрещенные команды 
+                if (message.Channel.Name != "команды-ботам" && BotCore.ForbiddenCommands().Contains(message.Content))
+                {
+                    var mashiroMessage = $"{message.Author.Mention}, все команды ботам пишутся в этот канал: <#636226731459608576>";
+                    await message.Channel.SendMessageAsync(mashiroMessage);
+                    await message.DeleteAsync();
+                }
+                
             }
             else if (message.Author.IsBot && message.Author.Username.Contains("Mashiro") && message.Channel.Name != "команды-ботам" && message.Channel.Name != "флудильня")
             {
@@ -308,46 +156,40 @@ namespace DiscordAngryBot.GatewayEventHandlers
         /// <returns></returns>
         public static async Task ReactionAddedHandler(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel messageChannel, SocketReaction reaction)
         {
-            await ConsoleWriter.Write($"{reaction.User} reacted message {cache.Id} with {reaction.Emote.Name}", ConsoleWriter.InfoType.Info);
-            if (reaction.ValidateReaction(new Emoji("\u2705"))) // white_check_mark
+            await Debug.Log($"{reaction.User} reacted message {cache.Id} with {reaction.Emote.Name}", Debug.InfoType.Info);
+            if (!reaction.User.Value.IsBot)
             {
-                new DiscordCommand(
-                    ReactionHandler.PartyReactionHandler.JoinGroup(reaction),
-                    CommandType.JoinGroup,
-                    (SocketUser)reaction.User)
-                    .RunCommand();
-            }
-            if (reaction.ValidateReaction(new Emoji("\u274C"))) // cross_mark
-            {
-                new DiscordCommand(
-                    ReactionHandler.PartyReactionHandler.TerminateGroup(reaction),
-                    CommandType.TerminateGroup,
-                    (SocketUser)reaction.User)
-                    .RunCommand();
-            }
-            if (reaction.ValidateReaction(new Emoji("\u2757"))) // exclamation
-            {
-                new DiscordCommand(
-                    ReactionHandler.PartyReactionHandler.GroupCallout(reaction),
-                    CommandType.CallGroup,
-                    (SocketUser)reaction.User)
-                    .RunCommand();
-            }
-            if (reaction.ValidateReaction(new Emoji("🐾")) || reaction.ValidateReaction(new Emoji("🐷")) || reaction.ValidateReaction(new Emoji("❓")))
-            {
-                new DiscordCommand(
-                    ReactionHandler.PartyReactionHandler.JoinGuildFight(reaction),
-                    CommandType.JoinGroup,
-                    (SocketUser)reaction.User)
-                    .RunCommand();
-            }
-            if (reaction.ValidateReaction(new Emoji("❎")) || reaction.ValidateReaction(new Emoji("☑️")) || reaction.ValidateReaction(new Emoji("🇽")))
-            {
-                new DiscordCommand(
-                    ReactionHandler.PartyReactionHandler.JoinGuildFight(reaction),
-                    CommandType.JoinGroup,
-                    (SocketUser)reaction.User)
-                    .RunCommand();
+                await Debug.Log("Reaction is from user. Checking if emoji command...");
+                string commandName = string.Empty;
+                if (BotCore.TryGetDiscordGuildGroups((messageChannel as SocketGuildChannel).Guild.Id, out List<Group> groups))
+                {
+                    await Debug.Log($"Found {groups.Count} groups for this guild.");
+                    if (groups.TryFindGroup(reaction.MessageId, out Group groupTiedToMessage))
+                    {
+                        await Debug.Log($"Found group tied to reacted message. Checking reaction corellation.");
+                        if (groupTiedToMessage.TryGetUserList((Emoji)reaction.Emote, out UserList userList))
+                        {
+                            await Debug.Log($"Found user list with corresponding enter reaction.");
+                            commandName = "JOINGROUP";
+                        }
+                        else
+                        {
+                            if (reaction.Emote.Name == TerminateGroupEmoji.Name)
+                            {
+                                commandName = "TERMINATEGROUP";
+                            }
+                            else if (reaction.Emote.Name == CallGroupEmoji.Name)
+                            {
+                                commandName = "CALLGROUP";
+                            }
+                        }
+                        if (BotCore.TryGetCommand(commandName, out DiscordCommand command))
+                        {
+                            await Debug.Log($"Command {command.CommandMetadata.CommandName} found. Executing command.");
+                            command.Run(new DiscordCommandParameterSet(groupTiedToMessage).AddParameter(reaction));
+                        }
+                    }
+                }
             }
         }
         /// <summary>
@@ -359,30 +201,22 @@ namespace DiscordAngryBot.GatewayEventHandlers
         /// <returns></returns>
         public static async Task ReactionRemovedHandler(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel messageChannel, SocketReaction reaction)
         {
-            await ConsoleWriter.Write($"{reaction.User} removed reaction {reaction.Emote.Name} from {cache.Id}", ConsoleWriter.InfoType.Info);
-            if (reaction.ValidateReaction(new Emoji("\u2705"))) // white_check_mark
+            await Debug.Log($"{reaction.User} removed reaction {reaction.Emote.Name} from {cache.Id}", Debug.InfoType.Info);           
+            if ((reaction.Emote.Name != TerminateGroupEmoji.Name) && (reaction.Emote.Name != CallGroupEmoji.Name))
             {
-                new DiscordCommand(
-                    ReactionHandler.PartyReactionHandler.LeaveGroup(reaction),
-                    CommandType.LeaveGroup,
-                    (SocketUser)reaction.User)
-                    .RunCommand();
-            }
-            if (reaction.ValidateReaction(new Emoji("🐾")) || reaction.ValidateReaction(new Emoji("🐷")) || reaction.ValidateReaction(new Emoji("❓")))
-            {
-                new DiscordCommand(
-                    ReactionHandler.PartyReactionHandler.LeaveGuildFight(reaction),
-                    CommandType.LeaveGroup,
-                    (SocketUser)reaction.User)
-                    .RunCommand();
-            }
-            if (reaction.ValidateReaction(new Emoji("❎")) || reaction.ValidateReaction(new Emoji("☑️")) || reaction.ValidateReaction(new Emoji("🇽")))
-            {
-                new DiscordCommand(
-                    ReactionHandler.PartyReactionHandler.LeaveGuildFight(reaction),
-                    CommandType.LeaveGroup,
-                    (SocketUser)reaction.User)
-                    .RunCommand();
+                if (BotCore.TryGetDiscordGuildGroups((messageChannel as SocketGuildChannel).Guild.Id, out List<Group> groups))
+                {
+                    if (groups.TryFindGroup(reaction.MessageId, out Group groupTiedToMessage))
+                    {
+                        if (groupTiedToMessage.TryGetUserList((Emoji)reaction.Emote, out UserList userList))
+                        {
+                            if (BotCore.TryGetCommand("LEAVEGROUP", out DiscordCommand command))
+                            {
+                                command.Run(new DiscordCommandParameterSet(groupTiedToMessage).AddParameter(reaction));
+                            }
+                        }
+                    }
+                }
             }
         }
         /// <summary>
@@ -392,7 +226,7 @@ namespace DiscordAngryBot.GatewayEventHandlers
         /// <returns></returns>
         public static async Task ChannelCreatedHandler(SocketChannel channel)
         {
-            await ConsoleWriter.Write($"Channel {((IChannel)channel).Name} created", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"Channel {((IChannel)channel).Name} created", Debug.InfoType.Notice);
         }
         /// <summary>
         /// Обработчик удаления канала
@@ -401,7 +235,7 @@ namespace DiscordAngryBot.GatewayEventHandlers
         /// <returns></returns>
         public static async Task ChannelDestroyedHandler(SocketChannel channel)
         {
-            await ConsoleWriter.Write($"Channel {((IChannel)channel).Name} destroyed", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"Channel {((IChannel)channel).Name} destroyed", Debug.InfoType.Notice);
         }
         /// <summary>
         /// Обработчик обновления канала
@@ -411,7 +245,7 @@ namespace DiscordAngryBot.GatewayEventHandlers
         /// <returns></returns>
         public static async Task ChannelUpdatedHandler(SocketChannel oldChannel, SocketChannel updatedChannel)
         {
-            await ConsoleWriter.Write($"Channel {((IChannel)oldChannel).Name} updated into {((IChannel)updatedChannel).Name}", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"Channel {((IChannel)oldChannel).Name} updated into {((IChannel)updatedChannel).Name}", Debug.InfoType.Notice);
         }
         /// <summary>
         /// Обработчик присоединения к серверу
@@ -419,7 +253,7 @@ namespace DiscordAngryBot.GatewayEventHandlers
         /// <returns></returns>
         public static async Task ConnectedHandler()
         {
-            await ConsoleWriter.Write($"Connected to servers", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"Connected to servers", Debug.InfoType.Notice);
         }
         /// <summary>
         /// Обработчик обновления нынешнего пользователя
@@ -429,7 +263,7 @@ namespace DiscordAngryBot.GatewayEventHandlers
         /// <returns></returns>
         public static async Task CurrentUserUpdatedHandler(SocketSelfUser oldUser, SocketSelfUser updatedUser)
         {
-            await ConsoleWriter.Write($"{oldUser.Username} updated to {updatedUser.Username}", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"{oldUser.Username} updated to {updatedUser.Username}", Debug.InfoType.Notice);
         }
         /// <summary>
         /// Обработчик отключения от сервера
@@ -439,7 +273,7 @@ namespace DiscordAngryBot.GatewayEventHandlers
         public static async Task DisconnectedHandler(Exception exception)
         {
             //Program.GetFormThread().Abort();
-            await ConsoleWriter.Write($"{exception.Message}", ConsoleWriter.InfoType.Error);
+            await Debug.Log($"{exception.Message}", Debug.InfoType.Error);
         }
         /// <summary>
         /// Обработчик доступности гильдии дискорда
@@ -449,7 +283,7 @@ namespace DiscordAngryBot.GatewayEventHandlers
         public static async Task GuildAvailableHandler(SocketGuild guild)
         {
             await BotCore.CreateGuildCache(guild);
-            await ConsoleWriter.Write($"{guild.Name} is available", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"{guild.Name} is available", Debug.InfoType.Notice);
         }
         /// <summary>
         /// Обработчик скачанных юзеров дискорда
@@ -458,7 +292,7 @@ namespace DiscordAngryBot.GatewayEventHandlers
         /// <returns></returns>
         public static async Task GuildMembersDownloadedHandler(SocketGuild guild)
         {
-            await ConsoleWriter.Write($"{guild.Name} members downloaded, {guild.MemberCount} members", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"{guild.Name} members downloaded, {guild.MemberCount} members", Debug.InfoType.Notice);
         }
         /// <summary>
         /// Обработчик обновления состояния пользователя гильдии
@@ -478,7 +312,7 @@ namespace DiscordAngryBot.GatewayEventHandlers
         public static async Task GuildUnavailableHandler(SocketGuild guild)
         {
             await BotCore.RemoveGuildCache(guild);
-            await ConsoleWriter.Write($"{guild.Name} is unavailable", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"{guild.Name} is unavailable", Debug.InfoType.Notice);
         }
         /// <summary>
         /// Обработчик обновления состояния гильдии дискорда
@@ -488,7 +322,7 @@ namespace DiscordAngryBot.GatewayEventHandlers
         /// <returns></returns>
         public static async Task GuildUpdatedHandler(SocketGuild oldGuild, SocketGuild updatedGuild)
         {
-            await ConsoleWriter.Write($"{updatedGuild.Name} guild was updated", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"{updatedGuild.Name} guild was updated", Debug.InfoType.Notice);
         }
         /// <summary>
         /// Обработчик момента присоединения к гильдии бота
@@ -498,7 +332,7 @@ namespace DiscordAngryBot.GatewayEventHandlers
         public static async Task JoinedGuildHandler(SocketGuild guild)
         {
             await BotCore.CreateGuildCache(guild);
-            await ConsoleWriter.Write($"Joined \"{guild.Name}\" guild", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"Joined \"{guild.Name}\" guild", Debug.InfoType.Notice);
         }
         /// <summary>
         /// Обработчик смены задержки обновления
@@ -517,7 +351,7 @@ namespace DiscordAngryBot.GatewayEventHandlers
         /// <returns></returns>
         public static async Task LeftGuildHandler(SocketGuild guild)
         {
-            await ConsoleWriter.Write($"Left \"{guild.Name}\" guild", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"Left \"{guild.Name}\" guild", Debug.InfoType.Notice);
         }
         /// <summary>
         /// Обработчик логина в дискорд
@@ -525,7 +359,7 @@ namespace DiscordAngryBot.GatewayEventHandlers
         /// <returns></returns>
         public static async Task LoggedInHandler()
         {
-            await ConsoleWriter.Write($"Logged in", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"Logged in", Debug.InfoType.Notice);
         }
         /// <summary>
         /// Обработчик выхода из дискорда
@@ -533,7 +367,7 @@ namespace DiscordAngryBot.GatewayEventHandlers
         /// <returns></returns>
         public static async Task LoggedOutHandler()
         {
-            await ConsoleWriter.Write($"Logged out", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"Logged out", Debug.InfoType.Notice);
         }
         /// <summary>
         /// Обработчик удаления сообщения
@@ -545,11 +379,11 @@ namespace DiscordAngryBot.GatewayEventHandlers
         {
             if (cache.Value != null)
             {
-                await ConsoleWriter.Write($"{cache.Value.Author.Username}'s message {cache.Id} was deleted in {channel.Name}", ConsoleWriter.InfoType.Notice);
+                await Debug.Log($"{cache.Value.Author.Username}'s message {cache.Id} was deleted in {channel.Name}", Debug.InfoType.Notice);
             }
             else
             {
-                await ConsoleWriter.Write($"Message was deleted in {channel.Name}, no cache for message was found", ConsoleWriter.InfoType.Notice);
+                await Debug.Log($"Message was deleted in {channel.Name}, no cache for message was found", Debug.InfoType.Notice);
             }
         }
         /// <summary>
@@ -560,17 +394,17 @@ namespace DiscordAngryBot.GatewayEventHandlers
         /// <returns></returns>
         public static async Task MessagesBulkDeletedHandler(IReadOnlyCollection<Cacheable<IMessage, ulong>> cacheList, ISocketMessageChannel channel)
         {
-            await ConsoleWriter.Write($"Deleting a bulk of messages in {channel.Name}", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"Deleting a bulk of messages in {channel.Name}", Debug.InfoType.Notice);
 
             foreach (Cacheable<IMessage, ulong> cache in cacheList)
             {
                 if (cache.Value != null)
                 {
-                    await ConsoleWriter.Write($"{cache.Value.Author.Username}'s message {cache.Id} was deleted in {channel.Name}", ConsoleWriter.InfoType.Notice);
+                    await Debug.Log($"{cache.Value.Author.Username}'s message {cache.Id} was deleted in {channel.Name}", Debug.InfoType.Notice);
                 }
                 else
                 {
-                    await ConsoleWriter.Write($"Message was deleted in {channel.Name}, no cache for message was found", ConsoleWriter.InfoType.Notice);
+                    await Debug.Log($"Message was deleted in {channel.Name}, no cache for message was found", Debug.InfoType.Notice);
                 }
             }
         }
@@ -587,12 +421,12 @@ namespace DiscordAngryBot.GatewayEventHandlers
             {
                 if (message.Content != "" || message.Content != null)
                 {
-                    await ConsoleWriter.Write($"[#{channel.Name}]: {message.Id} was updated to: {message.Content}", ConsoleWriter.InfoType.Notice);
+                    await Debug.Log($"[#{channel.Name}]: {message.Id} was updated to: {message.Content}", Debug.InfoType.Notice);
                     await message.RunSwearFilter();
                 }
                 else
                 {
-                    await ConsoleWriter.Write($"[#{channel.Name}]: {message.Id} was updated but text is empty", ConsoleWriter.InfoType.Notice);
+                    await Debug.Log($"[#{channel.Name}]: {message.Id} was updated but text is empty", Debug.InfoType.Notice);
                 }
             }
         }
@@ -604,7 +438,7 @@ namespace DiscordAngryBot.GatewayEventHandlers
         /// <returns></returns>
         public static async Task ReactionsClearedHandler(Cacheable<IUserMessage, ulong> userMessageCache, ISocketMessageChannel channel)
         {
-            await ConsoleWriter.Write($"Cleared all reactions from message {userMessageCache.Id} in channel {channel.Name}", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"Cleared all reactions from message {userMessageCache.Id} in channel {channel.Name}", Debug.InfoType.Notice);
         }
         /// <summary>
         /// Обработчик вступления пользователя в канал (я так и не понял, когда это происходит...)
@@ -613,7 +447,7 @@ namespace DiscordAngryBot.GatewayEventHandlers
         /// <returns></returns>
         public static async Task RecipientAddedHandler(SocketGroupUser user)
         {
-            await ConsoleWriter.Write($"{user.Username} was added to {user.Channel.Name}", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"{user.Username} was added to {user.Channel.Name}", Debug.InfoType.Notice);
         }
         /// <summary>
         /// Обработчик выхода пользователя из канала (аналогично с выше)
@@ -622,7 +456,7 @@ namespace DiscordAngryBot.GatewayEventHandlers
         /// <returns></returns>
         public static async Task RecipientRemovedHandler(SocketGroupUser user)
         {
-            await ConsoleWriter.Write($"{user.Username} was removed from {user.Channel.Name}", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"{user.Username} was removed from {user.Channel.Name}", Debug.InfoType.Notice);
         }
         /// <summary>
         /// Обработчик создания роли
@@ -631,7 +465,7 @@ namespace DiscordAngryBot.GatewayEventHandlers
         /// <returns></returns>
         public static async Task RoleCreatedHandler(SocketRole role)
         {
-            await ConsoleWriter.Write($"{role.Name} was created in {role.Guild.Name}", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"{role.Name} was created in {role.Guild.Name}", Debug.InfoType.Notice);
         }
         /// <summary>
         /// Обработчик удаления роли
@@ -640,7 +474,7 @@ namespace DiscordAngryBot.GatewayEventHandlers
         /// <returns></returns>
         public static async Task RoleDeletedHandler(SocketRole role)
         {
-            await ConsoleWriter.Write($"{role.Name} was deleted from {role.Guild.Name}", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"{role.Name} was deleted from {role.Guild.Name}", Debug.InfoType.Notice);
         }
         /// <summary>
         /// Обработчик обновления роли на сервере
@@ -650,7 +484,7 @@ namespace DiscordAngryBot.GatewayEventHandlers
         /// <returns></returns>
         public static async Task RoleUpdatedHandler(SocketRole oldRole, SocketRole updatedRole)
         {
-            await ConsoleWriter.Write($"{updatedRole.Name} was updated at {updatedRole.Guild.Name}", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"{updatedRole.Name} was updated at {updatedRole.Guild.Name}", Debug.InfoType.Notice);
         }
         /// <summary>
         /// Обработчик бана пользователя на сервере дискорда
@@ -660,7 +494,7 @@ namespace DiscordAngryBot.GatewayEventHandlers
         /// <returns></returns>
         public static async Task UserBannedHandler(SocketUser user, SocketGuild guild)
         {
-            await ConsoleWriter.Write($"{user.Username} was banned from {guild.Name}", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"{user.Username} was banned from {guild.Name}", Debug.InfoType.Notice);
         }
         /// <summary>
         /// Обработчик события "Пользователь печатает..."
@@ -679,7 +513,7 @@ namespace DiscordAngryBot.GatewayEventHandlers
         /// <returns></returns>
         public static async Task UserJoinedHandler(SocketGuildUser user)
         {
-            await ConsoleWriter.Write($"{user.Username} joined {user.Guild.Name}", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"{user.Username} joined {user.Guild.Name}", Debug.InfoType.Notice);
         }
         /// <summary>
         /// Обработчик выхода юзера с сервера
@@ -688,7 +522,7 @@ namespace DiscordAngryBot.GatewayEventHandlers
         /// <returns></returns>
         public static async Task UserLeftHandler(SocketGuildUser user)
         {
-            await ConsoleWriter.Write($"{user.Username} left {user.Guild.Name}", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"{user.Username} left {user.Guild.Name}", Debug.InfoType.Notice);
         }
         /// <summary>
         /// Обработчик разбана юзера на сервере
@@ -698,7 +532,7 @@ namespace DiscordAngryBot.GatewayEventHandlers
         /// <returns></returns>
         public static async Task UserUnbannedHandler(SocketUser user, SocketGuild guild)
         {
-            await ConsoleWriter.Write($"{user.Username} was unbanned at {guild.Name}", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"{user.Username} was unbanned at {guild.Name}", Debug.InfoType.Notice);
         }
         /// <summary>
         /// Обработчик обновления пользователя
@@ -721,15 +555,15 @@ namespace DiscordAngryBot.GatewayEventHandlers
         {
             if (oldState.VoiceChannel == null && newState.VoiceChannel != null)
             {
-                await ConsoleWriter.Write($"{user.Username} has joined {newState.VoiceChannel.Name}", ConsoleWriter.InfoType.Notice);
+                await Debug.Log($"{user.Username} has joined {newState.VoiceChannel.Name}", Debug.InfoType.Notice);
             }
             else if (oldState.VoiceChannel != null && newState.VoiceChannel != null && (oldState.VoiceChannel.Id != newState.VoiceChannel.Id))
             {
-                await ConsoleWriter.Write($"{user.Username} had switched voice channel to {newState.VoiceChannel.Name} from {oldState.VoiceChannel.Name}", ConsoleWriter.InfoType.Notice);
+                await Debug.Log($"{user.Username} had switched voice channel to {newState.VoiceChannel.Name} from {oldState.VoiceChannel.Name}", Debug.InfoType.Notice);
             }
             else if (oldState.VoiceChannel != null && newState.VoiceChannel == null)
             {
-                await ConsoleWriter.Write($"{user.Username} had left voice channel {oldState.VoiceChannel.Name}", ConsoleWriter.InfoType.Notice);
+                await Debug.Log($"{user.Username} had left voice channel {oldState.VoiceChannel.Name}", Debug.InfoType.Notice);
             }
         }
         /// <summary>
@@ -739,7 +573,7 @@ namespace DiscordAngryBot.GatewayEventHandlers
         /// <returns></returns>
         public static async Task VoiceServerUpdatedHandler(SocketVoiceServer voiceServer)
         {
-            await ConsoleWriter.Write($"Joined voice server", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"Joined voice server", Debug.InfoType.Notice);
         }
     }
 }

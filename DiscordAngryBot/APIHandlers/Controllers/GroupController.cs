@@ -1,4 +1,5 @@
 ﻿using DiscordAngryBot.CustomObjects.Groups;
+using DiscordAngryBot.Models;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web.Http;
@@ -18,15 +19,19 @@ namespace DiscordAngryBot.APIHandlers.Controllers
         /// <param name="guildID"></param>
         /// <returns></returns>
         [HttpGet, Route("{guildID}/Groups")]
-        public List<GroupJSONObject> GetGroups(string guildID)
+        public List<GroupReference> GetGroups(string guildID)
         {
-            var groups = BotCore.GetDiscordGuildGroups(ulong.Parse(guildID));
-            List<GroupJSONObject> returnData = new List<GroupJSONObject>();
-            foreach (var group in groups)
+            if (BotCore.TryGetDiscordGuildGroups(ulong.Parse(guildID), out var groups))
             {
-                returnData.Add(new GroupJSONObject(group));
+                List<GroupReference> returnData = new List<GroupReference>();
+                foreach (var group in groups)
+                {
+                    returnData.Add(new GroupReference(group));
+                }
+                return returnData;
             }
-            return returnData;
+            else
+                return null;
         }
         /// <summary>
         /// Получение конкретной группы сервера
@@ -37,11 +42,16 @@ namespace DiscordAngryBot.APIHandlers.Controllers
         [HttpGet, Route("{guildID}/Groups/{GUID}")]
         public object GetGroupByGUID(string guildID, string GUID)
         {
-            Group group = BotCore.GetDiscordGuildGroups(ulong.Parse(guildID)).Where(x => x.GUID == GUID).SingleOrDefault();
-            if (group != null)
-                return new GroupJSONObject(group);
+            if (BotCore.TryGetDiscordGuildGroups(ulong.Parse(guildID), out var groups))
+            {
+                var group = groups.Where(x => x.GUID == GUID).SingleOrDefault();
+                if (group != null)
+                    return new GroupReference(group);
+                else
+                    return "No such group was found.";
+            }
             else
-                return "No such group was found.";
+                return "No such guild was found.";
         }
     }
 }

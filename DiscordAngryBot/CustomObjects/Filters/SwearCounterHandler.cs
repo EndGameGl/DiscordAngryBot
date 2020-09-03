@@ -35,14 +35,23 @@ namespace DiscordAngryBot.CustomObjects.Filters
             counter.reasons.Add(reason);
             if (counter.reasons.Count() == 5)
             {
-                await ((SocketGuildUser)reason.Author).Ban(
-                    1800000, 
-                    ((SocketGuildUser)reason.Author).Guild.GetRole(BotCore.GetDiscordGuildSettings(counter.author.Guild.Id).BanRoleID.Value), 
-                    (SocketTextChannel)reason.Channel, 
-                    true);
-                await BotCore.GetClient().GetUser(261497385274966026).SendMessageAsync($"Выдан автоматический бан юзеру {reason.Author.Username}\n" +
-                    $"Причины:\n1. {counter.reasons[0].Content}\n2.{counter.reasons[1].Content}\n3.{counter.reasons[2].Content}\n4.{counter.reasons[3].Content}\n5.{counter.reasons[4].Content}");
-                counter.reasons = new List<SocketMessage>();
+                if (BotCore.TryGetDiscordGuildSettings(counter.author.Guild.Id, out var settings))
+                {
+                    await ((SocketGuildUser)reason.Author).Ban(
+                        BanSettings.Default.AutoBanLength,
+                        ((SocketGuildUser)reason.Author).Guild.GetRole(settings.BanRoleID.Value),
+                        (SocketTextChannel)reason.Channel,
+                        true);
+                    await BotCore.GetClient().GetUser(261497385274966026).SendMessageAsync(
+                        $"Выдан автоматический бан юзеру {reason.Author.Username}\n" +
+                        $"Причины:\n" +
+                        $"1.{counter.reasons[0].Content}\n" +
+                        $"2.{counter.reasons[1].Content}\n" +
+                        $"3.{counter.reasons[2].Content}\n" +
+                        $"4.{counter.reasons[3].Content}\n" +
+                        $"5.{counter.reasons[4].Content}");
+                    counter.reasons.Clear();
+                }
             }
         }
 

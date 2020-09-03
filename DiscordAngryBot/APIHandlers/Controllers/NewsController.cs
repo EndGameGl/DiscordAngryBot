@@ -30,11 +30,17 @@ namespace DiscordAngryBot.APIHandlers.Controllers
                 Dictionary<string, SocketTextChannel> channelsList = new Dictionary<string, SocketTextChannel>();
                 foreach (var guild in BotCore.GetClient().Guilds.Select(x => x.Id).ToList())
                 {
-                    var newsID = BotCore.GetDiscordGuildSettings(guild).NewsChannelID;
-                    var apiToken = BotCore.GetDiscordGuildSettings(guild).APIToken;
-                    if (newsID != null && apiToken != null)
+                    if (BotCore.TryGetDiscordGuildSettings(guild, out var guildSettings))
                     {
-                        channelsList.Add(apiToken, BotCore.GetGuildDataCache(guild).Guild.GetTextChannel(newsID.Value));
+                        var newsID = guildSettings.NewsChannelID;
+                        var apiToken = guildSettings.APIToken;
+                        if (newsID != null && apiToken != null)
+                        {
+                            if (BotCore.TryGetGuildDataCache(guild, out var cache)) 
+                            {
+                                channelsList.Add(apiToken, cache.Guild.GetTextChannel(newsID.Value)); 
+                            }
+                        }
                     }
                 }
                 if (channelsList.Count() != 0)
@@ -55,7 +61,7 @@ namespace DiscordAngryBot.APIHandlers.Controllers
             }
             catch (Exception e)
             {
-                ConsoleWriter.Write($"{e.Message}", ConsoleWriter.InfoType.Error).GetAwaiter().GetResult();
+                Debug.Log($"{e.Message}", Debug.InfoType.Error).GetAwaiter().GetResult();
                 return $"Error: {e.Message} [{e.InnerException?.Message}]";
             }
         }

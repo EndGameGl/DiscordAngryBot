@@ -10,6 +10,9 @@ namespace DiscordAngryBot.CustomObjects.Caches
         public ulong? NewsChannelID { get; set; }
         public string APIToken { get; set; }
         public bool? IsSwearFilterEnabled { get; set; }
+        public DiscordGuildSettings() { }
+        public bool IsAdmin(ulong id) => adminsID.Contains(id);
+
     }
 }
  

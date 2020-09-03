@@ -47,11 +47,11 @@ namespace DiscordAngryBot.CustomObjects.Bans
         /// <param name="GUID"></param>
         /// <param name="JSON"></param>
         /// <returns></returns>
-        public static async Task<DiscordBan> BuildLoadedDiscordBan(string GUID, string JSON, SocketGuild guild)
+        public static async Task<DiscordBan> BuildLoadedDiscordBan(string GUID, string JSON)
         {
             return await Task.Run(async () =>
             {
-                DiscordBan ban = await BanHandler.DeserializeFromJson(JSON, guild);
+                DiscordBan ban = await BanHandler.DeserializeFromJson(JSON);
                 ban.GUID = GUID;
                 DateTime currentTime = DateTime.Now;
 

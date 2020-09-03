@@ -32,23 +32,23 @@ namespace DiscordAngryBot.CustomObjects.SQLIteHandler
         /// <returns></returns>
         public static async Task<DataTable> GetDataFromDB(string dbPath, string sqlQuery)
         {
-            await ConsoleWriter.Write($"Creating new connection...", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"Creating new connection...", Debug.InfoType.Notice);
             SQLiteConnection connection = new SQLiteConnection($"Data Source={dbPath};Version=3;");
             SQLiteCommand command = new SQLiteCommand(sqlQuery, connection);
 
             await connection.OpenAsync();
-            await ConsoleWriter.Write($"Opened new async connection: {connection.DataSource}", ConsoleWriter.InfoType.Notice);
-            await ConsoleWriter.Write($"Executing async reader", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"Opened new async connection: {connection.DataSource}", Debug.InfoType.Notice);
+            await Debug.Log($"Executing async reader", Debug.InfoType.Notice);
             var reader = await command.ExecuteReaderAsync();
 
             DataTable dataTable = new DataTable();
-            await ConsoleWriter.Write($"Loading new datatable", ConsoleWriter.InfoType.Notice);            
+            await Debug.Log($"Loading new datatable", Debug.InfoType.Notice);            
             dataTable.Load(reader);
-            await ConsoleWriter.Write($"Loaded datatable: {dataTable.Rows.Count} rows", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"Loaded datatable: {dataTable.Rows.Count} rows", Debug.InfoType.Notice);
             reader.Close();
-            await ConsoleWriter.Write($"Closed reader", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"Closed reader", Debug.InfoType.Notice);
             connection.Close();
-            await ConsoleWriter.Write($"Closed connection", ConsoleWriter.InfoType.Notice);
+            await Debug.Log($"Closed connection", Debug.InfoType.Notice);
 
             return dataTable;
         }

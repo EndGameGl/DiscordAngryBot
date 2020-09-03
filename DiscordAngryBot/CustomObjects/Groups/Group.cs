@@ -1,8 +1,11 @@
-﻿using Discord.Rest;
+﻿using Discord;
+using Discord.Rest;
 using Discord.WebSocket;
+using DiscordAngryBot.Models;
 using Microsoft.Win32.SafeHandles;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace DiscordAngryBot.CustomObjects.Groups
@@ -10,7 +13,7 @@ namespace DiscordAngryBot.CustomObjects.Groups
     /// <summary>
     /// Абстрактный класс, предстравляющий группу пользователей
     /// </summary>
-    public class Group : IDisposable
+    public class Group : IDisposable, IReferableTo<GroupReference>
     {
         /// <summary>
         /// Признак того, был ли удален объект
@@ -34,13 +37,9 @@ namespace DiscordAngryBot.CustomObjects.Groups
         /// </summary>
         public SocketTextChannel Channel { get; set; }
         /// <summary>
-        /// Список пользователей, состоящих в группе
+        /// Собираемые группы пользователей
         /// </summary>
-        public List<SocketGuildUser> Users { get; set; }
-        /// <summary>
-        /// Ограничение на количество пользователей в группе
-        /// </summary>
-        public int? UserLimit { get; set; } 
+        public List<UserList> UserLists { get; set; }
         /// <summary>
         /// Сообщение, представляющее группу в дискорде
         /// </summary>
@@ -53,6 +52,10 @@ namespace DiscordAngryBot.CustomObjects.Groups
         /// Описание цели сбора группы
         /// </summary>
         public string Destination { get; set; }
+        /// <summary>
+        /// Тип группы
+        /// </summary>
+        public GroupType Type { get; set; }
 
         /// <summary>
         /// Метод вызова сбора памяти
@@ -62,6 +65,12 @@ namespace DiscordAngryBot.CustomObjects.Groups
             Dispose(true);
             GC.SuppressFinalize(this);
         }
+
+        public GroupReference GetReference()
+        {
+            return new GroupReference(this);
+        }
+
         /// <summary>
         /// Метод сбора памяти
         /// </summary>

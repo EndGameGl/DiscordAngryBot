@@ -91,36 +91,83 @@
     <Compile Include="BotSettings.cs" />
     <Compile Include="CustomObjects\Bans\BanBuilder.cs" />
     <Compile Include="CustomObjects\Bans\BanHandler.cs" />
-    <Compile Include="CustomObjects\Bans\BanJSONobject.cs" />
+    <Compile Include="CustomObjects\Bans\BanResources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>BanResources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Models\BanReference.cs" />
+    <Compile Include="CustomObjects\Bans\BanSettings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>BanSettings.settings</DependentUpon>
+    </Compile>
     <Compile Include="CustomObjects\Bans\DiscordBan.cs" />
     <Compile Include="CustomObjects\Caches\CustomGuildDataCache.cs" />
     <Compile Include="CustomObjects\Caches\DiscordGuildSettings.cs" />
-    <Compile Include="CustomObjects\ConsoleOutput\ConsoleWriter.cs" />
+    <Compile Include="CustomObjects\ConsoleOutput\Debug.cs" />
+    <Compile Include="CustomObjects\DiscordCommands\CommandExecutionScope.cs" />
+    <Compile Include="CustomObjects\DiscordCommands\CommandScope.cs" />
+    <Compile Include="CustomObjects\DiscordCommands\CustomCommandAttribute.cs" />
+    <Compile Include="CustomObjects\DiscordCommands\CommandCategory.cs" />
+    <Compile Include="CustomObjects\DiscordCommands\CommandExecutableTask.cs" />
+    <Compile Include="CustomObjects\DiscordCommands\CommandType.cs" />
     <Compile Include="CustomObjects\DiscordCommands\DiscordCommand.cs" />
+    <Compile Include="CustomObjects\DiscordCommands\DiscordCommandComparer.cs" />
+    <Compile Include="CustomObjects\DiscordCommands\DiscordCommandParameterSet.cs" />
     <Compile Include="CustomObjects\Filters\SwearCounter.cs" />
     <Compile Include="CustomObjects\Filters\SwearCounterHandler.cs" />
     <Compile Include="CustomObjects\Filters\SwearFilter.cs" />
     <Compile Include="CustomObjects\Groups\Group.cs" />
     <Compile Include="CustomObjects\Groups\GroupBuilder.cs" />
     <Compile Include="CustomObjects\Groups\GroupHandler.cs" />
-    <Compile Include="CustomObjects\Groups\GroupJSONObject.cs" />
+    <Compile Include="Models\GroupReference.cs" />
+    <Compile Include="CustomObjects\Groups\GroupType.cs" />
     <Compile Include="CustomObjects\Groups\GuildFight.cs" />
-    <Compile Include="CustomObjects\Groups\Party.cs" />
-    <Compile Include="CustomObjects\Groups\Raid.cs" />
+    <Compile Include="CustomObjects\Groups\GuildFightType.cs" />
+    <Compile Include="CustomObjects\Groups\UserList.cs" />
+    <Compile Include="Models\UserListReference.cs" />
+    <Compile Include="CustomObjects\ILoadableInto.cs" />
+    <Compile Include="CustomObjects\IReferableTo.cs" />
     <Compile Include="CustomObjects\Logs\DataLog.cs" />
     <Compile Include="CustomObjects\News\NewsData.cs" />
     <Compile Include="CustomObjects\Notifications\PushNotificator.cs" />
     <Compile Include="CustomObjects\Parsers\CommandParser.cs" />
     <Compile Include="CustomObjects\SQLIteHandler\SQLiteDataManager.cs" />
+    <Compile Include="CustomObjects\SQLIteHandler\SQLiteResources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>SQLiteResources.resx</DependentUpon>
+    </Compile>
     <Compile Include="MessageHandlers\CommandHandler.cs" />
     <Compile Include="BotCore.cs" />
+    <Compile Include="MessageHandlers\CommandResources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>CommandResources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="MessageHandlers\CommandSettings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>CommandSettings.settings</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ReactionHandlers\EmojiGetter.cs" />
+    <Compile Include="ReactionHandlers\Emojis.cs" />
     <Compile Include="ReactionHandlers\ReactionHandler.cs" />
     <Compile Include="ReactionHandlers\ReactionValidator.cs" />
     <Compile Include="GatewayEventHandlers\GatewayEventHandlers.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="CustomObjects\Bans\BanSettings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>BanSettings.Designer.cs</LastGenOutput>
+    </None>
+    <None Include="MessageHandlers\CommandSettings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>CommandSettings.Designer.cs</LastGenOutput>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.7.2">
@@ -150,6 +197,20 @@
     <PackageReference Include="System.Text.Json">
       <Version>4.7.2</Version>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="CustomObjects\Bans\BanResources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>BanResources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="CustomObjects\SQLIteHandler\SQLiteResources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>SQLiteResources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="MessageHandlers\CommandResources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>CommandResources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

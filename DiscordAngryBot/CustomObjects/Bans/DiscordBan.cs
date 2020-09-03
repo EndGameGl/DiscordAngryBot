@@ -1,17 +1,14 @@
 ﻿using Discord.WebSocket;
+using DiscordAngryBot.Models;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace DiscordAngryBot.CustomObjects.Bans
 {
     /// <summary>
     /// Класс, представляющий бан в дискорде
     /// </summary>
-    public class DiscordBan
+    public class DiscordBan : IReferableTo<BanReference>
     {
         /// <summary>
         /// Уникальный идентификатор бана
@@ -42,5 +39,10 @@ namespace DiscordAngryBot.CustomObjects.Bans
         /// Дата окончания бана
         /// </summary>
         public DateTime? EndsAt { get; set; }
+
+        public BanReference GetReference()
+        {
+            return new BanReference(this);
+        }
     }
 }

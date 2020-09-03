@@ -1,4 +1,5 @@
 ﻿using DiscordAngryBot.CustomObjects.Bans;
+using DiscordAngryBot.Models;
 using System.Collections.Generic;
 using System.Web.Http;
 
@@ -16,13 +17,13 @@ namespace DiscordAngryBot.APIHandlers.Controllers
         /// <param name="guildID"></param>
         /// <returns></returns>
         [HttpGet, Route("{guildID}")]
-        public List<BanJSONobject> GetBans(string guildID)
+        public List<BanReference> GetBans(string guildID)
         {
             List<DiscordBan> bans = BotCore.GetDiscordGuildBans(ulong.Parse(guildID));
-            List<BanJSONobject> returnData = new List<BanJSONobject>();
+            List<BanReference> returnData = new List<BanReference>();
             foreach (var ban in bans)
             {
-                returnData.Add(new BanJSONobject(ban));
+                returnData.Add(new BanReference(ban));
             }
             return returnData;
         }

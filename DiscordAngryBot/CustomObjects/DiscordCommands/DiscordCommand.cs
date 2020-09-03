@@ -1,74 +1,55 @@
-﻿using Discord.WebSocket;
-using DiscordAngryBot.CustomObjects.ConsoleOutput;
+﻿using DiscordAngryBot.CustomObjects.ConsoleOutput;
 using System;
+using System.Linq;
+using System.Reflection;
 using System.Threading;
-using System.Threading.Tasks;
-using Windows.System;
 
 namespace DiscordAngryBot.CustomObjects.DiscordCommands
 {
-    public enum CommandType
-    {
-        Ban,
-        Unban,
-        Clear,
-        SetPrefix,
-        News,
-        BanRole,
-        Admin,
-        Deadmin,
-        Party,
-        Raid,
-        List,
-        GvgEV,
-        GvgPR,
-        Help,
-        Selfban,
-        Bite,
-        NotBan,
-        TestingPlaceholder,
-        JoinGroup,
-        LeaveGroup,
-        CallGroup,
-        TerminateGroup,
-        EnableSwear,
-        DisableSwear,
-        Roll
-    }
+    /// <summary>
+    /// Класс, содержащий в себе команду для бота
+    /// </summary>
     public class DiscordCommand
     {
-        private Task TaskToRun { get; set; }
-        private CommandType Type { get; set; }
-        private SocketUser User { get; set; }
-
-        public DiscordCommand(Task task, CommandType commandType, SocketUser user)
+        /// <summary>
+        /// Метадата к методу, вызываемому командой
+        /// </summary>
+        public CustomCommandAttribute CommandMetadata { get; set; }
+        /// <summary>
+        /// Метод, вызываемый командой
+        /// </summary>
+        public MethodInfo Method { get; set; }
+        /// <summary>
+        /// Конструктор команды
+        /// </summary>
+        public DiscordCommand() { }
+        /// <summary>
+        /// Запуск команды с указанным набором параметров
+        /// </summary>
+        /// <param name="parameterSet"></param>
+        public void Run(DiscordCommandParameterSet parameterSet)
         {
-            TaskToRun = task;
-            Type = commandType;
-            User = user;
-        }
-
-        public void RunCommand()
-        {
-            if (TaskToRun != null)
+            Thread thread = new Thread(async () =>
             {
-                
-                Thread thread = new Thread(async () =>
+                try
                 {
-                    try
-                    {
-                        await ConsoleWriter.Write($"Executing command {Type}", ConsoleWriter.InfoType.CommandInfo);
-                        BotCore.GetDataLogs().Add(new Logs.DataLog() { LogType = "Command", Message = $"Executed command {Type} for {User.Username} ({User.Id})" });
-                        await TaskToRun;
-                    }
-                    catch (Exception e)
-                    {
-                        BotCore.GetDataLogs().Add(new CustomObjects.Logs.DataLog() { Exception = e, LogType = "Error" });
-                        await ConsoleWriter.Write($"Task got an error: [{e.Message}: {e.InnerException?.Message}]", ConsoleWriter.InfoType.Error);
-                    }
-                });
-                thread.Start();                
-            }
+                    await Debug.Log($"Invoking command {CommandMetadata.CommandName}", Debug.InfoType.CommandInfo);
+                    Method.Invoke(null, parameterSet.GetParameters(Method.GetParameters().Length));
+                }
+                catch (Exception ex)
+                {
+                    await Debug.Log($"{ex.Message} : {ex.InnerException?.Message}", Debug.InfoType.Error);
+                }
+            });
+            thread.Start();
+        }
+        public override int GetHashCode()
+        {
+            return CommandMetadata.CommandName.GetHashCode();
+        }
+        public override bool Equals(object obj)
+        {
+            return CommandMetadata.CommandName.Equals(((DiscordCommand)obj).CommandMetadata.CommandName);
         }
     }
 }

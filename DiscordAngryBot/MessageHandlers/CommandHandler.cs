@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Discord.Commands;
 using DiscordAngryBot.CustomObjects.SQLIteHandler;
 using Newtonsoft.Json;
+using DiscordAngryBot.CustomObjects.DiscordCommands;
 
 namespace DiscordAngryBot.MessageHandlers
 {
@@ -29,24 +30,29 @@ namespace DiscordAngryBot.MessageHandlers
             /// </summary>
             /// <param name="message"></param>
             /// <returns></returns>
+            [CustomCommand("ADMIN", CommandCategory.System, CommandType.StringCommand, "Добавление нового админа в бота", CommandScope.Admin, CommandExecutionScope.Server)]
             public async static Task AddAdmin(SocketMessage message)
             {
-                await Task.Run(async () => 
+                await Task.Run(async () =>
                 {
                     ulong guildID = ((SocketGuildChannel)message.Channel).Guild.Id;
-                    var settings = BotCore.GetDiscordGuildSettings(guildID);
-                    var adminID = message.MentionedUsers.FirstOrDefault()?.Id;
-                    if (adminID != null)
+                    if (BotCore.TryGetDiscordGuildSettings(guildID, out var settings))
                     {
-                        if (!settings.adminsID.Contains(adminID.Value))
+                        var adminID = message.MentionedUsers.FirstOrDefault()?.Id;
+                        if (adminID != null)
                         {
-                            settings.adminsID.Add(adminID.Value);
-                            await message.Channel.SendMessageAsync($"Добавлен новый администратор бота на сервере: '{BotCore.GetGuildDataCache(guildID).Guild.GetUser(adminID.Value)}'");
-                            await SQLiteDataManager.PushToDB("locals/GuildSettings.sqlite", $"UPDATE Settings SET SettingsJSON = '{JsonConvert.SerializeObject(settings)}' WHERE GuildID = '{guildID}'");
-                        }
-                        else 
-                        {
-                            await message.Channel.SendMessageAsync("Данный пользователь уже является администратором");
+                            if (!settings.IsAdmin(adminID.Value))
+                            {
+                                settings.adminsID.Add(adminID.Value);
+                                string callbackMessage = string.Format(CommandResources.AdminAddedLine, message.MentionedUsers.FirstOrDefault().Mention);
+                                await message.Channel.SendMessageAsync(callbackMessage);
+                                string updateQuery = string.Format(SQLiteResources.UpdateSettingsByGuildID, JsonConvert.SerializeObject(settings), guildID);
+                                await SQLiteDataManager.PushToDB(SQLiteResources.GuildSettingsDBPath, updateQuery);
+                            }
+                            else
+                            {
+                                await message.Channel.SendMessageAsync(CommandResources.AlreadyAdminLine);
+                            }
                         }
                     }
                 });
@@ -56,24 +62,29 @@ namespace DiscordAngryBot.MessageHandlers
             /// </summary>
             /// <param name="message"></param>
             /// <returns></returns>
+            [CustomCommand("DEADMIN", CommandCategory.System, CommandType.StringCommand, "Удаление админа из бота", CommandScope.Admin, CommandExecutionScope.Server)]
             public async static Task RemoveAdmin(SocketMessage message)
             {
                 await Task.Run(async () =>
                 {
                     ulong guildID = ((SocketGuildChannel)message.Channel).Guild.Id;
-                    var settings = BotCore.GetDiscordGuildSettings(guildID);
-                    var adminID = message.MentionedUsers.FirstOrDefault()?.Id;
-                    if (adminID != null)
+                    if (BotCore.TryGetDiscordGuildSettings(guildID, out var settings))
                     {
-                        if (settings.adminsID.Contains(adminID.Value))
+                        var adminID = message.MentionedUsers.FirstOrDefault()?.Id;
+                        if (adminID != null)
                         {
-                            settings.adminsID.Remove(adminID.Value);
-                            await message.Channel.SendMessageAsync($"Забраны администраторские права у: '{BotCore.GetGuildDataCache(guildID).Guild.GetUser(adminID.Value)}'");
-                            await SQLiteDataManager.PushToDB("locals/GuildSettings.sqlite", $"UPDATE Settings SET SettingsJSON = '{JsonConvert.SerializeObject(settings)}' WHERE GuildID = '{guildID}'");
-                        }
-                        else
-                        {
-                            await message.Channel.SendMessageAsync("Данный пользователь не является администратором");
+                            if (settings.IsAdmin(adminID.Value))
+                            {
+                                settings.adminsID.Remove(adminID.Value);
+                                string callbackMessage = string.Format(CommandResources.AdminRemovedLine, message.MentionedUsers.FirstOrDefault().Mention);
+                                await message.Channel.SendMessageAsync(callbackMessage);
+                                string updateQuery = string.Format(SQLiteResources.UpdateSettingsByGuildID, JsonConvert.SerializeObject(settings), guildID);
+                                await SQLiteDataManager.PushToDB(SQLiteResources.GuildSettingsDBPath, updateQuery);
+                            }
+                            else
+                            {
+                                await message.Channel.SendMessageAsync(CommandResources.NotAnAdminLine);
+                            }
                         }
                     }
                 });
@@ -84,18 +95,23 @@ namespace DiscordAngryBot.MessageHandlers
             /// <param name="message"></param>
             /// <param name="args"></param>
             /// <returns></returns>
+            [CustomCommand("SETPREFIX", CommandCategory.System, CommandType.StringCommand, "Установка префикса для команд", CommandScope.Admin, CommandExecutionScope.Server)]
             public async static Task SetPrefix(SocketMessage message, string[] args)
             {
                 await Task.Run(
-                    async () => 
+                    async () =>
                     {
-                        if (args.Length == 1 && args[0]?.Length == 1) 
+                        if (args.Length == 1 && args[0]?.Length == 1)
                         {
                             ulong guildID = ((SocketGuildChannel)message.Channel).Guild.Id;
-                            var settings = BotCore.GetDiscordGuildSettings(guildID);
-                            settings.CommandPrefix = args[0][0];
-                            await message.Channel.SendMessageAsync($"Префикс команд сменен на '{settings.CommandPrefix}'");
-                            await SQLiteDataManager.PushToDB("locals/GuildSettings.sqlite", $"UPDATE Settings SET SettingsJSON = '{JsonConvert.SerializeObject(settings)}' WHERE GuildID = '{guildID}'");
+                            if (BotCore.TryGetDiscordGuildSettings(guildID, out var settings))
+                            {
+                                settings.CommandPrefix = args[0][0];
+                                string callbackMessage = string.Format(CommandResources.CommandPrefixChangedLine, settings.CommandPrefix);
+                                await message.Channel.SendMessageAsync(callbackMessage);
+                                string updateQuery = string.Format(SQLiteResources.UpdateSettingsByGuildID, JsonConvert.SerializeObject(settings), guildID);
+                                await SQLiteDataManager.PushToDB(SQLiteResources.GuildSettingsDBPath, updateQuery);
+                            }
                         }
                     });
             }
@@ -104,15 +120,19 @@ namespace DiscordAngryBot.MessageHandlers
             /// </summary>
             /// <param name="message"></param>
             /// <returns></returns>
+            [CustomCommand("NEWS", CommandCategory.System, CommandType.StringCommand, "Установка новостного канала", CommandScope.Admin, CommandExecutionScope.Server)]
             public async static Task SetNews(SocketMessage message)
             {
                 await Task.Run(async () =>
                 {
                     ulong guildID = ((SocketGuildChannel)message.Channel).Guild.Id;
-                    var settings = BotCore.GetDiscordGuildSettings(guildID);
-                    settings.NewsChannelID = message.Channel.Id;
-                    await message.Channel.SendMessageAsync($"Этот канал установлен как новостной.");
-                    await SQLiteDataManager.PushToDB("locals/GuildSettings.sqlite", $"UPDATE Settings SET SettingsJSON = '{JsonConvert.SerializeObject(settings)}' WHERE GuildID = '{guildID}'");
+                    if (BotCore.TryGetDiscordGuildSettings(guildID, out var settings))
+                    {
+                        settings.NewsChannelID = message.Channel.Id;
+                        await message.Channel.SendMessageAsync(CommandResources.NewsChannelSetLine);
+                        string updateQuery = string.Format(SQLiteResources.UpdateSettingsByGuildID, JsonConvert.SerializeObject(settings), guildID);
+                        await SQLiteDataManager.PushToDB(SQLiteResources.GuildSettingsDBPath, updateQuery);
+                    }
                 });
             }
             /// <summary>
@@ -120,15 +140,24 @@ namespace DiscordAngryBot.MessageHandlers
             /// </summary>
             /// <param name="message"></param>
             /// <returns></returns>
+            [CustomCommand("BANROLE", CommandCategory.System, CommandType.StringCommand, "Установка роли для бана", CommandScope.Admin, CommandExecutionScope.Server)]
             public async static Task SetBanRole(SocketMessage message)
             {
                 await Task.Run(async () =>
                 {
                     ulong guildID = ((SocketGuildChannel)message.Channel).Guild.Id;
-                    var settings = BotCore.GetDiscordGuildSettings(guildID);
-                    settings.BanRoleID = message.MentionedRoles.FirstOrDefault()?.Id;
-                    await message.Channel.SendMessageAsync($"Роль для бана на этом сервере: '{((SocketGuildChannel)message.Channel).Guild.GetRole(settings.BanRoleID.Value).Name}'");
-                    await SQLiteDataManager.PushToDB("locals/GuildSettings.sqlite", $"UPDATE Settings SET SettingsJSON = '{JsonConvert.SerializeObject(settings)}' WHERE GuildID = '{guildID}'");
+                    if (BotCore.TryGetDiscordGuildSettings(guildID, out var settings))
+                    {
+                        var banRole = message.MentionedRoles.FirstOrDefault();
+                        if (banRole != null)
+                        {
+                            settings.BanRoleID = banRole.Id;
+                            string callbackMessage = string.Format(CommandResources.BanRoleSetLine, banRole.Name);
+                            await message.Channel.SendMessageAsync(callbackMessage);
+                            string updateQuery = string.Format(SQLiteResources.UpdateSettingsByGuildID, JsonConvert.SerializeObject(settings), guildID);
+                            await SQLiteDataManager.PushToDB(SQLiteResources.GuildSettingsDBPath, updateQuery);
+                        }
+                    }
                 });
             }
             /// <summary>
@@ -137,20 +166,21 @@ namespace DiscordAngryBot.MessageHandlers
             /// <param name="message"></param>
             /// <param name="args"></param>
             /// <returns></returns>
+            [CustomCommand("BAN", CommandCategory.System, CommandType.StringCommand, "Бан юзера", CommandScope.Admin, CommandExecutionScope.Server)]
             public async static Task BanUser(SocketMessage message, string[] args)
             {
-                if (message.Channel is SocketGuildChannel)
+                var channel = (SocketTextChannel)message.Channel;
+                if (BotCore.TryGetDiscordGuildSettings(channel.Guild.Id, out var settings))
                 {
-                    var channel = (SocketTextChannel)message.Channel;
                     var user = channel.GetUser(message.MentionedUsers.FirstOrDefault().Id);
-                    var role = channel.Guild.GetRole(BotCore.GetDiscordGuildSettings(channel.Guild.Id).BanRoleID.Value);
+                    var role = channel.Guild.GetRole(settings.BanRoleID.Value);
                     if (args?.Length == 2)
                     {
                         if (args[1] != null && args[1]?.Length > 0)
                         {
                             if (int.TryParse(args[1], out int time))
                             {
-                                time = time * 60 * 1000;
+                                time *= CommandSettings.Default.MinuteToMilliseconds;
                                 await user.Ban(time, role, channel, false);
                             }
                         }
@@ -160,10 +190,6 @@ namespace DiscordAngryBot.MessageHandlers
                         await user.Ban(null, role, channel, false);
                     }
                 }
-                else
-                {
-                    await message.Channel.SendMessageAsync("Данная команда предназначена для использования на сервере.");
-                }
             }
             /// <summary>
             /// Очистка сообщений
@@ -171,32 +197,26 @@ namespace DiscordAngryBot.MessageHandlers
             /// <param name="message"></param>
             /// <param name="args"></param>
             /// <returns></returns>
+            [CustomCommand("CLEAR", CommandCategory.System, CommandType.StringCommand, "Очистка сообщений", CommandScope.Admin, CommandExecutionScope.Server)]
             public async static Task ClearMessages(SocketMessage message, string[] args)
             {
-                if (message.Channel is SocketGuildChannel)
+                var channel = (SocketGuildChannel)message.Channel;
+                if (args?.Length == 1)
                 {
-                    var channel = (SocketGuildChannel)message.Channel;
-                    if (args?.Length == 1)
+                    if (int.TryParse(args[0], out int amount))
                     {
-                        if (int.TryParse(args[0], out int amount))
+                        try
                         {
-                            try
-                            {
-                                var messages = message.Channel.GetMessagesAsync(amount + 1, CacheMode.AllowDownload).Flatten();
-                                await channel.Guild.GetTextChannel(message.Channel.Id).DeleteMessagesAsync(messages.ToEnumerable());
-                            }
-                            catch (Exception ex)
-                            {
-                                await ConsoleWriter.Write(ex.Message, ConsoleWriter.InfoType.Error);
-                                await message.Channel.SendMessageAsync($"Не получилось удалить столько сообщений, возможно, вы попытались удалить сообщения старше двух недель.");
-                                await message.DeleteAsync();
-                            }
+                            var messages = message.Channel.GetMessagesAsync(amount + 1, CacheMode.AllowDownload).Flatten();
+                            await channel.Guild.GetTextChannel(message.Channel.Id).DeleteMessagesAsync(messages.ToEnumerable());
+                        }
+                        catch (Exception ex)
+                        {
+                            await Debug.Log(ex.Message, Debug.InfoType.Error);
+                            await message.Channel.SendMessageAsync(CommandResources.InvalidMessageClearRangeLine);
+                            await message.DeleteAsync();
                         }
                     }
-                }
-                else
-                {
-                    await message.Channel.SendMessageAsync("Данная команда предназначена для использования на сервере.");
                 }
             }
             /// <summary>
@@ -205,95 +225,58 @@ namespace DiscordAngryBot.MessageHandlers
             /// <param name="message"></param>
             /// <param name="args"></param>
             /// <returns></returns>
+            [CustomCommand("UNBAN", CommandCategory.System, CommandType.StringCommand, "Разбан юзера", CommandScope.Admin, CommandExecutionScope.Server)]
             public async static Task UnbanUser(SocketMessage message, string[] args)
             {
-                if (message.Channel is SocketGuildChannel)
+                if (args?.Length == 1)
                 {
-                    if (args?.Length == 1)
+                    if (args[0].Length > 0)
                     {
-                        if (args[0].Length > 0)
+                        try
                         {
-                            try
+                            var channel = (SocketGuildChannel)message.Channel;
+                            var user = channel.Guild.GetUser(message.MentionedUsers.FirstOrDefault().Id);
+                            var ban = BotCore.GetDiscordGuildBans(channel.Guild.Id).Where(x => x.BanTarget.Id == user.Id).FirstOrDefault();
+                            if (ban != null)
                             {
-                                var channel = (SocketGuildChannel)message.Channel;
-                                var user = channel.Guild.GetUser(message.MentionedUsers.FirstOrDefault().Id);
-                                var ban = BotCore.GetDiscordGuildBans(channel.Guild.Id).Where(x => x.BanTarget.Id == user.Id).FirstOrDefault();
-                                if (ban != null)
-                                {
-                                    await ban.Unban();
-                                    await message.Channel.SendMessageAsync($"Пользователь {user.Username} был разбанен.");
-                                }
-                                else
-                                {
-                                    await message.Channel.SendMessageAsync($"Пользователь {user.Username} не был забанен.");
-                                }
+                                await ban.Unban();
+                                string callbackMessage = string.Format(CommandResources.UserIsUnbannedLine, user.Username);
+                                await message.Channel.SendMessageAsync(callbackMessage);
                             }
-                            catch (Exception e)
+                            else
                             {
-                                await ConsoleWriter.Write($"{e.Message}", ConsoleWriter.InfoType.Error);
+                                string callbackMessage = string.Format(CommandResources.UserIsNotBannedLine, user.Username);
+                                await message.Channel.SendMessageAsync(callbackMessage);
                             }
                         }
+                        catch (Exception e)
+                        {
+                            await Debug.Log($"{e.Message}", Debug.InfoType.Error);
+                        }
                     }
-                    await message.DeleteAsync();
                 }
-                else
-                {
-                    await message.Channel.SendMessageAsync("Данная команда предназначена для использования на сервере.");
-                }
-            }
-            /// <summary>
-            /// Тестовая штука
-            /// </summary>
-            /// <param name="message"></param>
-            /// <param name="args"></param>
-            /// <returns></returns>
-            public async static Task EmbedTesting(SocketMessage message, string[] args)
-            {
-                if (message.Channel is SocketGuildChannel)
-                {                  
-                    Party party = await GroupBuilder.BuildParty(message, args);
-                    var embedbuilder = new EmbedBuilder();
-                    var embed =
-                        embedbuilder
-                        .WithTitle($"{string.Join(" ", args)}")
-                        .WithTimestamp(party.CreatedAt)
-                        .WithColor(Color.Blue)
-                        .WithAuthor($"Лидер: {party.Author.Username}")
-                        .AddField("Поле 1", "Тестовое значение 1")
-                        .AddField("Поле 2", "Тестовое значение 2")
-                        .AddField("Поле 3", "Тестовое значение 3")
-                        .AddField("Поле 4", "Тестовое значение 4")
-                        .AddField("Поле 5", "Тестовое значение 5")
-                        .AddField("Поле 6", "Тестовое значение 6")
-                        .Build();
-                    party.TargetMessage = await party.Channel.SendMessageAsync(null, false, embed);
-                    var messageEmbed = party.TargetMessage.Embeds.FirstOrDefault();
-                }
-                
+                await message.DeleteAsync();
             }
             /// <summary>
             /// Включение мат-фильтра на сервере
             /// </summary>
             /// <param name="message"></param>
             /// <returns></returns>
+            [CustomCommand("FILTERENABLE", CommandCategory.System, CommandType.StringCommand, "Включение мат-фильтра на сервере", CommandScope.Admin, CommandExecutionScope.Server)]
             public async static Task EnableSwearFilter(SocketMessage message)
             {
-                if (message.Channel is SocketGuildChannel)
+                try
                 {
-                    try
+                    var channel = (SocketGuildChannel)message.Channel;
+                    if (BotCore.TryGetDiscordGuildSettings(channel.Guild.Id, out var settings))
                     {
-                        var channel = (SocketGuildChannel)message.Channel;
-                        BotCore.GetDiscordGuildSettings(channel.Guild.Id).IsSwearFilterEnabled = true;
-                        await message.Channel.SendMessageAsync($"Матфильтр на этом сервере включен");
-                    }
-                    catch (Exception e)
-                    {
-                        await ConsoleWriter.Write($"{e.Message}", ConsoleWriter.InfoType.Error);
+                        settings.IsSwearFilterEnabled = true;
+                        await message.Channel.SendMessageAsync(CommandResources.SwearFilterEnabledLine);
                     }
                 }
-                else
+                catch (Exception e)
                 {
-                    await message.Channel.SendMessageAsync("Данная команда предназначена для использования на сервере.");
+                    await Debug.Log($"{e.Message}", Debug.InfoType.Error);
                 }
             }
             /// <summary>
@@ -301,24 +284,21 @@ namespace DiscordAngryBot.MessageHandlers
             /// </summary>
             /// <param name="message"></param>
             /// <returns></returns>
+            [CustomCommand("FILTERDISABLE", CommandCategory.System, CommandType.StringCommand, "Выключение мат-фильтра на сервере", CommandScope.Admin, CommandExecutionScope.Server)]
             public async static Task DisableSwearFilter(SocketMessage message)
             {
-                if (message.Channel is SocketGuildChannel)
+                try
                 {
-                    try
+                    var channel = (SocketGuildChannel)message.Channel;
+                    if (BotCore.TryGetDiscordGuildSettings(channel.Guild.Id, out var settings))
                     {
-                        var channel = (SocketGuildChannel)message.Channel;
-                        BotCore.GetDiscordGuildSettings(channel.Guild.Id).IsSwearFilterEnabled = false;
-                        await message.Channel.SendMessageAsync($"Матфильтр на этом сервере выключен");
-                    }
-                    catch (Exception e)
-                    {
-                        await ConsoleWriter.Write($"{e.Message}", ConsoleWriter.InfoType.Error);
+                        settings.IsSwearFilterEnabled = false;
+                        await message.Channel.SendMessageAsync(CommandResources.SwearFilterDisabledLine);
                     }
                 }
-                else
+                catch (Exception e)
                 {
-                    await message.Channel.SendMessageAsync("Данная команда предназначена для использования на сервере.");
+                    await Debug.Log($"{e.Message}", Debug.InfoType.Error);
                 }
             }
 
@@ -336,18 +316,22 @@ namespace DiscordAngryBot.MessageHandlers
             /// <param name="message">Сообщение, инициировавшее создание</param>
             /// <param name="destination">Описание группы</param>
             /// <returns></returns>
-            public static async Task CreateParty(SocketMessage message, string[] destination)
+            [CustomCommand("PARTY", CommandCategory.User, CommandType.StringCommand, "Операция создания группы", CommandScope.User, CommandExecutionScope.Server)]
+            public static async Task CreatePartyTemplate(SocketMessage message, string[] destination)
             {
-                if (message.Channel is SocketGuildChannel)
+                await Debug.Log($"Starting party creation: [message is in {((message.Channel is SocketGuildChannel) ? "guild channel" : "not a guild channel")}] [destination: {((destination != null) ? string.Join("", destination) : "empty")}].");
+                await Debug.Log("Building group with given parameters.");
+                Group group = GroupBuilder.BuildPartyTemplate(message, destination);
+                await Debug.Log($"Group {group.GUID} was built for {group.UserLists.Count} userlists at {group.CreatedAt}.");
+                if (BotCore.TryGetDiscordGuildGroups(group.Channel.Guild.Id, out List<Group> groups))
                 {
-                    Party party = await GroupBuilder.BuildParty(message, destination);
-                    BotCore.GetDiscordGuildGroups(party.Channel.Guild.Id).Add(party);
-                    await party.SendMessage();
-                    await party.SaveToDB();
-                }
-                else
-                {
-                    await message.Channel.SendMessageAsync("Данная команда предназначена для использования на сервере.");
+                    await Debug.Log($"Got guild groups list: {groups.Count} groups. Adding new group to the list.");
+                    groups.Add(group);
+                    await Debug.Log($"Group added: {groups.Count} groups in the list. Sending group message...");
+                    await group.SendMessage();
+                    await Debug.Log($"Message sent. Saving group to database.");
+                    await group.SaveToDB();
+                    await Debug.Log($"Group saved. Task finished.");
                 }
             }
             /// <summary>
@@ -357,40 +341,54 @@ namespace DiscordAngryBot.MessageHandlers
             /// <param name="message">Сообщение, инициировавшее создание</param>
             /// <param name="destination">Описание рейда</param>
             /// <returns></returns>
-            public static async Task CreateRaid(SocketMessage message, string[] destination)
+            [CustomCommand("RAID", CommandCategory.User, CommandType.StringCommand, "Операция создания рейда", CommandScope.User, CommandExecutionScope.Server)]
+            public static async Task CreateRaidTemplate(SocketMessage message, string[] destination)
             {
-                if (message.Channel is SocketGuildChannel)
+                Group group = await GroupBuilder.BuildRaidTemplate(message, destination);
+                if (BotCore.TryGetDiscordGuildGroups(group.Channel.Guild.Id, out List<Group> groups))
                 {
-                    Raid raid = await GroupBuilder.BuildRaid(message, destination);
-                    BotCore.GetDiscordGuildGroups(raid.Channel.Guild.Id).Add(raid);
-                    await raid.SendMessage();
-                    await raid.SaveToDB();
-                }
-                else
-                {
-                    await message.Channel.SendMessageAsync("Данная команда предназначена для использования на сервере.");
+                    groups.Add(group);
+                    await group.SendMessage();
+                    await group.SaveToDB();
                 }
             }
             /// <summary>
-            /// Операция создания битвы БШ
+            /// Операция создания битвы БШ Winter
             /// </summary>
             /// <param name="groups"></param>
             /// <param name="message"></param>
             /// <param name="destination"></param>
             /// <returns></returns>
-            public static async Task CreateGuildFight(SocketMessage message, string[] destination, GuildFightType type)
+            [CustomCommand("GVGEV", CommandCategory.User, CommandType.StringCommand, "Операция создания битвы БШ", CommandScope.User, CommandExecutionScope.Server)]
+            public static async Task CreateGuildFightEV(SocketMessage message, string[] destination)
             {
-                if (message.Channel is SocketGuildChannel)
+                GuildFightType type = GuildFightType.EV;
+                GuildFight group = await GroupBuilder.BuildGuildFight(message, destination, type);
+                if (BotCore.TryGetDiscordGuildGroups(group.Channel.Guild.Id, out List<Group> groups))
                 {
-                    GuildFight guildFight = await GroupBuilder.BuildGuildFight(message, destination, type);
-                    BotCore.GetDiscordGuildGroups(guildFight.Channel.Guild.Id).Add(guildFight);
-                    await guildFight.SendMessage();
-                    await guildFight.SaveToDB();
-                    await guildFight.RewriteMessage();
+                    groups.Add(group);
+                    await group.SendMessage();
+                    await group.SaveToDB();
                 }
-                else
+
+            }
+            /// <summary>
+            /// Операция создания битвы БШ Поди разберись
+            /// </summary>
+            /// <param name="groups"></param>
+            /// <param name="message"></param>
+            /// <param name="destination"></param>
+            /// <returns></returns>
+            [CustomCommand("GVGPR", CommandCategory.User, CommandType.StringCommand, "Операция создания битвы БШ", CommandScope.User, CommandExecutionScope.Server)]
+            public static async Task CreateGuildFightPR(SocketMessage message, string[] destination)
+            {
+                GuildFightType type = GuildFightType.PR;
+                GuildFight group = await GroupBuilder.BuildGuildFight(message, destination, type);
+                if (BotCore.TryGetDiscordGuildGroups(group.Channel.Guild.Id, out List<Group> groups))
                 {
-                    await message.Channel.SendMessageAsync("Данная команда предназначена для использования на сервере.");
+                    groups.Add(group);
+                    await group.SendMessage();
+                    await group.SaveToDB();
                 }
             }
             /// <summary>
@@ -399,55 +397,26 @@ namespace DiscordAngryBot.MessageHandlers
             /// <param name="message">Сообщение, инициировавшее вызов списка</param>
             /// <param name="groups">Список всех групп</param>
             /// <returns></returns>
+            [CustomCommand("LIST", CommandCategory.User, CommandType.StringCommand, "Операция вывода списка групп", CommandScope.User, CommandExecutionScope.Server)]
             public static async Task ListGroups(SocketMessage message)
             {
                 StringBuilder text = new StringBuilder();
-                var groups = BotCore.GetDiscordGuildGroups(((SocketGuildChannel)message.Channel).Guild.Id);
-                if (groups.Count() == 0)
+                if (BotCore.TryGetDiscordGuildGroups(((SocketGuildChannel)message.Channel).Guild.Id, out List<Group> groups))
                 {
-                    text.AppendLine("В данный момент нет никаких групп или рейдов.");
-                }
-                else
-                {
-                    if (groups.Count() > 0)
+                    if (groups.Count() == 0)
                     {
-                        text.AppendLine("Список собираемых в данный момент составов:");
-                        if (groups.Count(x => x is Party) > 0)
+                        text.AppendLine("В данный момент нет никаких групп или рейдов.");
+                    }
+                    else
+                    {
+                        text.AppendLine("Собираемые в данный момент группы:");
+                        foreach (var group in groups)
                         {
-                            text.AppendLine("Группы:");
-                            groups.ForEach(x =>
-                                {
-                                    if (x is Party)
-                                    {
-                                        text.AppendLine($"    {x.Author.Username}: {x.Destination} ({x.Users.Count} участников)");
-                                    }
-                                });
+                            text.AppendLine($">{group.Author.Mention}: {group.Destination} ({group.UserLists.Sum(x => x.Users.Count())} пользователей)");
                         }
-                        if (groups.Count(x => x is Raid) > 0)
-                        {
-                            text.AppendLine("Группы:");
-                            groups.ForEach(x =>
-                                {
-                                    if (x is Raid)
-                                    {
-                                        text.AppendLine($"    {x.Author.Username}: {x.Destination} ({x.Users.Count} участников)");
-                                    }
-                                });
-                        }
-                        if (groups.Count(x => x is GuildFight) > 0)
-                        {
-                            text.AppendLine("Битвы БШ:");
-                            groups.ForEach(x =>
-                                {
-                                    if (x is GuildFight)
-                                    {
-                                        text.AppendLine($"    {x.Author.Username}: {x.Destination} ({x.Users.Count + ((GuildFight)x).unwillingUsers.Count + ((GuildFight)x).unsureUsers.Count + ((GuildFight)x).noGearUsers.Count} участников)");
-                                    }
-                                });
-                        }
-                    }                    
+                    }
+                    await message.Author.SendMessageAsync(text.ToString());
                 }
-                await message.Author.SendMessageAsync(text.ToString());
                 await message.DeleteAsync();
             }
             /// <summary>
@@ -455,69 +424,26 @@ namespace DiscordAngryBot.MessageHandlers
             /// </summary>
             /// <param name="user"></param>
             /// <returns></returns>
+            [CustomCommand("HELP", CommandCategory.User, CommandType.StringCommand, "Вывод для пользователя всех доступных комманд бота", CommandScope.User, CommandExecutionScope.All)]
             public static async Task HelpUser(SocketMessage message, string[] args)
             {
                 var guildID = ((SocketGuildUser)message.Author).Guild.Id;
                 StringBuilder stringBuilder = new StringBuilder();
                 if (args.Length == 0)
-                {                   
-                    stringBuilder.AppendLine("Информация о командах, используемых хомяком.");
-                    if (BotCore.GetDiscordGuildSettings(guildID).adminsID.Contains(message.Author.Id))
+                {
+                    var commands = BotCore.GetAllCommands();
+                    foreach (var command in commands)
                     {
-                        stringBuilder.AppendLine("> Системные команды:");
-                        foreach (var com in BotCore.SystemCommands())
-                        {
-                            stringBuilder.AppendLine($" - {com.ToLowerInvariant()}");
-                        }
-                    }
-                    stringBuilder.AppendLine("> Пользовательские команды:");
-                    foreach (var com in BotCore.UserCommands())
-                    {
-                        stringBuilder.AppendLine($" - {com.ToLowerInvariant()}");
-                    }
-                    stringBuilder.AppendLine("> Другие команды:");
-                    foreach (var com in BotCore.OtherCommands())
-                    {
-                        stringBuilder.AppendLine($" - {com.ToLowerInvariant()}");
+                        stringBuilder.AppendLine($"{command.CommandMetadata.CommandName}: {command.CommandMetadata.Description}");
                     }
                 }
                 else
                 {
-                    stringBuilder.AppendLine($"Информация о команде {args[0]}");
-                    switch (args[0].ToUpperInvariant())
+                    stringBuilder.AppendLine($"Информация о команде {args[0]}:");
+                    if (BotCore.TryGetCommand(args[0].ToUpperInvariant(), out DiscordCommand discordCommand))
                     {
-                        case "BAN":
-                            stringBuilder.AppendLine($"Применение:\n> {BotCore.GetGuildCommandPrefix(guildID)}ban [цель бана] [время в минутах]");
-                            break;
-                        case "CLEAR":
-                            stringBuilder.AppendLine($"Применение:\n> {BotCore.GetGuildCommandPrefix(guildID)}clear [количество сообщений]");
-                            break;
-                        case "PARTY":
-                            stringBuilder.AppendLine($"Применение:\n> {BotCore.GetGuildCommandPrefix(guildID)}party [цель сбора группы]");
-                            break;
-                        case "RAID":
-                            stringBuilder.AppendLine($"Применение:\n> {BotCore.GetGuildCommandPrefix(guildID)}raid [цель сбора рейда]");
-                            break;
-                        case "LIST":
-                            stringBuilder.AppendLine($"Применение:\n> {BotCore.GetGuildCommandPrefix(guildID)}list");
-                            break;
-                        case "GVG":
-                            stringBuilder.AppendLine($"Применение:\n> {BotCore.GetGuildCommandPrefix(guildID)}gvg [время сбора битв бш]");
-                            break;
-                        case "HELP":
-                            stringBuilder.AppendLine($"Применение:\n> {BotCore.GetGuildCommandPrefix(guildID)}help (команда)");
-                            break;
-                        case "КУСЬ":
-                            stringBuilder.AppendLine($"Применение:\n> {BotCore.GetGuildCommandPrefix(guildID)}кусь (цель)");
-                            break;
-                        case "БАН":
-                            stringBuilder.AppendLine($"Применение:\n> {BotCore.GetGuildCommandPrefix(guildID)}бан");
-                            break;
-                        default:
-                            stringBuilder.AppendLine($"Такой команды нет.");
-                            break;
+                        stringBuilder.AppendLine($"{discordCommand.CommandMetadata.Description}");
                     }
-
                 }
                 await message.Author.SendMessageAsync(stringBuilder.ToString());
                 await message.DeleteAsync();
@@ -528,18 +454,19 @@ namespace DiscordAngryBot.MessageHandlers
             /// <param name="message"></param>
             /// <param name="args"></param>
             /// <returns></returns>
+            [CustomCommand("SELFBAN", CommandCategory.User, CommandType.StringCommand, "Команда для бана пользователя самим себя", CommandScope.User, CommandExecutionScope.Server)]
             public static async Task SelfBan(SocketMessage message, string[] args)
             {
-                if (message.Channel is SocketGuildChannel)
+                var targetServer = ((SocketGuildChannel)message.Channel).Guild;
+                if (BotCore.TryGetDiscordGuildSettings(targetServer.Id, out var settings))
                 {
-                    var targetServer = ((SocketGuildChannel)message.Channel).Guild;
                     var targetUser = targetServer.Users.Where(x => x.Id == message.Author.Id).Single();
                     if (BotCore.GetDiscordGuildBans(targetServer.Id).Where(x => x.BanTarget.Id == targetUser.Id).Count() == 0)
                     {
                         if (args[0] != null && args[0] != "")
-                            await targetUser?.Ban(Convert.ToInt32(args[0]) * 60 * 1000, targetServer.GetRole(BotCore.GetDiscordGuildSettings(targetServer.Id).BanRoleID.Value), (SocketTextChannel)message.Channel, false, true);
+                            await targetUser?.Ban(Convert.ToInt32(args[0]) * CommandSettings.Default.MinuteToMilliseconds, targetServer.GetRole(settings.BanRoleID.Value), (SocketTextChannel)message.Channel, false, true);
                         else
-                            await targetUser?.Ban(21600000, targetServer.GetRole(BotCore.GetDiscordGuildSettings(targetServer.Id).BanRoleID.Value), (SocketTextChannel)message.Channel, false, true);
+                            await targetUser?.Ban(21600000, targetServer.GetRole(settings.BanRoleID.Value), (SocketTextChannel)message.Channel, false, true);
                     }
                     else
                     {
@@ -547,24 +474,31 @@ namespace DiscordAngryBot.MessageHandlers
                     }
                     await message.DeleteAsync();
                 }
-                else
-                {
-                    await message.Channel.SendMessageAsync("Данная команда предназначена для использования на сервере.");
-                }
             }
+            /// <summary>
+            /// Команда для броска костей
+            /// </summary>
+            /// <param name="message"></param>
+            /// <param name="args"></param>
+            /// <returns></returns>
+            [CustomCommand("ROLL", CommandCategory.User, CommandType.StringCommand, "Команда для броска костей", CommandScope.User, CommandExecutionScope.All)]
             public static async Task Roll(SocketMessage message, string[] args)
             {
-                if (message.Channel is SocketGuildChannel)
+                if (Int32.TryParse(args[0], out int num))
                 {
-                    if (Int32.TryParse(args[0], out int num))
-                    {
-                        await message.Channel.SendMessageAsync($"Пользователь {message.Author.Mention} выкинул {BotCore.Random.Next(0, num)} из {num}");
-                    }
-                    await message.DeleteAsync();
+                    await message.Channel.SendMessageAsync($"Пользователь {message.Author.Mention} выкинул {BotCore.Random.Next(0, num)} из {num}");
                 }
-                else
+            }
+
+            [CustomCommand("POLL", CommandCategory.User, CommandType.StringCommand, "Команда для бана пользователя самим себя", CommandScope.Admin, CommandExecutionScope.Server)]
+            public static async Task StartPoll(SocketMessage message, string[] args)
+            {
+                var group = await GroupBuilder.BuildPoll(message, args);
+                if (BotCore.TryGetDiscordGuildGroups(group.Channel.Guild.Id, out List<Group> groups))
                 {
-                    await message.Channel.SendMessageAsync("Данная команда предназначена для использования на сервере.");
+                    groups.Add(group);
+                    await group.SendMessage();
+                    await group.SaveToDB();
                 }
             }
         }
@@ -596,6 +530,7 @@ namespace DiscordAngryBot.MessageHandlers
             /// <param name="message"></param>
             /// <param name="args"></param>
             /// <returns></returns>
+            [CustomCommand("КУСЬ", CommandCategory.Other, CommandType.StringCommand, "КУСЬ", CommandScope.User, CommandExecutionScope.All)]
             public static async Task Bite(SocketMessage message, string[] args)
             {
                 await message.DeleteAsync();
@@ -634,6 +569,7 @@ namespace DiscordAngryBot.MessageHandlers
             /// </summary>
             /// <param name="message"></param>
             /// <returns></returns>
+            [CustomCommand("БАН", CommandCategory.Other, CommandType.StringCommand, "Нет, ну это бан", CommandScope.User, CommandExecutionScope.All)]
             public static async Task Ban(SocketMessage message)
             {
                 await message.DeleteAsync();

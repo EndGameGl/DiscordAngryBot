@@ -19,6 +19,10 @@ using DiscordAngryBot.CustomObjects.SQLIteHandler;
 using Newtonsoft.Json;
 using System.Text;
 using DiscordAngryBot.CustomObjects.Logs;
+using DiscordAngryBot.CustomObjects.DiscordCommands;
+using static DiscordAngryBot.MessageHandlers.CommandHandler;
+using static DiscordAngryBot.ReactionHandlers.ReactionHandler;
+using System.Reflection;
 
 namespace DiscordAngryBot
 {
@@ -58,7 +62,10 @@ namespace DiscordAngryBot
         /// <param name="args"></param>
         static void Main(string[] args) 
         {
-            apiServer = new APIServer("http://192.168.1.9:20001", new MediaTypeHeaderValue("text/html"));           
+            Console.Clear();
+            Console.BackgroundColor = ConsoleColor.White;
+            //apiServer = new APIServer("http://192.168.1.9:20001", new MediaTypeHeaderValue("text/html"));
+            RegisterCommands();
             MainAsync().GetAwaiter().GetResult(); 
         }
        
@@ -67,16 +74,14 @@ namespace DiscordAngryBot
         /// </summary>
         /// <returns></returns>
         private async static Task MainAsync()
-        {
-            Console.Clear();
-            Console.BackgroundColor = ConsoleColor.White;
-            await apiServer.RunAPIServer();
+        {          
+            //await apiServer.RunAPIServer();
             await ValidateLocalFiles();
             discordSocketClient = new DiscordSocketClient(
                 new DiscordSocketConfig 
                 { 
                     LogLevel = LogSeverity.Info,
-                    MessageCacheSize = 10                     
+                    MessageCacheSize = 10,                                      
                 });
             AddHandlersToClient(discordSocketClient);
             await discordSocketClient.LoginAsync(TokenType.Bot, File.ReadAllText(@"Token\Token.txt"));
@@ -119,7 +124,7 @@ namespace DiscordAngryBot
             List<Group> groups = new List<Group>();           
             groups = GroupHandler.LoadAllGroupsFromDB(guild).GetAwaiter().GetResult();             
             stopwatch.Stop();
-            await ConsoleWriter.WriteDivideMessage($"LoadGroups() finished: took {stopwatch.ElapsedMilliseconds} ms");
+            await CustomObjects.ConsoleOutput.Debug.WriteDivideMessage($"LoadGroups() finished: took {stopwatch.ElapsedMilliseconds} ms");
             return groups;
         }
         /// <summary>
@@ -129,7 +134,7 @@ namespace DiscordAngryBot
         private static async Task<List<DiscordBan>> LoadGuildBans(SocketGuild guild)
         {
             List<DiscordBan> bans = new List<DiscordBan>();
-            bans = await BanHandler.LoadBansFromGuildDB(guild);
+            bans = await BanHandler.LoadBansFromGuildDB(guild.Id);
             return bans;
         } 
         /// <summary>
@@ -184,27 +189,49 @@ namespace DiscordAngryBot
         /// </summary>
         /// <param name="ID"></param>
         /// <returns></returns>
-        public static CustomGuildDataCache GetGuildDataCache(ulong guildID)
+        public static bool TryGetGuildDataCache(ulong guildID, out CustomGuildDataCache guildCache)
         {
-            return customGuildDataCaches.Where(x => x.Guild.Id == guildID).FirstOrDefault();
+            guildCache = customGuildDataCaches.Where(x => x.Guild.Id == guildID).FirstOrDefault();
+            if (guildCache != null)
+                return true;
+            else
+                return false;
         }
         /// <summary>
         /// Вернуть список настроек конкретного сервера
         /// </summary>
         /// <param name="guildID"></param>
         /// <returns></returns>
-        public static DiscordGuildSettings GetDiscordGuildSettings(ulong guildID)
+        public static bool TryGetDiscordGuildSettings(ulong guildID, out DiscordGuildSettings settings)
         {
-            return customGuildDataCaches.Where(x => x.Guild.Id == guildID).FirstOrDefault().Settings;
+            settings = null;
+            if (TryGetGuildDataCache(guildID, out CustomGuildDataCache cache))
+            {
+                settings = cache.Settings;
+                if (settings != null)
+                    return true;
+                else
+                    return false;
+            }
+            else
+                return false;
+            
         }
         /// <summary>
         /// Вернуть список групп конкретного сервера
         /// </summary>
         /// <param name="guildID"></param>
         /// <returns></returns>
-        public static List<Group> GetDiscordGuildGroups(ulong guildID)
+        public static bool TryGetDiscordGuildGroups(ulong guildID, out List<Group> groups)
         {
-            return customGuildDataCaches.Where(x => x.Guild.Id == guildID).FirstOrDefault().Groups;
+            groups = null;
+            if (TryGetGuildDataCache(guildID, out CustomGuildDataCache cache))
+            {
+                groups = cache.Groups;
+                return true;
+            }
+            else 
+                return false;
         }
         /// <summary>
         /// Вернуть список банов конкретного сервера
@@ -238,25 +265,25 @@ namespace DiscordAngryBot
         /// Список системных команд
         /// </summary>
         /// <returns></returns>
-        public static List<string> SystemCommands()
+        public static List<DiscordCommand> SystemCommands()
         {
-            return settings.systemCommands;
+            return settings.Commands.Where(x => x.CommandMetadata.Category == CommandCategory.System).ToList();
         }
         /// <summary>
         /// Список пользовательских команд
         /// </summary>
         /// <returns></returns>
-        public static List<string> UserCommands()
+        public static List<DiscordCommand> UserCommands()
         {
-            return settings.userCommands;
+            return settings.Commands.Where(x => x.CommandMetadata.Category == CommandCategory.User).ToList();
         }
         /// <summary>
         /// Список остальных команд
         /// </summary>
         /// <returns></returns>
-        public static List<string> OtherCommands()
+        public static List<DiscordCommand> OtherCommands()
         {
-            return settings.otherCommands;
+            return settings.Commands.Where(x => x.CommandMetadata.Category == CommandCategory.Other).ToList();
         }
         /// <summary>
         /// Список матов
@@ -278,9 +305,9 @@ namespace DiscordAngryBot
         /// Список музыкальных команд
         /// </summary>
         /// <returns></returns>
-        public static List<string> MusicCommands()
+        public static List<DiscordCommand> MusicCommands()
         {
-            return settings.musicCommands;
+            return settings.Commands.Where(x => x.CommandMetadata.Category == CommandCategory.Music).ToList();
         }
         /// <summary>
         /// Клиент бота дискорда
@@ -289,6 +316,23 @@ namespace DiscordAngryBot
         public static DiscordSocketClient GetClient()
         {
             return discordSocketClient;
+        }
+        /// <summary>
+        /// Поиск команды для запуска
+        /// </summary>
+        /// <param name="commandName"></param>
+        /// <returns></returns>
+        public static bool TryGetCommand(string commandName, out DiscordCommand command)
+        {
+            command = settings.Commands.FirstOrDefault(x => x.CommandMetadata.CommandName == commandName);
+            if (command != null)
+                return true;
+            else
+                return false;
+        }
+        public static HashSet<DiscordCommand> GetAllCommands()
+        {
+            return settings.Commands;
         }
 
         /// <summary>
@@ -337,7 +381,10 @@ namespace DiscordAngryBot
                 }
                 else
                 {
-                    GetGuildDataCache(guild.Id).IsAvailable = true;
+                    if (TryGetGuildDataCache(guild.Id, out var guildCache))
+                    {
+                        guildCache.IsAvailable = true;
+                    }
                 }                              
             });
         }
@@ -444,6 +491,91 @@ namespace DiscordAngryBot
                 sb.AppendLine($"Voice region: {guild.VoiceRegionId}");
                 return sb.ToString();
             });
+        }
+        /// <summary>
+        /// Сбор данных о методах и регистрация команд в боте
+        /// </summary>
+        private static void RegisterCommands()
+        {
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+            CustomObjects.ConsoleOutput.Debug.Log($"Getting command metadata...", CustomObjects.ConsoleOutput.Debug.InfoType.CommandInfo).GetAwaiter().GetResult();
+
+            var systemMethods = typeof(SystemCommands).GetMethods();
+            CustomObjects.ConsoleOutput.Debug.Log($"Found {systemMethods.Length} system commands.", CustomObjects.ConsoleOutput.Debug.InfoType.CommandInfo).GetAwaiter().GetResult();
+            var userMethods = typeof(UserCommands).GetMethods();
+            CustomObjects.ConsoleOutput.Debug.Log($"Found {userMethods.Length} user commands", CustomObjects.ConsoleOutput.Debug.InfoType.CommandInfo).GetAwaiter().GetResult();
+            var otherMethods = typeof(OtherCommands).GetMethods();
+            CustomObjects.ConsoleOutput.Debug.Log($"Found {otherMethods.Length} other commands", CustomObjects.ConsoleOutput.Debug.InfoType.CommandInfo).GetAwaiter().GetResult();
+            var musicMethods = typeof(MusicCommands).GetMethods();
+            CustomObjects.ConsoleOutput.Debug.Log($"Found {musicMethods.Length} music commands", CustomObjects.ConsoleOutput.Debug.InfoType.CommandInfo).GetAwaiter().GetResult();
+            var emojiMethods = typeof(PartyReactionHandler).GetMethods();
+            CustomObjects.ConsoleOutput.Debug.Log($"Found {emojiMethods.Length} emoji handlers", CustomObjects.ConsoleOutput.Debug.InfoType.CommandInfo).GetAwaiter().GetResult();
+
+            CustomObjects.ConsoleOutput.Debug.Log($"Registering command handlers...", CustomObjects.ConsoleOutput.Debug.InfoType.CommandInfo).GetAwaiter().GetResult();
+            foreach (var systemMethod in systemMethods)
+            {
+                var attribute = systemMethod.GetCustomAttribute<CustomCommandAttribute>();
+                if (attribute != null)
+                {
+                    settings.RegisterCommand(new DiscordCommand() 
+                    {  
+                        CommandMetadata = attribute, 
+                        Method = systemMethod 
+                    });
+                }
+            }
+            foreach (var userMethod in userMethods)
+            {
+                var attribute = userMethod.GetCustomAttribute<CustomCommandAttribute>();
+                if (attribute != null)
+                {
+                    settings.RegisterCommand(new DiscordCommand()
+                    {
+                        CommandMetadata = attribute,
+                        Method = userMethod
+                    });
+                }
+            }
+            foreach (var otherMethod in otherMethods)
+            {
+                var attribute = otherMethod.GetCustomAttribute<CustomCommandAttribute>();
+                if (attribute != null)
+                {
+                    settings.RegisterCommand(new DiscordCommand()
+                    {
+                        CommandMetadata = attribute,
+                        Method = otherMethod
+                    });
+                }
+            }
+            foreach (var musicMethod in musicMethods)
+            {
+                var attribute = musicMethod.GetCustomAttribute<CustomCommandAttribute>();
+                if (attribute != null)
+                {
+                    settings.RegisterCommand(new DiscordCommand()
+                    {
+                        CommandMetadata = attribute,
+                        Method = musicMethod
+                    });
+                }
+            }
+            foreach (var emojiMethod in emojiMethods)
+            {
+                var attribute = emojiMethod.GetCustomAttribute<CustomCommandAttribute>();
+                if (attribute != null)
+                {
+                    settings.RegisterCommand(new DiscordCommand()
+                    {
+                        CommandMetadata = attribute,
+                        Method = emojiMethod
+                    });
+                }
+            }
+
+            stopwatch.Stop();
+            CustomObjects.ConsoleOutput.Debug.Log($"Finished registering commands. [Took {stopwatch.Elapsed} ms to register]", CustomObjects.ConsoleOutput.Debug.InfoType.CommandInfo).GetAwaiter().GetResult();
         }
     }
 }

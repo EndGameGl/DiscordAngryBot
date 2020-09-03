@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace DiscordAngryBot.CustomObjects.ConsoleOutput
@@ -6,8 +7,10 @@ namespace DiscordAngryBot.CustomObjects.ConsoleOutput
     /// <summary>
     /// Класс, предназаченный для форматирования текста в консоль
     /// </summary>
-    public static class ConsoleWriter
+    public static class Debug
     {
+        private static readonly bool IsDegugEnabled = true;
+        private static readonly bool WriteToFile = false;
         /// <summary>
         /// Тип информации, выводимой в консоль
         /// </summary>
@@ -32,7 +35,8 @@ namespace DiscordAngryBot.CustomObjects.ConsoleOutput
             /// <summary>
             /// Чат дискорда
             /// </summary>
-            Chat
+            Chat,
+            Debug
         }
         /// <summary>
         /// Вывод текста в консоль
@@ -40,7 +44,7 @@ namespace DiscordAngryBot.CustomObjects.ConsoleOutput
         /// <param name="obj">Информация для вывода в консоль</param>
         /// <param name="type">Тип информации</param>
         /// <returns></returns>
-        public static async Task Write(object obj, InfoType type)
+        public static async Task Log(object obj, InfoType type = InfoType.Debug)
         {               
                 await Task.Run( () => 
                 {
@@ -62,8 +66,17 @@ namespace DiscordAngryBot.CustomObjects.ConsoleOutput
                         case InfoType.CommandInfo:
                             Console.ForegroundColor = ConsoleColor.DarkCyan;
                             break;
+                        case InfoType.Debug:
+                            if (IsDegugEnabled == false)
+                                return;
+                            
+                            Console.ForegroundColor = ConsoleColor.DarkGreen;
+                            break;
                     }
-                    Console.WriteLine($"[{DateTime.Now,5}] [{type.ToString(),5}]: {obj.ToString()}");
+                    var text = $"[{DateTime.Now,5}] [{type.ToString(),8}]: {obj.ToString()}";
+                    Console.WriteLine(text);
+                    if (WriteToFile)
+                        File.AppendAllText("Logs.log", "\n" + text);
                 });
         }
 

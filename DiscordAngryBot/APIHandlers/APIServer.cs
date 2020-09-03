@@ -28,7 +28,7 @@ namespace DiscordAngryBot.APIHandlers
         /// <param name="mediaTypeHeaderValue"></param>
         public APIServer(string serverAddress, MediaTypeHeaderValue mediaTypeHeaderValue) 
         {
-            ConsoleWriter.Write($"Setting up API configs to {serverAddress} | {mediaTypeHeaderValue.MediaType}", ConsoleWriter.InfoType.Notice).GetAwaiter().GetResult();
+            Debug.Log($"Setting up API configs to {serverAddress} | {mediaTypeHeaderValue.MediaType}", Debug.InfoType.Notice).GetAwaiter().GetResult();
             this.serverConfig = new HttpSelfHostConfiguration(serverAddress);
             this.serverConfig.MapHttpAttributeRoutes();
             this.serverConfig.Formatters.JsonFormatter.SerializerSettings.Formatting = Newtonsoft.Json.Formatting.Indented;
