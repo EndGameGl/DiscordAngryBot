@@ -6,71 +6,84 @@ using DiscordAngryBot.CustomObjects.Groups;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace DiscordAngryBot.Models
 {
     /// <summary>
-    /// Референс для объекта Group
+    /// Refence object for Group
     /// </summary>
     public class GroupReference : ILoadableInto<Group>
     {
         /// <summary>
-        /// Идентификатор группы
+        /// Group GUID
         /// </summary>
         [JsonProperty("GUID")]
         public string GUID { get; set; }
+
         /// <summary>
-        /// Идентификатор автора
+        /// Group author ID
         /// </summary>
         [JsonProperty("authorID")]
         public ulong authorID { get; set; }
+
         /// <summary>
-        /// Идентификатор сервера дискорда
+        /// Group server ID
         /// </summary>
         [JsonProperty("serverID")]
         public ulong serverID { get; set; }
+
         /// <summary>
-        /// Идентификатор канала дискорда
+        /// Group channel ID
         /// </summary>
         [JsonProperty("channelID")]
         public ulong channelID { get; set; }
+
         /// <summary>
-        /// Идентификатор сообщения, представляющего группу
+        /// Target message ID
         /// </summary>
         [JsonProperty("targetMessageID")]
         public ulong targetMessageID { get; set; }
+
         /// <summary>
-        /// Дата создания группы
+        /// Group creation date
         /// </summary>
         [JsonProperty("createdAt")]
         public DateTime createdAt { get; set; }
+
         /// <summary>
-        /// Цель создания группы
+        /// Group goal
         /// </summary>
         [JsonProperty("destination")]
         public string destination { get; set; }
+
         /// <summary>
-        /// Тип группы
+        /// Group type
         /// </summary>
         [JsonProperty("groupType")]
         public GroupType groupType { get; set; }
+
         /// <summary>
-        /// Референс на списки в группе
+        /// User lists references
         /// </summary>
         [JsonProperty("userListReferences")]
         public List<UserListReference> userListReferences { get; set; }
+
         /// <summary>
-        /// Тип битвы БШ (Если такой есть)
+        /// Guild fight type, if any
         /// </summary>
         [JsonProperty("guildFightType")]
         public GuildFightType? guildFightType { get; set; }
+
+        /// <summary>
+        /// Class constructor
+        /// </summary>
         [JsonConstructor]
         public GroupReference() { }
+
         /// <summary>
-        /// Конструктор референса группы
+        /// Second class constructor
         /// </summary>
-        /// <param name="group"></param>
+        /// <param name="group">Group object</param>
         public GroupReference(Group group)
         {
             GUID = group.GUID;
@@ -91,6 +104,11 @@ namespace DiscordAngryBot.Models
                 guildFightType = ((GuildFight)group).GuildFightType;
             }
         }
+
+        /// <summary>
+        /// Loads into origin object
+        /// </summary>
+        /// <returns></returns>
         public Group LoadOrigin()
         {
             Group loadedGroup = null;

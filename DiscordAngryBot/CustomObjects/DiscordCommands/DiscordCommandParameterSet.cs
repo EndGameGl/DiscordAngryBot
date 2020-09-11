@@ -3,27 +3,29 @@
 namespace DiscordAngryBot.CustomObjects.DiscordCommands
 {
     /// <summary>
-    /// Класс, содержащий параметры для запуска команды дискорда
+    /// Class for holding parameters to run discord command
     /// </summary>
     public class DiscordCommandParameterSet
     {
         /// <summary>
-        /// Список параметров
+        /// Parameter list
         /// </summary>
         private List<object> parameterList { get; set; }
+
         /// <summary>
-        /// Конструктор класса
+        /// Class constructor
         /// </summary>
-        /// <param name="parameter"></param>
+        /// <param name="parameter">Initial parameter</param>
         public DiscordCommandParameterSet(object parameter)
         {
             parameterList = new List<object>();
             parameterList.Add(parameter);
         }
+
         /// <summary>
-        /// Добавление нового параметра в список
+        /// Add new parameter to the list
         /// </summary>
-        /// <param name="parameter"></param>
+        /// <param name="parameter">Additional parameter</param>
         /// <returns></returns>
         public DiscordCommandParameterSet AddParameter(object parameter)
         {
@@ -31,9 +33,11 @@ namespace DiscordAngryBot.CustomObjects.DiscordCommands
                 parameterList.Add(parameter);
             return this;
         }
+
         /// <summary>
-        /// Получение массива параметров для метода
+        /// Get all parameters as object array
         /// </summary>
+        /// <param name="amountOfParameters">Required number of parameters</param>
         /// <returns></returns>
         public object[] GetParameters(int amountOfParameters)
         {

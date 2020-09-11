@@ -1,16 +1,16 @@
 ﻿namespace DiscordAngryBot.CustomObjects.Groups
 {
     /// <summary>
-    /// Тип битвы БШ
+    /// Guild fight type
     /// </summary>
     public enum GuildFightType
     {
         /// <summary>
-        /// Сбор БШ для "Поди Разберись"
+        /// Group for "Поди Разберись"
         /// </summary>
         PR,
         /// <summary>
-        /// Сбор БШ для "Winter"
+        /// Group for "Winter"
         /// </summary>
         EV
     }

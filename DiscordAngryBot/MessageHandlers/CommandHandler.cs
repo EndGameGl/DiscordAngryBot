@@ -16,19 +16,19 @@ using DiscordAngryBot.CustomObjects.DiscordCommands;
 namespace DiscordAngryBot.MessageHandlers
 {
     /// <summary>
-    /// Класс для обработки команд
+    /// Class for handling commands
     /// </summary>
     public static class CommandHandler
     {
         /// <summary>
-        /// Класс для обработки администраторских команд
+        /// Class for handling system commands
         /// </summary>
         public static class SystemCommands
         {
             /// <summary>
-            /// Добавление нового админа в бота
+            /// Add new admin to bot
             /// </summary>
-            /// <param name="message"></param>
+            /// <param name="message">Command message</param>
             /// <returns></returns>
             [CustomCommand("ADMIN", CommandCategory.System, CommandType.StringCommand, "Добавление нового админа в бота", CommandScope.Admin, CommandExecutionScope.Server)]
             public async static Task AddAdmin(SocketMessage message)
@@ -43,7 +43,7 @@ namespace DiscordAngryBot.MessageHandlers
                         {
                             if (!settings.IsAdmin(adminID.Value))
                             {
-                                settings.adminsID.Add(adminID.Value);
+                                settings.AdminsID.Add(adminID.Value);
                                 string callbackMessage = string.Format(CommandResources.AdminAddedLine, message.MentionedUsers.FirstOrDefault().Mention);
                                 await message.Channel.SendMessageAsync(callbackMessage);
                                 string updateQuery = string.Format(SQLiteResources.UpdateSettingsByGuildID, JsonConvert.SerializeObject(settings), guildID);
@@ -57,10 +57,11 @@ namespace DiscordAngryBot.MessageHandlers
                     }
                 });
             }
+
             /// <summary>
-            /// Удаление админа из бота
+            /// Remove admin from bot
             /// </summary>
-            /// <param name="message"></param>
+            /// <param name="message">Command message</param>
             /// <returns></returns>
             [CustomCommand("DEADMIN", CommandCategory.System, CommandType.StringCommand, "Удаление админа из бота", CommandScope.Admin, CommandExecutionScope.Server)]
             public async static Task RemoveAdmin(SocketMessage message)
@@ -75,7 +76,7 @@ namespace DiscordAngryBot.MessageHandlers
                         {
                             if (settings.IsAdmin(adminID.Value))
                             {
-                                settings.adminsID.Remove(adminID.Value);
+                                settings.AdminsID.Remove(adminID.Value);
                                 string callbackMessage = string.Format(CommandResources.AdminRemovedLine, message.MentionedUsers.FirstOrDefault().Mention);
                                 await message.Channel.SendMessageAsync(callbackMessage);
                                 string updateQuery = string.Format(SQLiteResources.UpdateSettingsByGuildID, JsonConvert.SerializeObject(settings), guildID);
@@ -89,11 +90,12 @@ namespace DiscordAngryBot.MessageHandlers
                     }
                 });
             }
+
             /// <summary>
-            /// Установка префикса для команд
+            /// Change command prefix
             /// </summary>
-            /// <param name="message"></param>
-            /// <param name="args"></param>
+            /// <param name="message">Command message</param>
+            /// <param name="args">Command arguments</param>
             /// <returns></returns>
             [CustomCommand("SETPREFIX", CommandCategory.System, CommandType.StringCommand, "Установка префикса для команд", CommandScope.Admin, CommandExecutionScope.Server)]
             public async static Task SetPrefix(SocketMessage message, string[] args)
@@ -115,10 +117,11 @@ namespace DiscordAngryBot.MessageHandlers
                         }
                     });
             }
+
             /// <summary>
-            /// Установка новостного канала
+            /// Set news channel
             /// </summary>
-            /// <param name="message"></param>
+            /// <param name="message">Command message</param>
             /// <returns></returns>
             [CustomCommand("NEWS", CommandCategory.System, CommandType.StringCommand, "Установка новостного канала", CommandScope.Admin, CommandExecutionScope.Server)]
             public async static Task SetNews(SocketMessage message)
@@ -135,10 +138,11 @@ namespace DiscordAngryBot.MessageHandlers
                     }
                 });
             }
+
             /// <summary>
-            /// Установка роли для бана
+            /// Set ban role
             /// </summary>
-            /// <param name="message"></param>
+            /// <param name="message">Command message</param>
             /// <returns></returns>
             [CustomCommand("BANROLE", CommandCategory.System, CommandType.StringCommand, "Установка роли для бана", CommandScope.Admin, CommandExecutionScope.Server)]
             public async static Task SetBanRole(SocketMessage message)
@@ -160,11 +164,12 @@ namespace DiscordAngryBot.MessageHandlers
                     }
                 });
             }
+
             /// <summary>
-            /// Бан юзера
+            /// Ban user
             /// </summary>
-            /// <param name="message"></param>
-            /// <param name="args"></param>
+            /// <param name="message">Command message</param>
+            /// <param name="args">Command arguments</param>
             /// <returns></returns>
             [CustomCommand("BAN", CommandCategory.System, CommandType.StringCommand, "Бан юзера", CommandScope.Admin, CommandExecutionScope.Server)]
             public async static Task BanUser(SocketMessage message, string[] args)
@@ -191,11 +196,12 @@ namespace DiscordAngryBot.MessageHandlers
                     }
                 }
             }
+
             /// <summary>
-            /// Очистка сообщений
+            /// Clear messages
             /// </summary>
-            /// <param name="message"></param>
-            /// <param name="args"></param>
+            /// <param name="message">Command message</param>
+            /// <param name="args">Command arguments</param>
             /// <returns></returns>
             [CustomCommand("CLEAR", CommandCategory.System, CommandType.StringCommand, "Очистка сообщений", CommandScope.Admin, CommandExecutionScope.Server)]
             public async static Task ClearMessages(SocketMessage message, string[] args)
@@ -212,18 +218,18 @@ namespace DiscordAngryBot.MessageHandlers
                         }
                         catch (Exception ex)
                         {
-                            await Debug.Log(ex.Message, Debug.InfoType.Error);
+                            await Debug.Log(ex.Message, LogInfoType.Error);
                             await message.Channel.SendMessageAsync(CommandResources.InvalidMessageClearRangeLine);
-                            await message.DeleteAsync();
                         }
                     }
                 }
             }
+
             /// <summary>
-            /// Разбан юзера
+            /// Unban user
             /// </summary>
-            /// <param name="message"></param>
-            /// <param name="args"></param>
+            /// <param name="message">Command message</param>
+            /// <param name="args">Command arguments</param>
             /// <returns></returns>
             [CustomCommand("UNBAN", CommandCategory.System, CommandType.StringCommand, "Разбан юзера", CommandScope.Admin, CommandExecutionScope.Server)]
             public async static Task UnbanUser(SocketMessage message, string[] args)
@@ -251,16 +257,16 @@ namespace DiscordAngryBot.MessageHandlers
                         }
                         catch (Exception e)
                         {
-                            await Debug.Log($"{e.Message}", Debug.InfoType.Error);
+                            await Debug.Log($"{e.Message}", LogInfoType.Error);
                         }
                     }
                 }
-                await message.DeleteAsync();
             }
+
             /// <summary>
-            /// Включение мат-фильтра на сервере
+            /// Enable swear filter in guild
             /// </summary>
-            /// <param name="message"></param>
+            /// <param name="message">Command message</param>
             /// <returns></returns>
             [CustomCommand("FILTERENABLE", CommandCategory.System, CommandType.StringCommand, "Включение мат-фильтра на сервере", CommandScope.Admin, CommandExecutionScope.Server)]
             public async static Task EnableSwearFilter(SocketMessage message)
@@ -276,13 +282,14 @@ namespace DiscordAngryBot.MessageHandlers
                 }
                 catch (Exception e)
                 {
-                    await Debug.Log($"{e.Message}", Debug.InfoType.Error);
+                    await Debug.Log($"{e.Message}", LogInfoType.Error);
                 }
             }
+
             /// <summary>
-            /// Выключение мат-фильтра на сервере
+            /// Disable swear filter in guild
             /// </summary>
-            /// <param name="message"></param>
+            /// <param name="message">Command message</param>
             /// <returns></returns>
             [CustomCommand("FILTERDISABLE", CommandCategory.System, CommandType.StringCommand, "Выключение мат-фильтра на сервере", CommandScope.Admin, CommandExecutionScope.Server)]
             public async static Task DisableSwearFilter(SocketMessage message)
@@ -298,23 +305,22 @@ namespace DiscordAngryBot.MessageHandlers
                 }
                 catch (Exception e)
                 {
-                    await Debug.Log($"{e.Message}", Debug.InfoType.Error);
+                    await Debug.Log($"{e.Message}", LogInfoType.Error);
                 }
             }
 
         }
 
         /// <summary>
-        /// Класс для обработки пользовательских команд
+        /// Class for handling user commands
         /// </summary>
         public static class UserCommands
         {
             /// <summary>
-            /// Операция создания группы
+            /// Create group with a party template
             /// </summary>
-            /// <param name="groups">Список всех групп</param>
-            /// <param name="message">Сообщение, инициировавшее создание</param>
-            /// <param name="destination">Описание группы</param>
+            /// <param name="message">Command message</param>
+            /// <param name="destination">Group goal</param>
             /// <returns></returns>
             [CustomCommand("PARTY", CommandCategory.User, CommandType.StringCommand, "Операция создания группы", CommandScope.User, CommandExecutionScope.Server)]
             public static async Task CreatePartyTemplate(SocketMessage message, string[] destination)
@@ -334,12 +340,12 @@ namespace DiscordAngryBot.MessageHandlers
                     await Debug.Log($"Group saved. Task finished.");
                 }
             }
+
             /// <summary>
-            /// Операция создания рейда
+            /// Create group with raid template
             /// </summary>
-            /// <param name="groups">Список всех групп</param>
-            /// <param name="message">Сообщение, инициировавшее создание</param>
-            /// <param name="destination">Описание рейда</param>
+            /// <param name="message">Command message</param>
+            /// <param name="destination">Group goal</param>
             /// <returns></returns>
             [CustomCommand("RAID", CommandCategory.User, CommandType.StringCommand, "Операция создания рейда", CommandScope.User, CommandExecutionScope.Server)]
             public static async Task CreateRaidTemplate(SocketMessage message, string[] destination)
@@ -352,12 +358,12 @@ namespace DiscordAngryBot.MessageHandlers
                     await group.SaveToDB();
                 }
             }
+
             /// <summary>
-            /// Операция создания битвы БШ Winter
+            /// Legacy, pointless but can't remove
             /// </summary>
-            /// <param name="groups"></param>
-            /// <param name="message"></param>
-            /// <param name="destination"></param>
+            /// <param name="message">Command message</param>
+            /// <param name="destination">Group goal</param>
             /// <returns></returns>
             [CustomCommand("GVGEV", CommandCategory.User, CommandType.StringCommand, "Операция создания битвы БШ", CommandScope.User, CommandExecutionScope.Server)]
             public static async Task CreateGuildFightEV(SocketMessage message, string[] destination)
@@ -370,14 +376,13 @@ namespace DiscordAngryBot.MessageHandlers
                     await group.SendMessage();
                     await group.SaveToDB();
                 }
-
             }
+
             /// <summary>
-            /// Операция создания битвы БШ Поди разберись
+            /// Legacy, but can't remove
             /// </summary>
-            /// <param name="groups"></param>
-            /// <param name="message"></param>
-            /// <param name="destination"></param>
+            /// <param name="message">Command message</param>
+            /// <param name="destination">Group goal</param>
             /// <returns></returns>
             [CustomCommand("GVGPR", CommandCategory.User, CommandType.StringCommand, "Операция создания битвы БШ", CommandScope.User, CommandExecutionScope.Server)]
             public static async Task CreateGuildFightPR(SocketMessage message, string[] destination)
@@ -391,11 +396,11 @@ namespace DiscordAngryBot.MessageHandlers
                     await group.SaveToDB();
                 }
             }
+
             /// <summary>
-            /// Операция вывода списка групп
+            /// List all groups present on server
             /// </summary>
-            /// <param name="message">Сообщение, инициировавшее вызов списка</param>
-            /// <param name="groups">Список всех групп</param>
+            /// <param name="message">Command message</param>
             /// <returns></returns>
             [CustomCommand("LIST", CommandCategory.User, CommandType.StringCommand, "Операция вывода списка групп", CommandScope.User, CommandExecutionScope.Server)]
             public static async Task ListGroups(SocketMessage message)
@@ -417,24 +422,55 @@ namespace DiscordAngryBot.MessageHandlers
                     }
                     await message.Author.SendMessageAsync(text.ToString());
                 }
-                await message.DeleteAsync();
             }
+
             /// <summary>
-            /// Вывод для пользователя всех доступных комманд бота
+            /// Show all available commands
             /// </summary>
-            /// <param name="user"></param>
+            /// <param name="message">Command message</param>
+            /// <param name="args">Command arguments</param>
             /// <returns></returns>
             [CustomCommand("HELP", CommandCategory.User, CommandType.StringCommand, "Вывод для пользователя всех доступных комманд бота", CommandScope.User, CommandExecutionScope.All)]
             public static async Task HelpUser(SocketMessage message, string[] args)
             {
-                var guildID = ((SocketGuildUser)message.Author).Guild.Id;
+                await Debug.Log("Entered HelpUser method.");
                 StringBuilder stringBuilder = new StringBuilder();
-                if (args.Length == 0)
+                if (args == null || args.Length == 0)
                 {
+                    await Debug.Log("No args detected...fetching all commands.");
                     var commands = BotCore.GetAllCommands();
-                    foreach (var command in commands)
+                    var stringCommands = commands.Where(x => x.CommandMetadata.Type == CommandType.StringCommand);
+                    if (stringCommands.Count() > 0)
                     {
-                        stringBuilder.AppendLine($"{command.CommandMetadata.CommandName}: {command.CommandMetadata.Description}");
+                        var globalCommands = stringCommands.Where(x => x.CommandMetadata.CommandExecutionScope == CommandExecutionScope.All);
+                        if (globalCommands.Count() > 0)
+                        {
+                            stringBuilder.AppendLine($"Комманды, применяемые в любом месте:");
+                            foreach (var command in globalCommands)
+                            {
+                                stringBuilder.AppendLine($"    {command.CommandMetadata.CommandName}: {command.CommandMetadata.Description}");
+                            }
+                        }
+
+                        var serverCommands = stringCommands.Where(x => x.CommandMetadata.CommandExecutionScope == CommandExecutionScope.Server);
+                        if (serverCommands.Count() > 0)
+                        {
+                            stringBuilder.AppendLine($"Комманды для применения на сервере:");
+                            foreach (var command in serverCommands)
+                            {
+                                stringBuilder.AppendLine($"    {command.CommandMetadata.CommandName}: {command.CommandMetadata.Description}");
+                            }
+                        }
+
+                        var dmCommands = stringCommands.Where(x => x.CommandMetadata.CommandExecutionScope == CommandExecutionScope.DM);
+                        if (dmCommands.Count() > 0)
+                        {
+                            stringBuilder.AppendLine($"Комманды для применения в личном канале:");
+                            foreach (var command in dmCommands)
+                            {
+                                stringBuilder.AppendLine($"    {command.CommandMetadata.CommandName}: {command.CommandMetadata.Description}");
+                            }
+                        }
                     }
                 }
                 else
@@ -446,13 +482,13 @@ namespace DiscordAngryBot.MessageHandlers
                     }
                 }
                 await message.Author.SendMessageAsync(stringBuilder.ToString());
-                await message.DeleteAsync();
             }
+
             /// <summary>
-            /// Команда для бана пользователя самим себя
+            /// User self ban
             /// </summary>
-            /// <param name="message"></param>
-            /// <param name="args"></param>
+            /// <param name="message">Command message</param>
+            /// <param name="args">Command arguments</param>
             /// <returns></returns>
             [CustomCommand("SELFBAN", CommandCategory.User, CommandType.StringCommand, "Команда для бана пользователя самим себя", CommandScope.User, CommandExecutionScope.Server)]
             public static async Task SelfBan(SocketMessage message, string[] args)
@@ -472,14 +508,14 @@ namespace DiscordAngryBot.MessageHandlers
                     {
                         await message.Channel.SendMessageAsync("Нельзя выдать себе бан будучи в бане.");
                     }
-                    await message.DeleteAsync();
                 }
             }
+
             /// <summary>
-            /// Команда для броска костей
+            /// Rolls the dice!
             /// </summary>
-            /// <param name="message"></param>
-            /// <param name="args"></param>
+            /// <param name="message">Command message</param>
+            /// <param name="args">Command arguments</param>
             /// <returns></returns>
             [CustomCommand("ROLL", CommandCategory.User, CommandType.StringCommand, "Команда для броска костей", CommandScope.User, CommandExecutionScope.All)]
             public static async Task Roll(SocketMessage message, string[] args)
@@ -490,6 +526,12 @@ namespace DiscordAngryBot.MessageHandlers
                 }
             }
 
+            /// <summary>
+            /// Starts the poll (not ready yet)
+            /// </summary>
+            /// <param name="message">Command message</param>
+            /// <param name="args">Command arguments</param>
+            /// <returns></returns>
             [CustomCommand("POLL", CommandCategory.User, CommandType.StringCommand, "Команда для бана пользователя самим себя", CommandScope.Admin, CommandExecutionScope.Server)]
             public static async Task StartPoll(SocketMessage message, string[] args)
             {
@@ -504,56 +546,60 @@ namespace DiscordAngryBot.MessageHandlers
         }
 
         /// <summary>
-        /// Класс для обработки музыкальных комманд
+        /// Class for handling music commands
         /// </summary>
         public static class MusicCommands
         {
+            /// <summary>
+            /// Not working
+            /// </summary>
+            /// <param name="message"></param>
+            /// <returns></returns>
             [Command(RunMode = RunMode.Async)]
             public static async Task JoinChannel(SocketMessage message)
             {
-                if (message.Channel is SocketGuildChannel)
+                if (message.Channel is SocketGuildChannel channel)
                 {
-                    var voiceChannel = ((SocketGuildChannel)message.Channel).Guild.VoiceChannels.Where(x => x.Users.Contains(message.Author)).FirstOrDefault();
+                    var voiceChannel = channel.Guild.VoiceChannels.Where(x => x.Users.Contains(message.Author)).FirstOrDefault();
                     await voiceChannel.ConnectAsync();
                 }
             }
         }
 
         /// <summary>
-        /// Класс для обработки команд для развлечения
+        /// Class for handling misc commands
         /// </summary>
         public static class OtherCommands
         {
             /// <summary>
-            /// Кусь
+            /// Bites someone...or no one!
             /// </summary>
-            /// <param name="message"></param>
-            /// <param name="args"></param>
+            /// <param name="message">Command message</param>
             /// <returns></returns>
             [CustomCommand("КУСЬ", CommandCategory.Other, CommandType.StringCommand, "КУСЬ", CommandScope.User, CommandExecutionScope.All)]
-            public static async Task Bite(SocketMessage message, string[] args)
+            public static async Task Bite(SocketMessage message)
             {
-                await message.DeleteAsync();
-
-                int shoudBite = -1;
-                Random rnd = new Random(Guid.NewGuid().GetHashCode());
-                shoudBite = rnd.Next(0, 2);
-
-                if (args.Length != 0)
+                await Debug.Log("Выбираем, кого укусить...");
+                bool shoudBite = false;
+                shoudBite = Convert.ToBoolean(BotCore.Random.Next(0, 2));
+                await Debug.Log($"{((shoudBite) ? "Кусать будем!" : "Кусать не будем...")}");
+                
+                if (message.MentionedUsers.Count > 0)
                 {
-                    if (shoudBite == 1)
+                    await Debug.Log("Аргументы есть, зне");
+                    if (shoudBite)
                     {
                         List<string> choices = new List<string>() { "ляху", "кокоро", "жеппу", "ножку", "щечку", "хвост" };
-                        await message.Channel.SendMessageAsync($"Кусаю {args[0]} за {choices.OrderBy(x => Guid.NewGuid()).FirstOrDefault()}");
+                        await message.Channel.SendMessageAsync($"Кусаю {message.MentionedUsers.FirstOrDefault()?.Mention} за {choices.OrderBy(x => Guid.NewGuid()).FirstOrDefault()}");
                     }
-                    else if (shoudBite == 0)
+                    else
                     {
                         await message.Channel.SendMessageAsync($"Не собираюсь я такое кусать D:");
                     }
                 }
                 else
                 {
-                    if (shoudBite == 1)
+                    if (shoudBite)
                     {
                         List<string> moreChoices = new List<string>() { "Кого кусать то? ( ._.)", "КУСЬ" };
                         await message.Channel.SendMessageAsync($"{moreChoices.OrderBy(x => Guid.NewGuid()).FirstOrDefault()}");
@@ -565,14 +611,13 @@ namespace DiscordAngryBot.MessageHandlers
             }
 
             /// <summary>
-            /// Бан
+            /// Fake ban...huh
             /// </summary>
-            /// <param name="message"></param>
+            /// <param name="message">Command message</param>
             /// <returns></returns>
             [CustomCommand("БАН", CommandCategory.Other, CommandType.StringCommand, "Нет, ну это бан", CommandScope.User, CommandExecutionScope.All)]
             public static async Task Ban(SocketMessage message)
             {
-                await message.DeleteAsync();
                 await message.Channel.SendMessageAsync($"Не, ну это бан");
             }
         }

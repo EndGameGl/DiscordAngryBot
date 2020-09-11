@@ -8,41 +8,42 @@ using System.Web.Http.SelfHost;
 namespace DiscordAngryBot.APIHandlers
 {
     /// <summary>
-    /// Класс-обертка для класса HttpSelfHostServer
+    /// API server for this bot
     /// </summary>
     public class APIServer
     {
         /// <summary>
-        /// Конфигурация сервера
+        /// Server configuration
         /// </summary>
-        private HttpSelfHostConfiguration serverConfig { get; set; }
-        /// <summary>
-        /// Сервер, поддерживающий работу API
-        /// </summary>
-        private HttpSelfHostServer server { get; set; }
+        private HttpSelfHostConfiguration serverConfig;
 
         /// <summary>
-        /// Конструктор класса
+        /// Server that is responsible for API
         /// </summary>
-        /// <param name="serverAddress"></param>
-        /// <param name="mediaTypeHeaderValue"></param>
+        private HttpSelfHostServer server;
+
+        /// <summary>
+        /// Class constructor
+        /// </summary>
+        /// <param name="serverAddress">Server address</param>
+        /// <param name="mediaTypeHeaderValue">Media type header</param>
         public APIServer(string serverAddress, MediaTypeHeaderValue mediaTypeHeaderValue) 
         {
-            Debug.Log($"Setting up API configs to {serverAddress} | {mediaTypeHeaderValue.MediaType}", Debug.InfoType.Notice).GetAwaiter().GetResult();
-            this.serverConfig = new HttpSelfHostConfiguration(serverAddress);
-            this.serverConfig.MapHttpAttributeRoutes();
-            this.serverConfig.Formatters.JsonFormatter.SerializerSettings.Formatting = Newtonsoft.Json.Formatting.Indented;
-            this.serverConfig.Formatters.JsonFormatter.SupportedMediaTypes.Add(mediaTypeHeaderValue);
-            this.serverConfig.ReceiveTimeout = new TimeSpan(100);
-            this.server = new HttpSelfHostServer(serverConfig);
+            Debug.Log($"Setting up API configs to {serverAddress} | {mediaTypeHeaderValue.MediaType}", LogInfoType.Notice).GetAwaiter().GetResult();
+            serverConfig = new HttpSelfHostConfiguration(serverAddress);
+            serverConfig.MapHttpAttributeRoutes();
+            serverConfig.Formatters.JsonFormatter.SerializerSettings.Formatting = Newtonsoft.Json.Formatting.Indented;
+            serverConfig.Formatters.JsonFormatter.SupportedMediaTypes.Add(mediaTypeHeaderValue);
+            serverConfig.ReceiveTimeout = new TimeSpan(100);
+            server = new HttpSelfHostServer(serverConfig);
         }
         /// <summary>
-        /// Запуск сервера API
+        /// Start API server
         /// </summary>
         /// <returns></returns>
         public async Task RunAPIServer()
         {            
-            await this.server.OpenAsync();
+            await server.OpenAsync();
         }
     }
 }

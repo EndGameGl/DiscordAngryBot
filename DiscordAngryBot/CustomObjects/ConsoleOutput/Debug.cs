@@ -5,75 +5,54 @@ using System.Threading.Tasks;
 namespace DiscordAngryBot.CustomObjects.ConsoleOutput
 {
     /// <summary>
-    /// Класс, предназаченный для форматирования текста в консоль
+    /// Class for debugging messages to console
     /// </summary>
     public static class Debug
     {
+        /// <summary>
+        /// Whether debug mode is on
+        /// </summary>
         private static readonly bool IsDegugEnabled = true;
+        /// <summary>
+        /// Whether should write logs to file
+        /// </summary>
         private static readonly bool WriteToFile = false;
+
         /// <summary>
-        /// Тип информации, выводимой в консоль
+        /// Outputs data to console
         /// </summary>
-        public enum InfoType
-        {
-            /// <summary>
-            /// Обычная информация
-            /// </summary>
-            Info,
-            /// <summary>
-            /// События внутрия бота
-            /// </summary>
-            Notice,
-            /// <summary>
-            /// Ошибки внутри бота
-            /// </summary>
-            Error,
-            /// <summary>
-            /// Инфо о коммандах
-            /// </summary>
-            CommandInfo,
-            /// <summary>
-            /// Чат дискорда
-            /// </summary>
-            Chat,
-            Debug
-        }
-        /// <summary>
-        /// Вывод текста в консоль
-        /// </summary>
-        /// <param name="obj">Информация для вывода в консоль</param>
-        /// <param name="type">Тип информации</param>
+        /// <param name="obj">Data</param>
+        /// <param name="type">Information type</param>
         /// <returns></returns>
-        public static async Task Log(object obj, InfoType type = InfoType.Debug)
+        public static async Task Log(object obj, LogInfoType type = LogInfoType.Debug)
         {               
                 await Task.Run( () => 
                 {
                     Console.BackgroundColor = ConsoleColor.White;
                     switch (type)
                     {
-                        case InfoType.Info:
+                        case LogInfoType.Info:
                             Console.ForegroundColor = ConsoleColor.Black;
                             break;
-                        case InfoType.Chat:
+                        case LogInfoType.Chat:
                             Console.ForegroundColor = ConsoleColor.Black;
                             break;
-                        case InfoType.Error:
+                        case LogInfoType.Error:
                             Console.ForegroundColor = ConsoleColor.DarkYellow;
                             break;
-                        case InfoType.Notice:
+                        case LogInfoType.Notice:
                             Console.ForegroundColor = ConsoleColor.DarkMagenta;
                             break;
-                        case InfoType.CommandInfo:
+                        case LogInfoType.CommandInfo:
                             Console.ForegroundColor = ConsoleColor.DarkCyan;
                             break;
-                        case InfoType.Debug:
+                        case LogInfoType.Debug:
                             if (IsDegugEnabled == false)
-                                return;
-                            
+                                return;                           
                             Console.ForegroundColor = ConsoleColor.DarkGreen;
                             break;
                     }
-                    var text = $"[{DateTime.Now,5}] [{type.ToString(),8}]: {obj.ToString()}";
+                    var text = $"[{DateTime.Now,5}] [{type, 8}]: {obj}";
                     Console.WriteLine(text);
                     if (WriteToFile)
                         File.AppendAllText("Logs.log", "\n" + text);
@@ -81,7 +60,7 @@ namespace DiscordAngryBot.CustomObjects.ConsoleOutput
         }
 
         /// <summary>
-        /// Разделительная строка в консоли
+        /// Writes a divide line to console
         /// </summary>
         /// <returns></returns>
         public static async Task WriteDivideLine()
@@ -89,21 +68,21 @@ namespace DiscordAngryBot.CustomObjects.ConsoleOutput
             await Task.Run(() =>
             {
                 Console.ForegroundColor = ConsoleColor.Black;
-                Console.WriteLine($"[{DateTime.Now,5}]: #-------------------------------------------------#");
+                Console.WriteLine($"[{DateTime.Now,5}]: #{new string('-', 20)}#");
             });
         }
 
         /// <summary>
-        /// Разделительное сообщение в консоли
+        /// Writes a divide message to console
         /// </summary>
-        /// <param name="text"></param>
+        /// <param name="text">Message text</param>
         /// <returns></returns>
         public static async Task WriteDivideMessage(object text)
         {
             await Task.Run(() => 
             {
                 Console.ForegroundColor = ConsoleColor.Black;
-                Console.WriteLine($"\n[{DateTime.Now,5}]: ..//{text.ToString()}/\n"); 
+                Console.WriteLine($"\n[{DateTime.Now,5}]: ..//{text}/\n"); 
             });
         }
     }

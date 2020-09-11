@@ -27,55 +27,60 @@ using System.Reflection;
 namespace DiscordAngryBot
 {
     /// <summary>
-    /// Ядро бота, хранящее данные
+    /// Bot core for all processes
     /// </summary>
     public class BotCore
     {
         /// <summary>
-        /// Логи для вывода на сайт
+        /// Logs for latest actions
         /// </summary>
         private static List<DataLog> dataLogs = new List<DataLog>();
+
         /// <summary>
-        /// Список гильдий и связанных с ними данных
+        /// Guild caches
         /// </summary>
         private static List<CustomGuildDataCache> customGuildDataCaches = new List<CustomGuildDataCache>();
+
         /// <summary>
-        /// Сервер API бота
+        /// API server
         /// </summary>
         private static APIServer apiServer;
+
         /// <summary>
-        /// Клиент дискорда
+        /// Discord socket client
         /// </summary>
         private static DiscordSocketClient discordSocketClient;
+
         /// <summary>
-        /// Объект, содержащий настройки бота дискорда
+        /// Global bot settings
         /// </summary>
         private static BotSettings settings = new BotSettings();
+
         /// <summary>
-        /// Рандом, используемый в боте
+        /// Random class object instance
         /// </summary>
         public static Random Random = new Random(Guid.NewGuid().GetHashCode());
 
         /// <summary>
-        /// Функция запуска бота
+        /// Main method
         /// </summary>
-        /// <param name="args"></param>
+        /// <param name="args">keys</param>
         static void Main(string[] args) 
         {
             Console.Clear();
             Console.BackgroundColor = ConsoleColor.White;
-            //apiServer = new APIServer("http://192.168.1.9:20001", new MediaTypeHeaderValue("text/html"));
+            apiServer = new APIServer("http://192.168.1.56:20001", new MediaTypeHeaderValue("text/html"));
             RegisterCommands();
             MainAsync().GetAwaiter().GetResult(); 
         }
        
         /// <summary>
-        /// Установка обработчиков и запуск серва
+        /// Main async method
         /// </summary>
         /// <returns></returns>
         private async static Task MainAsync()
         {          
-            //await apiServer.RunAPIServer();
+            await apiServer.RunAPIServer();
             await ValidateLocalFiles();
             discordSocketClient = new DiscordSocketClient(
                 new DiscordSocketConfig 
@@ -90,7 +95,7 @@ namespace DiscordAngryBot
         }
 
         /// <summary>
-        /// Настройка бота для серверов
+        /// Sets up guild caches
         /// </summary>
         /// <returns></returns>
         private static async Task SetUpBotData()
@@ -100,10 +105,11 @@ namespace DiscordAngryBot
                 await RunGuildLoaders(guildCache);
             }
         }
+
         /// <summary>
-        /// Загрузка всех данных для гильдии
+        /// Loads all data for current guild
         /// </summary>
-        /// <param name="guildCache"></param>
+        /// <param name="guildCache">Guild cache</param>
         /// <returns></returns>
         private static async Task RunGuildLoaders(CustomGuildDataCache guildCache)
         {
@@ -113,23 +119,27 @@ namespace DiscordAngryBot
             GroupHandler.ActualizeReactionsOnGroups(guildCache.Guild).GetAwaiter().GetResult();
             File.WriteAllText($"locals/Databases/{guildCache.Guild.Id}/GuildInfo.txt", await CollectGuildInfo(guildCache.Guild));
         }
+
         /// <summary>
-        /// Загрузка всех составов
+        /// Loads all guild groups
         /// </summary>
+        /// <param name="guild">Guild</param>
         /// <returns></returns>
         private static async Task<List<Group>> LoadGuildGroups(SocketGuild guild)
         {
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
             List<Group> groups = new List<Group>();           
-            groups = GroupHandler.LoadAllGroupsFromDB(guild).GetAwaiter().GetResult();             
+            groups = GroupHandler.LoadAllGroupsFromDB(guild.Id).GetAwaiter().GetResult();             
             stopwatch.Stop();
             await CustomObjects.ConsoleOutput.Debug.WriteDivideMessage($"LoadGroups() finished: took {stopwatch.ElapsedMilliseconds} ms");
             return groups;
         }
+
         /// <summary>
-        /// Загрузка всех банов
+        /// Loads all guild bans
         /// </summary>
+        /// <param name="guild">Guild</param>
         /// <returns></returns>
         private static async Task<List<DiscordBan>> LoadGuildBans(SocketGuild guild)
         {
@@ -137,57 +147,59 @@ namespace DiscordAngryBot
             bans = await BanHandler.LoadBansFromGuildDB(guild.Id);
             return bans;
         } 
+
         /// <summary>
-        /// Добавка всех обработчиков событий клиента дискорда
+        /// Add all handlers to client
         /// </summary>
-        /// <param name="_client"></param>
-        private static void AddHandlersToClient(DiscordSocketClient _client)
+        /// <param name="client">Discord Socket Client</param>
+        private static void AddHandlersToClient(DiscordSocketClient client)
         {           
-            _client.Log += GatewayEventHandler.LogHandler;         
-            _client.MessageReceived += GatewayEventHandler.MessageReceivedHandler;           
-            _client.ReactionAdded += GatewayEventHandler.ReactionAddedHandler;         
-            _client.ReactionRemoved += GatewayEventHandler.ReactionRemovedHandler;          
-            _client.Ready += SetUpBotData;
-            _client.ChannelCreated += GatewayEventHandler.ChannelCreatedHandler;
-            _client.ChannelDestroyed += GatewayEventHandler.ChannelDestroyedHandler;
-            _client.ChannelUpdated += GatewayEventHandler.ChannelUpdatedHandler;
-            _client.Connected += GatewayEventHandler.ConnectedHandler;
-            _client.CurrentUserUpdated += GatewayEventHandler.CurrentUserUpdatedHandler;
-            _client.Disconnected += GatewayEventHandler.DisconnectedHandler;
-            _client.GuildAvailable += GatewayEventHandler.GuildAvailableHandler;
-            _client.GuildMembersDownloaded += GatewayEventHandler.GuildMembersDownloadedHandler;
-            _client.GuildMemberUpdated += GatewayEventHandler.GuildMemberUpdatedHandler;
-            _client.GuildUnavailable += GatewayEventHandler.GuildUnavailableHandler;
-            _client.GuildUpdated += GatewayEventHandler.GuildUpdatedHandler;
-            _client.JoinedGuild += GatewayEventHandler.JoinedGuildHandler;
-            _client.LatencyUpdated += GatewayEventHandler.LatencyUpdatedHandler;
-            _client.LeftGuild += GatewayEventHandler.LeftGuildHandler;
-            _client.LoggedIn += GatewayEventHandler.LoggedInHandler;
-            _client.LoggedOut += GatewayEventHandler.LoggedOutHandler;
-            _client.MessageDeleted += GatewayEventHandler.MessageDeletedHandler;
-            _client.MessagesBulkDeleted += GatewayEventHandler.MessagesBulkDeletedHandler;
-            _client.MessageUpdated += GatewayEventHandler.MessageUpdatedHandler;
-            _client.ReactionsCleared += GatewayEventHandler.ReactionsClearedHandler;
-            _client.RecipientAdded += GatewayEventHandler.RecipientAddedHandler;
-            _client.RecipientRemoved += GatewayEventHandler.RecipientRemovedHandler;
-            _client.RoleCreated += GatewayEventHandler.RoleCreatedHandler;
-            _client.RoleDeleted += GatewayEventHandler.RoleDeletedHandler;
-            _client.RoleUpdated += GatewayEventHandler.RoleUpdatedHandler;
-            _client.UserBanned += GatewayEventHandler.UserBannedHandler;
-            _client.UserIsTyping += GatewayEventHandler.UserIsTypingHandler;
-            _client.UserJoined += GatewayEventHandler.UserJoinedHandler;
-            _client.UserLeft += GatewayEventHandler.UserLeftHandler;
-            _client.UserUnbanned += GatewayEventHandler.UserUnbannedHandler;
-            _client.UserUpdated += GatewayEventHandler.UserUpdatedHandler;
-            _client.UserVoiceStateUpdated += GatewayEventHandler.UserVoiceStateUpdatedHandler;
-            _client.VoiceServerUpdated += GatewayEventHandler.VoiceServerUpdatedHandler;
+            client.Log += GatewayEventHandler.LogHandler;         
+            client.MessageReceived += GatewayEventHandler.MessageReceivedHandler;           
+            client.ReactionAdded += GatewayEventHandler.ReactionAddedHandler;         
+            client.ReactionRemoved += GatewayEventHandler.ReactionRemovedHandler;          
+            client.Ready += SetUpBotData;
+            client.ChannelCreated += GatewayEventHandler.ChannelCreatedHandler;
+            client.ChannelDestroyed += GatewayEventHandler.ChannelDestroyedHandler;
+            client.ChannelUpdated += GatewayEventHandler.ChannelUpdatedHandler;
+            client.Connected += GatewayEventHandler.ConnectedHandler;
+            client.CurrentUserUpdated += GatewayEventHandler.CurrentUserUpdatedHandler;
+            client.Disconnected += GatewayEventHandler.DisconnectedHandler;
+            client.GuildAvailable += GatewayEventHandler.GuildAvailableHandler;
+            client.GuildMembersDownloaded += GatewayEventHandler.GuildMembersDownloadedHandler;
+            client.GuildMemberUpdated += GatewayEventHandler.GuildMemberUpdatedHandler;
+            client.GuildUnavailable += GatewayEventHandler.GuildUnavailableHandler;
+            client.GuildUpdated += GatewayEventHandler.GuildUpdatedHandler;
+            client.JoinedGuild += GatewayEventHandler.JoinedGuildHandler;
+            client.LatencyUpdated += GatewayEventHandler.LatencyUpdatedHandler;
+            client.LeftGuild += GatewayEventHandler.LeftGuildHandler;
+            client.LoggedIn += GatewayEventHandler.LoggedInHandler;
+            client.LoggedOut += GatewayEventHandler.LoggedOutHandler;
+            client.MessageDeleted += GatewayEventHandler.MessageDeletedHandler;
+            client.MessagesBulkDeleted += GatewayEventHandler.MessagesBulkDeletedHandler;
+            client.MessageUpdated += GatewayEventHandler.MessageUpdatedHandler;
+            client.ReactionsCleared += GatewayEventHandler.ReactionsClearedHandler;
+            client.RecipientAdded += GatewayEventHandler.RecipientAddedHandler;
+            client.RecipientRemoved += GatewayEventHandler.RecipientRemovedHandler;
+            client.RoleCreated += GatewayEventHandler.RoleCreatedHandler;
+            client.RoleDeleted += GatewayEventHandler.RoleDeletedHandler;
+            client.RoleUpdated += GatewayEventHandler.RoleUpdatedHandler;
+            client.UserBanned += GatewayEventHandler.UserBannedHandler;
+            client.UserIsTyping += GatewayEventHandler.UserIsTypingHandler;
+            client.UserJoined += GatewayEventHandler.UserJoinedHandler;
+            client.UserLeft += GatewayEventHandler.UserLeftHandler;
+            client.UserUnbanned += GatewayEventHandler.UserUnbannedHandler;
+            client.UserUpdated += GatewayEventHandler.UserUpdatedHandler;
+            client.UserVoiceStateUpdated += GatewayEventHandler.UserVoiceStateUpdatedHandler;
+            client.VoiceServerUpdated += GatewayEventHandler.VoiceServerUpdatedHandler;
         }
 
 
         /// <summary>
-        /// Получение кэша гильдии
+        /// Try to get guild cache by ID
         /// </summary>
-        /// <param name="ID"></param>
+        /// <param name="guildID">Guild ID</param>
+        /// <param name="guildCache">Guild cache, if found any</param>
         /// <returns></returns>
         public static bool TryGetGuildDataCache(ulong guildID, out CustomGuildDataCache guildCache)
         {
@@ -197,10 +209,12 @@ namespace DiscordAngryBot
             else
                 return false;
         }
+
         /// <summary>
-        /// Вернуть список настроек конкретного сервера
+        /// Try to get discord guild settings by ID
         /// </summary>
-        /// <param name="guildID"></param>
+        /// <param name="guildID">Guild ID</param>
+        /// <param name="settings">Guild settings, if found any</param>
         /// <returns></returns>
         public static bool TryGetDiscordGuildSettings(ulong guildID, out DiscordGuildSettings settings)
         {
@@ -217,10 +231,12 @@ namespace DiscordAngryBot
                 return false;
             
         }
+
         /// <summary>
-        /// Вернуть список групп конкретного сервера
+        /// Try to get guild groups by ID
         /// </summary>
-        /// <param name="guildID"></param>
+        /// <param name="guildID">Guild ID</param>
+        /// <param name="groups">Groups, if found any</param>
         /// <returns></returns>
         public static bool TryGetDiscordGuildGroups(ulong guildID, out List<Group> groups)
         {
@@ -233,26 +249,29 @@ namespace DiscordAngryBot
             else 
                 return false;
         }
+
         /// <summary>
-        /// Вернуть список банов конкретного сервера
+        /// Get guild bans
         /// </summary>
-        /// <param name="guildID"></param>
+        /// <param name="guildID">Guild ID</param>
         /// <returns></returns>
         public static List<DiscordBan> GetDiscordGuildBans(ulong guildID)
         {
             return customGuildDataCaches.Where(x => x.Guild.Id == guildID).FirstOrDefault().Bans;
         }
+
         /// <summary>
-        /// Вернуть список счетчиков мата конкретного сервера
+        /// Get guild swear counters
         /// </summary>
-        /// <param name="guildID"></param>
+        /// <param name="guildID">Guild ID</param>
         /// <returns></returns>
         public static List<SwearCounter> GetDiscordGuildSwearCounters(ulong guildID)
         {
             return customGuildDataCaches.Where(x => x.Guild.Id == guildID).FirstOrDefault().SwearCounters;
         }
+
         /// <summary>
-        /// Вернуть логи команд/ошибок, произошедших за время работы бота
+        /// Get all datalogs 
         /// </summary>
         /// <returns></returns>
         public static List<DataLog> GetDataLogs()
@@ -260,67 +279,38 @@ namespace DiscordAngryBot
             return dataLogs;
         }
 
-
         /// <summary>
-        /// Список системных команд
-        /// </summary>
-        /// <returns></returns>
-        public static List<DiscordCommand> SystemCommands()
-        {
-            return settings.Commands.Where(x => x.CommandMetadata.Category == CommandCategory.System).ToList();
-        }
-        /// <summary>
-        /// Список пользовательских команд
-        /// </summary>
-        /// <returns></returns>
-        public static List<DiscordCommand> UserCommands()
-        {
-            return settings.Commands.Where(x => x.CommandMetadata.Category == CommandCategory.User).ToList();
-        }
-        /// <summary>
-        /// Список остальных команд
-        /// </summary>
-        /// <returns></returns>
-        public static List<DiscordCommand> OtherCommands()
-        {
-            return settings.Commands.Where(x => x.CommandMetadata.Category == CommandCategory.Other).ToList();
-        }
-        /// <summary>
-        /// Список матов
+        /// Get list of filtered swears
         /// </summary>
         /// <returns></returns>
         public static List<string> Swears()
         {
             return settings.swearFilterWords;
         }
+
         /// <summary>
-        /// Список запрещенных команд
+        /// Get list of forbidden shiro commands
         /// </summary>
         /// <returns></returns>
         public static List<string> ForbiddenCommands()
         {
             return settings.forbiddenCommands;
         }
+
         /// <summary>
-        /// Список музыкальных команд
-        /// </summary>
-        /// <returns></returns>
-        public static List<DiscordCommand> MusicCommands()
-        {
-            return settings.Commands.Where(x => x.CommandMetadata.Category == CommandCategory.Music).ToList();
-        }
-        /// <summary>
-        /// Клиент бота дискорда
+        /// Get bot client
         /// </summary>
         /// <returns></returns>
         public static DiscordSocketClient GetClient()
         {
             return discordSocketClient;
         }
+
         /// <summary>
-        /// Поиск команды для запуска
+        /// Try get command for running
         /// </summary>
-        /// <param name="commandName"></param>
+        /// <param name="commandName">Command name</param>
+        /// <param name="command">Command, if found any</param>
         /// <returns></returns>
         public static bool TryGetCommand(string commandName, out DiscordCommand command)
         {
@@ -330,13 +320,18 @@ namespace DiscordAngryBot
             else
                 return false;
         }
+
+        /// <summary>
+        /// Get all commands
+        /// </summary>
+        /// <returns></returns>
         public static HashSet<DiscordCommand> GetAllCommands()
         {
             return settings.Commands;
         }
 
         /// <summary>
-        /// Загрузка настроек гильдии
+        /// Load guild settings by ID
         /// </summary>
         /// <param name="guildID"></param>
         /// <returns></returns>
@@ -346,10 +341,11 @@ namespace DiscordAngryBot
             var settingsJSON = data.Rows[0]["SettingsJSON"].ToString();
             return JsonConvert.DeserializeObject<DiscordGuildSettings>(settingsJSON);
         }
+
         /// <summary>
-        /// Добавление нового кэша гильдии
+        /// Create guild cache
         /// </summary>
-        /// <param name="guild"></param>
+        /// <param name="guild">Guild</param>
         /// <returns></returns>
         public static async Task CreateGuildCache(SocketGuild guild)
         {
@@ -366,7 +362,7 @@ namespace DiscordAngryBot
                         SwearCounters = new List<SwearCounter>(),
                         Settings = new DiscordGuildSettings()
                         {
-                            adminsID = new List<ulong>() { 261497385274966026 },
+                            AdminsID = new List<ulong>() { 261497385274966026 },
                             APIToken = null,
                             BanRoleID = null,
                             CommandPrefix = '_',
@@ -388,10 +384,11 @@ namespace DiscordAngryBot
                 }                              
             });
         }
+
         /// <summary>
-        /// Удаление кэша гильдии
+        /// Remove guild cache
         /// </summary>
-        /// <param name="guild"></param>
+        /// <param name="guild">Guild</param>
         /// <returns></returns>
         public static async Task RemoveGuildCache(SocketGuild guild)
         {
@@ -400,8 +397,9 @@ namespace DiscordAngryBot
                 customGuildDataCaches.Where(x => x.Guild.Id == guild.Id).FirstOrDefault().IsAvailable = false;
             });
         }
+
         /// <summary>
-        /// Проверка локальных файлов
+        /// Validate all local files
         /// </summary>
         /// <returns></returns>
         private static async Task ValidateLocalFiles()
@@ -421,10 +419,11 @@ namespace DiscordAngryBot
                 Directory.CreateDirectory("locals/Databases");
             }
         }
+
         /// <summary>
-        /// Подготовка кэша для гильдии
+        /// Prepare all guild files
         /// </summary>
-        /// <param name="cache"></param>
+        /// <param name="cache">Guild cache</param>
         /// <returns></returns>
         private static async Task PrepareGuildCache(CustomGuildDataCache cache)
         {
@@ -447,8 +446,9 @@ namespace DiscordAngryBot
 
             });
         }
+
         /// <summary>
-        /// Префикс для команд конкретного сервера
+        /// Get guild command prefix
         /// </summary>
         /// <returns></returns>
         public static char GetGuildCommandPrefix(ulong GuildID)
@@ -459,18 +459,20 @@ namespace DiscordAngryBot
             else
                 return prefix.Value;
         }
+
         /// <summary>
-        /// Исходный префикс для команд
+        /// Get default command prefix
         /// </summary>
         /// <returns></returns>
         public static char GetDefaultCommandPrefix()
         {
             return settings.defaultCommandPrefix;
         }
+
         /// <summary>
-        /// Сбор краткой сводки о работе гильдии
+        /// Collect guild summary
         /// </summary>
-        /// <param name="guild"></param>
+        /// <param name="guild">Guild</param>
         /// <returns></returns>
         public static async Task<string> CollectGuildInfo(SocketGuild guild)
         {
@@ -492,27 +494,28 @@ namespace DiscordAngryBot
                 return sb.ToString();
             });
         }
+
         /// <summary>
-        /// Сбор данных о методах и регистрация команд в боте
+        /// Register all bot commands
         /// </summary>
         private static void RegisterCommands()
         {
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
-            CustomObjects.ConsoleOutput.Debug.Log($"Getting command metadata...", CustomObjects.ConsoleOutput.Debug.InfoType.CommandInfo).GetAwaiter().GetResult();
+            CustomObjects.ConsoleOutput.Debug.Log($"Getting command metadata...", LogInfoType.CommandInfo).GetAwaiter().GetResult();
 
             var systemMethods = typeof(SystemCommands).GetMethods();
-            CustomObjects.ConsoleOutput.Debug.Log($"Found {systemMethods.Length} system commands.", CustomObjects.ConsoleOutput.Debug.InfoType.CommandInfo).GetAwaiter().GetResult();
+            CustomObjects.ConsoleOutput.Debug.Log($"Found {systemMethods.Length} system commands.", LogInfoType.CommandInfo).GetAwaiter().GetResult();
             var userMethods = typeof(UserCommands).GetMethods();
-            CustomObjects.ConsoleOutput.Debug.Log($"Found {userMethods.Length} user commands", CustomObjects.ConsoleOutput.Debug.InfoType.CommandInfo).GetAwaiter().GetResult();
+            CustomObjects.ConsoleOutput.Debug.Log($"Found {userMethods.Length} user commands", LogInfoType.CommandInfo).GetAwaiter().GetResult();
             var otherMethods = typeof(OtherCommands).GetMethods();
-            CustomObjects.ConsoleOutput.Debug.Log($"Found {otherMethods.Length} other commands", CustomObjects.ConsoleOutput.Debug.InfoType.CommandInfo).GetAwaiter().GetResult();
+            CustomObjects.ConsoleOutput.Debug.Log($"Found {otherMethods.Length} other commands", LogInfoType.CommandInfo).GetAwaiter().GetResult();
             var musicMethods = typeof(MusicCommands).GetMethods();
-            CustomObjects.ConsoleOutput.Debug.Log($"Found {musicMethods.Length} music commands", CustomObjects.ConsoleOutput.Debug.InfoType.CommandInfo).GetAwaiter().GetResult();
-            var emojiMethods = typeof(PartyReactionHandler).GetMethods();
-            CustomObjects.ConsoleOutput.Debug.Log($"Found {emojiMethods.Length} emoji handlers", CustomObjects.ConsoleOutput.Debug.InfoType.CommandInfo).GetAwaiter().GetResult();
+            CustomObjects.ConsoleOutput.Debug.Log($"Found {musicMethods.Length} music commands", LogInfoType.CommandInfo).GetAwaiter().GetResult();
+            var emojiMethods = typeof(GroupReactionHandler).GetMethods();
+            CustomObjects.ConsoleOutput.Debug.Log($"Found {emojiMethods.Length} emoji handlers", LogInfoType.CommandInfo).GetAwaiter().GetResult();
 
-            CustomObjects.ConsoleOutput.Debug.Log($"Registering command handlers...", CustomObjects.ConsoleOutput.Debug.InfoType.CommandInfo).GetAwaiter().GetResult();
+            CustomObjects.ConsoleOutput.Debug.Log($"Registering command handlers...", LogInfoType.CommandInfo).GetAwaiter().GetResult();
             foreach (var systemMethod in systemMethods)
             {
                 var attribute = systemMethod.GetCustomAttribute<CustomCommandAttribute>();
@@ -575,7 +578,7 @@ namespace DiscordAngryBot
             }
 
             stopwatch.Stop();
-            CustomObjects.ConsoleOutput.Debug.Log($"Finished registering commands. [Took {stopwatch.Elapsed} ms to register]", CustomObjects.ConsoleOutput.Debug.InfoType.CommandInfo).GetAwaiter().GetResult();
+            CustomObjects.ConsoleOutput.Debug.Log($"Finished registering commands. [Took {stopwatch.Elapsed} ms to register]", LogInfoType.CommandInfo).GetAwaiter().GetResult();
         }
     }
 }

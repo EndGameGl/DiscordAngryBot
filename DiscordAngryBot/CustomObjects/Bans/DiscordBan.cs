@@ -6,40 +6,44 @@ using System.Threading;
 namespace DiscordAngryBot.CustomObjects.Bans
 {
     /// <summary>
-    /// Класс, представляющий бан в дискорде
+    /// Object representing custom discord ban
     /// </summary>
     public class DiscordBan : IReferableTo<BanReference>
     {
         /// <summary>
-        /// Уникальный идентификатор бана
+        /// Ban GUID
         /// </summary>
         public string GUID { get; set; }
 
         /// <summary>
-        /// Канал гильдии, в котором был выдан бан
+        /// Ban originating channel
         /// </summary>
         public SocketTextChannel Channel { get; set; }
 
         /// <summary>
-        /// Цель бана
+        /// Banned user
         /// </summary>
         public SocketGuildUser BanTarget { get; set; }
 
         /// <summary>
-        /// Объект System.Threading.Timer бана
+        /// Ban timer, if any
         /// </summary>
         public Timer BanTimer { get; set; }
         
         /// <summary>
-        /// Дата создания бана
+        /// Date timestamp
         /// </summary>
         public DateTime CreatedAt { get; set; }
 
         /// <summary>
-        /// Дата окончания бана
+        /// Date when this ban is supposedly ends, if any
         /// </summary>
         public DateTime? EndsAt { get; set; }
 
+        /// <summary>
+        /// Gets this ban reference
+        /// </summary>
+        /// <returns></returns>
         public BanReference GetReference()
         {
             return new BanReference(this);

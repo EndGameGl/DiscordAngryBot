@@ -6,37 +6,40 @@ using System;
 namespace DiscordAngryBot.Models
 {
     /// <summary>
-    /// Объект для десериализации бана дискорда
+    /// Reference object for DiscordBan
     /// </summary>
     public class BanReference : ILoadableInto<DiscordBan>
     {
+        /// <summary>
+        /// Guild ID
+        /// </summary>
         public ulong GuildID { get; set; }
         /// <summary>
-        /// Идентификатор канала, где был выдан бан
+        /// Channel ID
         /// </summary>
         public ulong ChannelID { get; set; }
         /// <summary>
-        /// Юзер, у которого забрана роль
+        /// Banned user ID
         /// </summary>
         public ulong BanTargetID { get; set; }
         /// <summary>
-        /// Дата выдачи бана
+        /// Ban start date
         /// </summary>
         public DateTime CreatedAt { get; set; }
         /// <summary>
-        /// Дата окончания бана
+        /// Ban end date, if any
         /// </summary>
         public DateTime? EndsAt { get; set; }
 
         /// <summary>
-        /// Пустой конструктор бана
+        /// Class constructor
         /// </summary>
         public BanReference() { }
 
         /// <summary>
-        /// Конструктор бана на основе объекта DiscordBan
+        /// Second class constructor
         /// </summary>
-        /// <param name="ban"></param>
+        /// <param name="ban">DiscordBan object</param>
         public BanReference(DiscordBan ban)
         {
             GuildID = ban.Channel.Guild.Id;
@@ -46,6 +49,10 @@ namespace DiscordAngryBot.Models
             EndsAt = ban.EndsAt;
         }
 
+        /// <summary>
+        /// Loads origin of this reference
+        /// </summary>
+        /// <returns></returns>
         public DiscordBan LoadOrigin()
         {
             if (BotCore.TryGetGuildDataCache(GuildID, out var cache))

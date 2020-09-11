@@ -6,17 +6,16 @@ using System.Threading.Tasks;
 namespace DiscordAngryBot.CustomObjects.Bans
 {
     /// <summary>
-    /// Класс-конструктор банов
+    /// Class for building ban objects
     /// </summary>
     public static class BanBuilder
     {
         /// <summary>
-        /// Конструктор бана дискорда
+        /// Builds new discord ban
         /// </summary>
-        /// <param name="target"></param>
-        /// <param name="time"></param>
-        /// <param name="role"></param>
-        /// <param name="channel"></param>
+        /// <param name="target">User to be banned</param>
+        /// <param name="time">Time to ban for</param>
+        /// <param name="channel">Channel on which ban has occured</param>
         /// <returns></returns>
         public static async Task<DiscordBan> BuildDiscordBan(SocketGuildUser target, int? time, SocketTextChannel channel)
         {
@@ -41,11 +40,10 @@ namespace DiscordAngryBot.CustomObjects.Bans
         }
 
         /// <summary>
-        /// Конструктор бана дискорда на основе данных из базы
+        /// Builds discord ban based on DB data
         /// </summary>
-        /// <param name="client"></param>
-        /// <param name="GUID"></param>
-        /// <param name="JSON"></param>
+        /// <param name="GUID">Ban GUID</param>
+        /// <param name="JSON">Ban reference data</param>
         /// <returns></returns>
         public static async Task<DiscordBan> BuildLoadedDiscordBan(string GUID, string JSON)
         {

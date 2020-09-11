@@ -6,15 +6,15 @@ using System.Threading.Tasks;
 namespace DiscordAngryBot.CustomObjects.SQLIteHandler
 {
     /// <summary>
-    /// Класс, предназначенный для взаимодействия с базой данных
+    /// Class for handling SQLite DB operations
     /// </summary>
     public static class SQLiteDataManager
     {
         /// <summary>
-        /// Запрос к базе данных
+        /// Push query to DB
         /// </summary>
-        /// <param name="dbPath">Путь к БД</param>
-        /// <param name="sqlQuery">Запрос к БД</param>
+        /// <param name="dbPath">DB path</param>
+        /// <param name="sqlQuery">DB SQL Query</param>
         /// <returns></returns>
         public static async Task PushToDB(string dbPath, string sqlQuery)
         {
@@ -24,45 +24,44 @@ namespace DiscordAngryBot.CustomObjects.SQLIteHandler
             await command.ExecuteNonQueryAsync();
             connection.Close();
         }
+
         /// <summary>
-        /// Загрузка объекта DataTable из базы данных по запросу
+        /// Load query result to DataTable object
         /// </summary>
-        /// <param name="dbPath">Путь к БД</param>
-        /// <param name="sqlQuery">Запрос к БД</param>
+        /// <param name="dbPath">DB path</param>
+        /// <param name="sqlQuery">DB SQL query</param>
         /// <returns></returns>
         public static async Task<DataTable> GetDataFromDB(string dbPath, string sqlQuery)
         {
-            await Debug.Log($"Creating new connection...", Debug.InfoType.Notice);
+            await Debug.Log($"Creating new connection...", LogInfoType.Notice);
             SQLiteConnection connection = new SQLiteConnection($"Data Source={dbPath};Version=3;");
             SQLiteCommand command = new SQLiteCommand(sqlQuery, connection);
 
             await connection.OpenAsync();
-            await Debug.Log($"Opened new async connection: {connection.DataSource}", Debug.InfoType.Notice);
-            await Debug.Log($"Executing async reader", Debug.InfoType.Notice);
+            await Debug.Log($"Opened new async connection: {connection.DataSource}", LogInfoType.Notice);
+            await Debug.Log($"Executing async reader", LogInfoType.Notice);
             var reader = await command.ExecuteReaderAsync();
 
             DataTable dataTable = new DataTable();
-            await Debug.Log($"Loading new datatable", Debug.InfoType.Notice);            
+            await Debug.Log($"Loading new datatable", LogInfoType.Notice);            
             dataTable.Load(reader);
-            await Debug.Log($"Loaded datatable: {dataTable.Rows.Count} rows", Debug.InfoType.Notice);
+            await Debug.Log($"Loaded datatable: {dataTable.Rows.Count} rows", LogInfoType.Notice);
             reader.Close();
-            await Debug.Log($"Closed reader", Debug.InfoType.Notice);
+            await Debug.Log($"Closed reader", LogInfoType.Notice);
             connection.Close();
-            await Debug.Log($"Closed connection", Debug.InfoType.Notice);
+            await Debug.Log($"Closed connection", LogInfoType.Notice);
 
             return dataTable;
         }
+
         /// <summary>
-        /// Создание базы данных
+        /// Create new DB
         /// </summary>
-        /// <param name="Path"></param>
+        /// <param name="Path">Creation path</param>
         /// <returns></returns>
         public static async Task CreateDataBase(string Path)
         {
-            await Task.Run(
-                () =>
-            SQLiteConnection.CreateFile($"{Path}")
-            );
+            await Task.Run(() => SQLiteConnection.CreateFile($"{Path}"));
         }
     }
 }

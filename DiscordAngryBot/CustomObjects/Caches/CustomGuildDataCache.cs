@@ -7,34 +7,38 @@ using System.Collections.Generic;
 namespace DiscordAngryBot.CustomObjects.Caches
 {
     /// <summary>
-    /// Кэш гильдии с кастомными объектами
+    /// Guild cache with all the custom objects
     /// </summary>
     public class CustomGuildDataCache
     {
         /// <summary>
-        /// Кэш гильдии
+        /// Guild itself
         /// </summary>
         public SocketGuild Guild { get; set; }
+
         /// <summary>
-        /// Группы, собирыемые в гильдии
+        /// Guild groups
         /// </summary>
         public List<Group> Groups { get; set; }
+
         /// <summary>
-        /// Активные баны гильдии
+        /// Guild bans
         /// </summary>
         public List<DiscordBan> Bans { get; set; }
+
         /// <summary>
-        /// Счетчики мата гильдии
+        /// Guild swear counters
         /// </summary>
         public List<SwearCounter> SwearCounters { get; set; }
+
         /// <summary>
-        /// Настройка бота в пределах гильдии
+        /// Guild settings
         /// </summary>
         public DiscordGuildSettings Settings { get; set; }
+
         /// <summary>
-        /// Признак доступности гильдии
+        /// Whether this guild is available
         /// </summary>
         public bool IsAvailable { get; set; }
-
     }
 }

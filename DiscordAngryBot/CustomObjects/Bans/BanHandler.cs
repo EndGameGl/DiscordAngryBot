@@ -14,17 +14,19 @@ using System.Threading.Tasks;
 namespace DiscordAngryBot.CustomObjects.Bans
 {
     /// <summary>
-    /// Обработчик операций, связанных с банами пользователей
+    /// Class for handling operations with discord bans
     /// </summary>
     public static class BanHandler
     {
         /// <summary>
-        /// Бан пользователя
+        /// Ban specified user
         /// </summary>
-        /// <param name="user">Цель бана</param>
-        /// <param name="time">Время бана</param>
-        /// <param name="role">Роль, которая попадает под бан</param>
-        /// <param name="channel">Канал, в котором забанен пользователь</param>
+        /// <param name="user">User to be banned</param>
+        /// <param name="time">Time for ban</param>
+        /// <param name="role">Role that will be removed</param>
+        /// <param name="channel">Channel on which ban was made</param>
+        /// <param name="isAuto">Wheter this ban was automatic</param>
+        /// <param name="isSelf">Wheter this ban was self-given</param>
         /// <returns></returns>
         public static async Task Ban(this SocketGuildUser user, int? time, SocketRole role, SocketTextChannel channel, bool isAuto, bool isSelf = false)
         {
@@ -60,9 +62,9 @@ namespace DiscordAngryBot.CustomObjects.Bans
         }
 
         /// <summary>
-        /// Разбан пользователя
+        /// Unban specified user
         /// </summary>
-        /// <param name="ban"></param>
+        /// <param name="ban">Ban object</param>
         /// <returns></returns>
         public static async Task Unban(this DiscordBan ban)
         {
@@ -79,9 +81,9 @@ namespace DiscordAngryBot.CustomObjects.Bans
         }
 
         /// <summary>
-        /// Метод, вызываемый при окончании бана
+        /// Ban timer callback method
         /// </summary>
-        /// <param name="ban"></param>
+        /// <param name="ban">Ban object</param>
         public static async void BanTimerCallBack(object ban)
         {
             DiscordBan banObj = (DiscordBan)ban;
@@ -101,9 +103,9 @@ namespace DiscordAngryBot.CustomObjects.Bans
         }     
 
         /// <summary>
-        /// Сохранение бана в базе данных
+        /// Saves ban reference to DB
         /// </summary>
-        /// <param name="ban"></param>
+        /// <param name="ban">Ban object</param>
         /// <returns></returns>
         public static async Task SaveBanToDB(this DiscordBan ban)
         {
@@ -113,9 +115,9 @@ namespace DiscordAngryBot.CustomObjects.Bans
         }
 
         /// <summary>
-        /// Сериализация бана в формат JSON
+        /// Serialize ban to JSON
         /// </summary>
-        /// <param name="ban"></param>
+        /// <param name="ban">Ban object</param>
         /// <returns></returns>
         public static async Task<string> SerializeToJson(this DiscordBan ban)
         {
@@ -128,10 +130,9 @@ namespace DiscordAngryBot.CustomObjects.Bans
         }
 
         /// <summary>
-        /// Десериализация бана из формата JSON
+        /// Deserialize ban from JSON reference
         /// </summary>
-        /// <param name="jsonText"></param>
-        /// <param name="client"></param>
+        /// <param name="jsonText">JSON data</param>
         /// <returns></returns>
         public static async Task<DiscordBan> DeserializeFromJson(string jsonText)
         {
@@ -144,9 +145,9 @@ namespace DiscordAngryBot.CustomObjects.Bans
         }
 
         /// <summary>
-        /// Загрузка банов из базы данных
+        /// Load all bans from guild DB
         /// </summary>
-        /// <param name="client"></param>
+        /// <param name="guildID">Guild ID</param>
         /// <returns></returns>
         public static async Task<List<DiscordBan>> LoadBansFromGuildDB(ulong guildID)
         {

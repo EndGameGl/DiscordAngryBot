@@ -1,24 +1,24 @@
 ﻿namespace DiscordAngryBot.APIHandlers
 {
     /// <summary>
-    /// Класс для построения веб-страницы
+    /// Class that represents a web page
     /// </summary>
     public class WebPage
     {
         /// <summary>
-        /// Тип документа HTML
+        /// HTML Doctype
         /// </summary>
         public string Doctype { get; set; }
         /// <summary>
-        /// Содержимое тега head
+        /// Head content
         /// </summary>
         public string HeadContent { get; set; }
         /// <summary>
-        /// Содержимое тега body
+        /// Body content
         /// </summary>
         public string BodyContent { get; set; }
         /// <summary>
-        /// Сборка веб-страницы из данных
+        /// Build an HTML page with given content
         /// </summary>
         /// <returns></returns>
         public string Build()

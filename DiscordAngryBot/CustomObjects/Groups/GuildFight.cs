@@ -1,17 +1,17 @@
 ﻿namespace DiscordAngryBot.CustomObjects.Groups
 {
     /// <summary>
-    /// Класс, представляющий собой битву БШ
+    /// Extended group for guild fights
     /// </summary>
     public class GuildFight : Group
     {
         /// <summary>
-        /// Тип битвы БШ
+        /// Guiyld fight type
         /// </summary>
         public GuildFightType GuildFightType { get; set; }
 
         /// <summary>
-        /// Пустой конструктор битв БШ
+        /// Class constructor
         /// </summary>
         public GuildFight() { }
     }

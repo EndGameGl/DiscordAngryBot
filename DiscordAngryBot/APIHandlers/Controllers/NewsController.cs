@@ -11,15 +11,15 @@ using System.Web.Http;
 namespace DiscordAngryBot.APIHandlers.Controllers
 {
     /// <summary>
-    /// API контроллер для отображения новостей
+    /// API controller for news
     /// </summary>
     [RoutePrefix("api/News")]
     public class NewsController : ApiController
     {
         /// <summary>
-        /// Обработка присланных данных и отображение их в дискорд
+        /// Process posted data and output it to connected guilds if needed
         /// </summary>
-        /// <param name="data"></param>
+        /// <param name="data">Posted data</param>
         /// <returns></returns>
         [HttpPost, Route("")]
         public string PostNews(object data)
@@ -61,7 +61,7 @@ namespace DiscordAngryBot.APIHandlers.Controllers
             }
             catch (Exception e)
             {
-                Debug.Log($"{e.Message}", Debug.InfoType.Error).GetAwaiter().GetResult();
+                Debug.Log($"{e.Message}", LogInfoType.Error).GetAwaiter().GetResult();
                 return $"Error: {e.Message} [{e.InnerException?.Message}]";
             }
         }

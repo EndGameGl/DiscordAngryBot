@@ -5,32 +5,40 @@ using System.Collections.Generic;
 namespace DiscordAngryBot.Models
 {
     /// <summary>
-    /// Класс, предоставляющий упрощенную сводку данных класса UserList
+    /// Reference object for UserList
     /// </summary>
     public class UserListReference
     {
         /// <summary>
-        /// Название списка
+        /// List name
         /// </summary>
         public string ListName { get; set; }
+
         /// <summary>
-        /// Эмодзи для попадания в список
+        /// List emoji
         /// </summary>
         public string Emoji { get; set; }
+
         /// <summary>
-        /// Идентификаторы пользователей в списке
+        /// List of user IDs
         /// </summary>
         public List<ulong> UserIDs { get; set; }
+
         /// <summary>
-        /// Лимит пользователей в списке
+        /// User limit, if any
         /// </summary>
         public int? UserLimit { get; set; }
+
+        /// <summary>
+        /// Class constructor
+        /// </summary>
         [JsonConstructor]
         public UserListReference() { }
+
         /// <summary>
         /// Конструктор класса
         /// </summary>
-        /// <param name="userList"></param>
+        /// <param name="userList">UserList object</param>
         public UserListReference(UserList userList)
         {
             ListName = userList.ListName;

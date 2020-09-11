@@ -1,64 +1,69 @@
-﻿using Discord;
-using Discord.Rest;
+﻿using Discord.Rest;
 using Discord.WebSocket;
 using DiscordAngryBot.Models;
 using Microsoft.Win32.SafeHandles;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace DiscordAngryBot.CustomObjects.Groups
 {
     /// <summary>
-    /// Абстрактный класс, предстравляющий группу пользователей
+    /// Class for creating groups
     /// </summary>
     public class Group : IDisposable, IReferableTo<GroupReference>
     {
         /// <summary>
-        /// Признак того, был ли удален объект
+        /// Whether object was disposed
         /// </summary>
         bool disposed = false;
         /// <summary>
-        /// Объект SafeFileHandle
+        /// SafeFileHandle class object
         /// </summary>
         SafeHandle handle = new SafeFileHandle(IntPtr.Zero, true);
 
         /// <summary>
-        /// Уникальный идентификатор группы
+        /// Group GUID
         /// </summary>
         public string GUID { get; set; }
+
         /// <summary>
-        /// Пользователь, создавший группу
+        /// Group author
         /// </summary>
         public SocketGuildUser Author { get; set; }
+
         /// <summary>
-        /// Канал, в котором была создана группа
+        /// Channel where this group is being held
         /// </summary>
         public SocketTextChannel Channel { get; set; }
+
         /// <summary>
-        /// Собираемые группы пользователей
+        /// User lists
         /// </summary>
         public List<UserList> UserLists { get; set; }
+
         /// <summary>
-        /// Сообщение, представляющее группу в дискорде
+        /// Message that represents this group
         /// </summary>
         public RestUserMessage TargetMessage { get; set; }
+
         /// <summary>
-        /// Дата создания группы
+        /// Group creation date timestamp
         /// </summary>
         public DateTime CreatedAt { get; set; }
+
         /// <summary>
-        /// Описание цели сбора группы
+        /// Group creation goal
         /// </summary>
         public string Destination { get; set; }
+
         /// <summary>
-        /// Тип группы
+        /// Group type
         /// </summary>
         public GroupType Type { get; set; }
 
         /// <summary>
-        /// Метод вызова сбора памяти
+        /// Memory collection
         /// </summary>
         public void Dispose()
         {
@@ -66,15 +71,19 @@ namespace DiscordAngryBot.CustomObjects.Groups
             GC.SuppressFinalize(this);
         }
 
+        /// <summary>
+        /// Gets this group reference
+        /// </summary>
+        /// <returns></returns>
         public GroupReference GetReference()
         {
             return new GroupReference(this);
         }
 
         /// <summary>
-        /// Метод сбора памяти
+        /// Memory collection
         /// </summary>
-        /// <param name="disposing"></param>
+        /// <param name="disposing">Wheter already disposed</param>
         protected virtual void Dispose(bool disposing)
         {
             if (disposed)

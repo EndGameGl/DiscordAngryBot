@@ -11,17 +11,22 @@ using DiscordAngryBot.CustomObjects.SQLIteHandler;
 using System.Threading;
 using System.Diagnostics;
 using DiscordAngryBot.ReactionHandlers;
-using System;
 using DiscordAngryBot.Models;
 using Debug = DiscordAngryBot.CustomObjects.ConsoleOutput.Debug;
+using DiscordAngryBot.CustomObjects.ConsoleOutput;
 
 namespace DiscordAngryBot.CustomObjects.Groups
 {
     /// <summary>
-    /// Класс, содержащий методы расширения Group
+    /// Extension class for handling groups
     /// </summary>
     public static class GroupHandler
     {
+        /// <summary>
+        /// Form message that will represent this group
+        /// </summary>
+        /// <param name="group">Group object</param>
+        /// <returns></returns>
         private static string FormMessage(Group group)
         {
             Debug.Log($"Forming message...").GetAwaiter().GetResult();
@@ -56,10 +61,11 @@ namespace DiscordAngryBot.CustomObjects.Groups
             Debug.Log($"Finished forming message.").GetAwaiter().GetResult();
             return messageBuilder.ToString();
         }
+
         /// <summary>
-        /// Отправить первичное сообщение о сборе группы
+        /// Send initial group message and reactions
         /// </summary>
-        /// <param name="group">Группа</param>
+        /// <param name="group">Group object</param>
         /// <returns></returns>
         public static async Task SendMessage(this Group group)
         {
@@ -71,7 +77,7 @@ namespace DiscordAngryBot.CustomObjects.Groups
         }
 
         /// <summary>
-        /// Отредактировать сообщение в соотвествии с последней версией группы
+        /// Edit group message to actual group data
         /// </summary>
         /// <param name="group">Группа</param>
         /// <returns></returns>
@@ -83,7 +89,7 @@ namespace DiscordAngryBot.CustomObjects.Groups
         }
 
         /// <summary>
-        /// Редактирование сообщения про отмене сбора группы
+        /// Redact message to represent closed group
         /// </summary>
         /// <param name="group"></param>
         /// <returns></returns>
@@ -110,7 +116,7 @@ namespace DiscordAngryBot.CustomObjects.Groups
         }
 
         /// <summary>
-        /// Конвертация группы в формат JSON
+        /// Serialize group data to JSON
         /// </summary>
         /// <param name="group"></param>
         /// <returns></returns>
@@ -125,10 +131,9 @@ namespace DiscordAngryBot.CustomObjects.Groups
         }
 
         /// <summary>
-        /// Создание группы из формата JSON
+        /// Deserialize JSON reference to Group object
         /// </summary>
-        /// <param name="jsonText">Строка, представляющая файл</param>
-        /// <param name="client">Клиент бота</param>
+        /// <param name="jsonText">JSON data</param>
         /// <returns></returns>
         public static async Task<Group> DeserializeFromJson(string jsonText)
         {
@@ -141,9 +146,9 @@ namespace DiscordAngryBot.CustomObjects.Groups
         }
 
         /// <summary>
-        /// Сохранение группы в базу данных
+        /// Save Group object to DB
         /// </summary>
-        /// <param name="group"></param>
+        /// <param name="group">Group object</param>
         /// <returns></returns>
         public static async Task SaveToDB(this Group group)
         {
@@ -153,9 +158,9 @@ namespace DiscordAngryBot.CustomObjects.Groups
         }
 
         /// <summary>
-        /// Обновление записи группы в базе данных
+        /// Update group entry at DB
         /// </summary>
-        /// <param name="group">Группа</param>
+        /// <param name="group">Group object</param>
         /// <returns></returns>
         public static async Task UpdateAtDB(this Group group)
         {
@@ -165,9 +170,9 @@ namespace DiscordAngryBot.CustomObjects.Groups
         }
 
         /// <summary>
-        /// Удаление группы из базы данных
+        /// Remove group entry from DB
         /// </summary>
-        /// <param name="group">Группа</param>
+        /// <param name="group">Group object</param>
         /// <returns></returns>
         public static async Task RemoveFromDB(this Group group)
         {
@@ -177,23 +182,23 @@ namespace DiscordAngryBot.CustomObjects.Groups
         }
 
         /// <summary>
-        /// Загрузка всех активных групп из базы данных
+        /// Load all group data from DB
         /// </summary>
-        /// <param name="client"></param>
+        /// <param name="guildID">Guild ID</param>
         /// <returns></returns>
-        public static async Task<List<Group>> LoadAllGroupsFromDB(SocketGuild guild)
+        public static async Task<List<Group>> LoadAllGroupsFromDB(ulong guildID)
         {
             Stopwatch sw = new Stopwatch();
             sw.Start();
             string query = "SELECT * FROM Groups";
-            DataTable data = await SQLiteDataManager.GetDataFromDB($"locals/Databases/{guild.Id}/Groups.sqlite", query);
+            DataTable data = await SQLiteDataManager.GetDataFromDB($"locals/Databases/{guildID}/Groups.sqlite", query);
             List<Group> groups = new List<Group>();
             List<Thread> threads = new List<Thread>();
             foreach (DataRow row in data.AsEnumerable())
             {
                 Thread loadThread = new Thread(() =>
                 {
-                    groups.Add(GroupBuilder.BuildLoadedGroup(guild, row["GUID"].ToString(), row["GroupJSON"].ToString()).Result);
+                    groups.Add(GroupBuilder.BuildLoadedGroup(row["GUID"].ToString(), row["GroupJSON"].ToString()).Result);
                 });
                 loadThread.Start();
                 threads.Add(loadThread);
@@ -203,21 +208,20 @@ namespace DiscordAngryBot.CustomObjects.Groups
                 thread.Join();
             }
             sw.Stop();
-            await ConsoleOutput.Debug.Log($"Group loading took {sw.ElapsedMilliseconds} ms.", ConsoleOutput.Debug.InfoType.Notice);
+            await Debug.Log($"Group loading took {sw.ElapsedMilliseconds} ms.", LogInfoType.Notice);
             return groups;
         }
 
         /// <summary>
-        /// Актуализация групп пользователей по реакциям
+        /// Actualize reactions to actual state
         /// </summary>
-        /// <param name="groups"></param>
-        /// <param name="client"></param>
+        /// <param name="guild">Discord guild</param>
         /// <returns></returns>
         public static async Task ActualizeReactionsOnGroups(SocketGuild guild)
         {
             Stopwatch sw = new Stopwatch();
             sw.Start();
-            await ConsoleOutput.Debug.Log($"Actualizing group members", ConsoleOutput.Debug.InfoType.Notice);
+            await Debug.Log($"Actualizing group members", LogInfoType.Notice);
             List<Thread> threadList = new List<Thread>();
             if (BotCore.TryGetDiscordGuildGroups(guild.Id, out List<Group> groups))
             {
@@ -256,7 +260,7 @@ namespace DiscordAngryBot.CustomObjects.Groups
                         }
                         else
                         {
-                            ConsoleOutput.Debug.Log("Found broken party, deleting entry...", ConsoleOutput.Debug.InfoType.Error).GetAwaiter().GetResult();
+                            Debug.Log("Found broken party, deleting entry...", LogInfoType.Error).GetAwaiter().GetResult();
                             SQLiteDataManager.PushToDB($"locals/Databases/{group.Channel.Guild.Id}/Groups.sqlite", $"DELETE FROM Groups WHERE GUID = '{group.GUID}'").GetAwaiter().GetResult();
                         }
                     });
@@ -269,9 +273,16 @@ namespace DiscordAngryBot.CustomObjects.Groups
                 thread.Join();
             }
             sw.Stop();
-            await ConsoleOutput.Debug.Log($"Actualizing group members took {sw.Elapsed.Milliseconds} ms", ConsoleOutput.Debug.InfoType.Notice);
+            await ConsoleOutput.Debug.Log($"Actualizing group members took {sw.Elapsed.Milliseconds} ms", LogInfoType.Notice);
         }
 
+        /// <summary>
+        /// Try to get user list from group by emoji
+        /// </summary>
+        /// <param name="group">Group object</param>
+        /// <param name="emoji">List emoji</param>
+        /// <param name="userList">Found user list, if any</param>
+        /// <returns></returns>
         public static bool TryGetUserList(this Group group, Emoji emoji, out UserList userList)
         {
             userList = group.UserLists.FirstOrDefault(x => x.ListEmoji.Name == emoji.Name);           
@@ -281,9 +292,16 @@ namespace DiscordAngryBot.CustomObjects.Groups
                 return false;
         }
 
-        public static bool TryFindGroup(this List<Group> groups, ulong groupID, out Group group)
+        /// <summary>
+        /// Try to find group in list
+        /// </summary>
+        /// <param name="groups">Groups list</param>
+        /// <param name="groupMessageID">Group target message ID</param>
+        /// <param name="group">Found group, if any</param>
+        /// <returns></returns>
+        public static bool TryFindGroup(this List<Group> groups, ulong groupMessageID, out Group group)
         {
-            group = groups.FirstOrDefault(x => x.TargetMessage.Id == groupID);
+            group = groups.FirstOrDefault(x => x.TargetMessage.Id == groupMessageID);
             if (group != null)
                 return true;
             else

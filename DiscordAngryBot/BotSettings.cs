@@ -4,16 +4,17 @@ using System.Collections.Generic;
 namespace DiscordAngryBot
 {
     /// <summary>
-    /// Класс, представляющий настройки бота
+    /// Global bot settings class
     /// </summary>
     public class BotSettings
     {
         /// <summary>
-        /// Префикс команд бота
+        /// Default commands prefix
         /// </summary>
         public char defaultCommandPrefix { get; set; } = '_';
+
         /// <summary>
-        /// Список запрещенных команд
+        /// Shiro forbidden commands
         /// </summary>
         public List<string> forbiddenCommands { get; set; } = new List<string>() 
         { 
@@ -23,24 +24,29 @@ namespace DiscordAngryBot
             ".profile",
             ".xplb"
         };
+        /// <summary>
+        /// List of filtered words
+        /// </summary>
         public List<string> swearFilterWords { get; set; } = new List<string>()
         {
              "NAHOOU", "PIDOR", "ХУЙ", "ХУЕ", "ХУЁ", "БЛЯ", "ЕБИ", "ЕБА", "ПИЗД", "ДОЛБОЕБ", "ДОЛБОЁБ", "ШЛЮХ", "СОСИ", "СОСА", "СОСОВ", "ПИДОР", "ПИДР", "ПОРН", "СПЕРМ", "ПИДАР",
              "ШАЛАВ", "ДАУН", "ХУЛЕ", "ХУЛИ", "УБЛЮД", "DICK", "BASTARD", "АНАЛ"
         };
+
         /// <summary>
-        /// Список команд, зарегистрированных в боте
+        /// Registered bot commands
         /// </summary>
         public HashSet<DiscordCommand> Commands = new HashSet<DiscordCommand>(new DiscordCommandComparer());
 
         /// <summary>
-        /// Пустой конструктор класса
+        /// Class constructor
         /// </summary>
         public BotSettings() { }
+
         /// <summary>
-        /// Регистрация новой команды
+        /// Register command
         /// </summary>
-        /// <param name="command"></param>
+        /// <param name="command">Command</param>
         public void RegisterCommand(DiscordCommand command)
         {
             Commands.Add(command);

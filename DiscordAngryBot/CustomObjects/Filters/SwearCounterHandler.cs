@@ -8,10 +8,15 @@ using System.Threading.Tasks;
 namespace DiscordAngryBot.CustomObjects.Filters
 {
     /// <summary>
-    /// Обработчик событий, связанных с счетчиками матов
+    /// Class for handling swear counters
     /// </summary>
     public static class SwearCounterHandler
     {
+        /// <summary>
+        /// Create new swear handler
+        /// </summary>
+        /// <param name="message">Initial message</param>
+        /// <returns></returns>
         public static async Task<SwearCounter> CreateSwearCounter(this SocketMessage message)
         {
             if (message.Channel is SocketGuildChannel)
@@ -21,8 +26,8 @@ namespace DiscordAngryBot.CustomObjects.Filters
                 {
                     swearCounter = new SwearCounter()
                     {
-                        author = (SocketGuildUser)message.Author,
-                        reasons = new List<SocketMessage>() { message },
+                        Author = (SocketGuildUser)message.Author,
+                        Reasons = new List<SocketMessage>() { message },
                     };
                 });
                 return swearCounter;
@@ -30,12 +35,18 @@ namespace DiscordAngryBot.CustomObjects.Filters
             else return null;
         }
 
+        /// <summary>
+        /// Add new reason to swear counter
+        /// </summary>
+        /// <param name="counter">Counter to add to</param>
+        /// <param name="reason">New swear message</param>
+        /// <returns></returns>
         public async static Task AddReason(this SwearCounter counter, SocketMessage reason)
         {
-            counter.reasons.Add(reason);
-            if (counter.reasons.Count() == 5)
+            counter.Reasons.Add(reason);
+            if (counter.Reasons.Count() == 5)
             {
-                if (BotCore.TryGetDiscordGuildSettings(counter.author.Guild.Id, out var settings))
+                if (BotCore.TryGetDiscordGuildSettings(counter.Author.Guild.Id, out var settings))
                 {
                     await ((SocketGuildUser)reason.Author).Ban(
                         BanSettings.Default.AutoBanLength,
@@ -45,19 +56,24 @@ namespace DiscordAngryBot.CustomObjects.Filters
                     await BotCore.GetClient().GetUser(261497385274966026).SendMessageAsync(
                         $"Выдан автоматический бан юзеру {reason.Author.Username}\n" +
                         $"Причины:\n" +
-                        $"1.{counter.reasons[0].Content}\n" +
-                        $"2.{counter.reasons[1].Content}\n" +
-                        $"3.{counter.reasons[2].Content}\n" +
-                        $"4.{counter.reasons[3].Content}\n" +
-                        $"5.{counter.reasons[4].Content}");
-                    counter.reasons.Clear();
+                        $"1.{counter.Reasons[0].Content}\n" +
+                        $"2.{counter.Reasons[1].Content}\n" +
+                        $"3.{counter.Reasons[2].Content}\n" +
+                        $"4.{counter.Reasons[3].Content}\n" +
+                        $"5.{counter.Reasons[4].Content}");
+                    counter.Reasons.Clear();
                 }
             }
         }
 
+        /// <summary>
+        /// Runs swear filter for this message
+        /// </summary>
+        /// <param name="message">Target message</param>
+        /// <returns></returns>
         public static async Task RunSwearFilter(this SocketMessage message)
         {
-                var userSwearCounters = BotCore.GetDiscordGuildSwearCounters(((SocketTextChannel)message.Channel).Guild.Id).Where(x => x.author == message.Author);
+                var userSwearCounters = BotCore.GetDiscordGuildSwearCounters(((SocketTextChannel)message.Channel).Guild.Id).Where(x => x.Author == message.Author);
                 if (await message.CheckPhrase() && userSwearCounters.Count() == 0)
                 {
                     BotCore.GetDiscordGuildSwearCounters(((SocketTextChannel)message.Channel).Guild.Id).Add(await message.CreateSwearCounter());

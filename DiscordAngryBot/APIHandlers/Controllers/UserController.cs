@@ -6,16 +6,17 @@ using System.Web.Http;
 namespace DiscordAngryBot.APIHandlers.Controllers
 {
     /// <summary>
-    /// Контроллер API для юзеров 
+    /// API controller for users
     /// </summary>
-    [RoutePrefix("api/Users")]
+    [RoutePrefix("api/Guilds")]
     public class UserController : ApiController
     {
         /// <summary>
-        /// Получение всех юзеров
+        /// Gets all users from guild
         /// </summary>
+        /// <param name="guildID">Guild ID</param>
         /// <returns></returns>
-        [HttpGet, Route("{guildID}/SimpleUsers")]
+        [HttpGet, Route("{guildID}/Users")]
         public List<object> GetSimpleUsers(string guildID)
         {
             if (BotCore.TryGetGuildDataCache(ulong.Parse(guildID), out var cache))
@@ -27,8 +28,8 @@ namespace DiscordAngryBot.APIHandlers.Controllers
                     var guildUser = (SocketGuildUser)user;
                     userReturnList.Add(new
                     {
-                        Nickname = guildUser.Nickname,
-                        Username = guildUser.Username,
+                        guildUser.Nickname,
+                        guildUser.Username,
                         Roles = guildUser.Roles.Select(x => x.Name)
                     });
                 }

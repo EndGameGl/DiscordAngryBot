@@ -6,96 +6,103 @@ using System.Reflection;
 namespace DiscordAngryBot.APIHandlers
 {
     /// <summary>
-    /// Класс для сборка веб-страниц
+    /// Class for building web pages
     /// </summary>
     public static class WebpageBuilder
     {
         /// <summary>
-        /// Установка тега DOCTYPE
+        /// Sets a doctype
         /// </summary>
-        /// <param name="webPage"></param>
+        /// <param name="webPage">WebPage class object</param>
         /// <returns></returns>
         public static WebPage SetDoctype(this WebPage webPage)
         {
             webPage.Doctype = "<!DOCTYPE html>";
             return webPage;
         }
+
         /// <summary>
-        /// Установка названия страницы
+        /// Sets page title
         /// </summary>
-        /// <param name="webPage"></param>
-        /// <param name="Title"></param>
+        /// <param name="webPage">WebPage class object</param>
+        /// <param name="Title">Page title</param>
         /// <returns></returns>
         public static WebPage AddTitle(this WebPage webPage, string Title)
         {
             webPage.HeadContent += $"<title>{Title}</title>";
             return webPage;
         }
+
         /// <summary>
-        /// Добавление стилей к странице
+        /// Adds page styles
         /// </summary>
-        /// <param name="webPage"></param>
-        /// <param name="Styles"></param>
+        /// <param name="webPage">WebPage class object</param>
+        /// <param name="Styles">Page styles</param>
         /// <returns></returns>
         public static WebPage AddStyle(this WebPage webPage, string Styles)
         {
             webPage.HeadContent += $"<style>{Styles}</style>";
             return webPage;
         }
+
         /// <summary>
-        /// Добавление ссылок на скрипты к странице
+        /// Adds a header link
         /// </summary>
-        /// <param name="webPage"></param>
-        /// <param name="rel"></param>
-        /// <param name="href"></param>
-        /// <param name="integrity"></param>
-        /// <param name="crossorigin"></param>
+        /// <param name="webPage">WebPage class object</param>
+        /// <param name="rel">Specifies the relationship between the current document and the linked document</param>
+        /// <param name="href">Specifies the location of the linked document</param>
+        /// <param name="integrity">Subresource Integrity</param>
+        /// <param name="crossorigin">Specifies how the element handles cross-origin requests</param>
         /// <returns></returns>
         public static WebPage AddHeaderLink(this WebPage webPage, string rel, string href, string integrity, string crossorigin)
         {
             webPage.HeadContent += $"<link rel=\"{rel}\" href=\"{href}\" integrity=\"{integrity}\" crossorigin=\"{crossorigin}\">";
             return webPage;
         }
+
         /// <summary>
-        /// Добавление тега header
+        /// Adds new header to the body
         /// </summary>
-        /// <param name="webPage"></param>
-        /// <param name="headerText"></param>
-        /// <param name="size"></param>
+        /// <param name="webPage">WebPage class object</param>
+        /// <param name="headerText">Header text</param>
+        /// <param name="size">Header size</param>
         /// <returns></returns>
         public static WebPage AddBodyHeader(this WebPage webPage, string headerText, int size)
         {
             webPage.BodyContent += $"<h{size}>{headerText}</h{size}>";
             return webPage;
         }
+
         /// <summary>
-        /// Добавление открывающего тега div
+        /// Opens a new div tag
         /// </summary>
-        /// <param name="webPage"></param>
-        /// <param name="tags"></param>
+        /// <param name="webPage">WebPage class object</param>
+        /// <param name="tags">Tag class data</param>
         /// <returns></returns>
         public static WebPage AddOpenDiv(this WebPage webPage, string tags)
         {
             webPage.BodyContent += $"<div class=\"{tags}\">";
             return webPage;
         }
+
         /// <summary>
-        /// Добавление закрывающего тега div
+        /// Closes div tag
         /// </summary>
-        /// <param name="webPage"></param>
+        /// <param name="webPage">WebPage class object</param>
         /// <returns></returns>
         public static WebPage AddCloseDiv(this WebPage webPage)
         {
             webPage.BodyContent += $"</div>";
             return webPage;
         }
+
         /// <summary>
-        /// Добавление таблицы с данными
+        /// Adds a new datatable
         /// </summary>
-        /// <param name="webPage"></param>
-        /// <param name="Headers"></param>
-        /// <param name="data"></param>
-        /// <param name="tableClass"></param>
+        /// <param name="webPage">WebPage class object</param>
+        /// <param name="Headers">Table headers</param>
+        /// <param name="data">Table data</param>
+        /// <param name="tableClass">Table classes</param>
         /// <returns></returns>
         public static WebPage AddTable(this WebPage webPage, string[] Headers, IEnumerable<dynamic> data, string tableClass)
         {
@@ -146,42 +153,46 @@ namespace DiscordAngryBot.APIHandlers
                 return webPage;
             }
         }
+
         /// <summary>
-        /// Добавление тега p
+        /// Adds a new paragraph
         /// </summary>
-        /// <param name="webPage"></param>
-        /// <param name="text"></param>
+        /// <param name="webPage">WebPage class object</param>
+        /// <param name="text">Paragraph text</param>
         /// <returns></returns>
         public static WebPage AddParagraph(this WebPage webPage, string text)
         {
             webPage.BodyContent += $"<p>{text}</p>";
             return webPage;
         }
+
         /// <summary>
-        /// Добавление тега ul
+        /// Adds new unordered list
         /// </summary>
-        /// <param name="webPage"></param>
+        /// <param name="webPage">WebPage class object</param>
         /// <returns></returns>
         public static WebPage AddOpenList(this WebPage webPage)
         {
             webPage.BodyContent += $"<ul>";
             return webPage;
         }
+
         /// <summary>
-        /// Закрытие тега ul
+        /// Closes an unordered list
         /// </summary>
-        /// <param name="webPage"></param>
+        /// <param name="webPage">WebPage class object</param>
         /// <returns></returns>
         public static WebPage AddCloseList(this WebPage webPage)
         {
             webPage.BodyContent += $"</ul>";
             return webPage;
         }
+
         /// <summary>
-        /// Добалвение элемента в список
+        /// Adds an element to UL
         /// </summary>
-        /// <param name="webPage"></param>
-        /// <param name="element"></param>
+        /// <param name="webPage">WebPage class object</param>
+        /// <param name="element">Element data</param>
         /// <returns></returns>
         public static WebPage AddListElement(this WebPage webPage, string element)
         {

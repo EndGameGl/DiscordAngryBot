@@ -1,5 +1,4 @@
-﻿using DiscordAngryBot.CustomObjects.Groups;
-using DiscordAngryBot.Models;
+﻿using DiscordAngryBot.Models;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web.Http;
@@ -8,15 +7,15 @@ namespace DiscordAngryBot.APIHandlers.Controllers
 {
 
     /// <summary>
-    /// Контроллер API для объектов Group
+    /// API controller for guild groups
     /// </summary>
     [RoutePrefix("api/Guilds")]
     public class GroupController : ApiController
     {
         /// <summary>
-        /// Получение всех групп сервера в формате JSON
+        /// Gets list of groups for the guild
         /// </summary>
-        /// <param name="guildID"></param>
+        /// <param name="guildID">Guild ID</param>
         /// <returns></returns>
         [HttpGet, Route("{guildID}/Groups")]
         public List<GroupReference> GetGroups(string guildID)
@@ -34,10 +33,10 @@ namespace DiscordAngryBot.APIHandlers.Controllers
                 return null;
         }
         /// <summary>
-        /// Получение конкретной группы сервера
+        /// Gets guild group by ID
         /// </summary>
-        /// <param name="guildID"></param>
-        /// <param name="GUID"></param>
+        /// <param name="guildID">Guild ID</param>
+        /// <param name="GUID">Group GUID</param>
         /// <returns></returns>
         [HttpGet, Route("{guildID}/Groups/{GUID}")]
         public object GetGroupByGUID(string guildID, string GUID)

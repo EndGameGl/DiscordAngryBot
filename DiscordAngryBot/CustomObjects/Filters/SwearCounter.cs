@@ -1,24 +1,20 @@
 ﻿using Discord.WebSocket;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DiscordAngryBot.CustomObjects.Filters
 {
     /// <summary>
-    /// Счетчик матов
+    /// Class for counting swears made by user
     /// </summary>
     public class SwearCounter
     { 
         /// <summary>
-        /// Цель проверок
+        /// User
         /// </summary>
-        public SocketGuildUser author { get; set; }
+        public SocketGuildUser Author { get; set; }
         /// <summary>
-        /// Найденные сообщения с матами
+        /// Messages with swears
         /// </summary>
-        public List<SocketMessage> reasons { get; set; }
+        public List<SocketMessage> Reasons { get; set; }
     }
 }

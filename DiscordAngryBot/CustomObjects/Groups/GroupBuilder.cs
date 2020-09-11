@@ -9,15 +9,15 @@ using System.Threading.Tasks;
 namespace DiscordAngryBot.CustomObjects.Groups
 {
     /// <summary>
-    /// Класс, предназначенный для инициализации групп
+    /// Class for building groups
     /// </summary>
     public static class GroupBuilder
     {
         /// <summary>
-        /// Конструктор простой группы
+        /// Build group party template
         /// </summary>
-        /// <param name="sourceMessage">Сообщение, запустившее конструктор</param>
-        /// <param name="args">Параметры</param>
+        /// <param name="sourceMessage">Source message</param>
+        /// <param name="args">Creation parameters</param>
         /// <returns></returns>
         public static Group BuildPartyTemplate(SocketMessage sourceMessage, string[] args)
         {
@@ -44,10 +44,10 @@ namespace DiscordAngryBot.CustomObjects.Groups
         }
 
         /// <summary>
-        /// Конструктор рейда
+        /// Build group raid template
         /// </summary>
-        /// <param name="sourceMessage">Сообщение, запустившее конструктор</param>
-        /// <param name="args">Параметры</param>
+        /// <param name="sourceMessage">Source message</param>
+        /// <param name="args">Creation parameters</param>
         /// <returns></returns>
         public async static Task<Group> BuildRaidTemplate(SocketMessage sourceMessage, string[] args)
         {
@@ -75,10 +75,11 @@ namespace DiscordAngryBot.CustomObjects.Groups
         }
 
         /// <summary>
-        /// Конструктор битвы БШ
+        /// Build group guild fight template
         /// </summary>
-        /// <param name="sourceMessage"></param>
-        /// <param name="args"></param>
+        /// <param name="sourceMessage">Source message</param>
+        /// <param name="args">Creation message</param>
+        /// <param name="type">Guild fight type</param>
         /// <returns></returns>
         public async static Task<GuildFight> BuildGuildFight(SocketMessage sourceMessage, string[] args, GuildFightType type)
         {
@@ -166,16 +167,14 @@ namespace DiscordAngryBot.CustomObjects.Groups
         }
 
         /// <summary>
-        /// Конструктор группы, на основе данных, полученных из базы данных
+        /// Build group from DB json data
         /// </summary>
-        /// <param name="client">Клиент бота</param>
-        /// <param name="GUID">Уникальный идентификатор</param>
-        /// <param name="json">JSON-данные группы</param>
-        /// <param name="isActive">Признак активности группы</param>
+        /// <param name="GUID">Group GUID</param>
+        /// <param name="json">JSON data</param>
         /// <returns></returns>
-        public async static Task<Group> BuildLoadedGroup(SocketGuild guild, string GUID, string json)
+        public async static Task<Group> BuildLoadedGroup(string GUID, string json)
         {
-            await Debug.Log($"Building group {GUID}", Debug.InfoType.Notice);
+            await Debug.Log($"Building group {GUID}", LogInfoType.Notice);
             Group group = await GroupHandler.DeserializeFromJson(json);
             if (group != null)
             {
@@ -189,6 +188,12 @@ namespace DiscordAngryBot.CustomObjects.Groups
                 return group;
         }
 
+        /// <summary>
+        /// Build poll (test)
+        /// </summary>
+        /// <param name="sourceMessage">Source message</param>
+        /// <param name="args">Creation parameters</param>
+        /// <returns></returns>
         public async static Task<Group> BuildPoll(SocketMessage sourceMessage, string[] args)
         {
             await Debug.Log("Building poll...");

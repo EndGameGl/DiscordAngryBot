@@ -6,50 +6,52 @@ using System.Linq;
 namespace DiscordAngryBot.CustomObjects.Parsers
 {
     /// <summary>
-    /// Класс для парса команд бота
+    /// Class for parsing bot commands
     /// </summary>
     public class CommandParser
     {
         /// <summary>
-        /// Сообщение, текст которого парсится
+        /// Message that is being parsed
         /// </summary>
-        private SocketMessage _Message { get; set; }
+        private SocketMessage _message { get; set; }
         /// <summary>
-        /// Префикс команды
+        /// Command prefix
         /// </summary>
-        private char? _Prefix { get; set; }
+        private char? _prefix { get; set; }
         /// <summary>
-        /// Текст команды
+        /// Command text
         /// </summary>
         private string Command { get; set; }
         /// <summary>
-        /// Параметры команды
+        /// Parameters array
         /// </summary>
         private string[] Parameters { get; set; }
         /// <summary>
-        /// Аргументы команды
+        /// Arguments array
         /// </summary>
         private string[] Arguments { get; set; }
+
         /// <summary>
-        /// Конструктор парсера
+        /// Class contructor
         /// </summary>
-        /// <param name="message"></param>
-        /// <param name="prefix"></param>
+        /// <param name="message">Message to parse</param>
+        /// <param name="prefix">Command prefix</param>
         public CommandParser(SocketMessage message, char? prefix)
         {
-            _Prefix = prefix;
-            _Message = message;
+            _prefix = prefix;
+            _message = message;
             ParseCommand(message);
         }
+
         /// <summary>
-        /// Парс команды
+        /// Parse command and get data
         /// </summary>
-        /// <param name="message"></param>
+        /// <param name="message">Message to parse</param>
         private void ParseCommand(SocketMessage message)
         {
-            if (_Prefix != null && _Message.Content[0] == _Prefix)
+            if (_prefix != null && _message.Content[0] == _prefix)
             {
-                var commandText = _Message.Content.Remove(0, 1);
+                var commandText = _message.Content.Remove(0, 1);
                 var commandWords = commandText.Split(new char[] { ' ' });
                 Command = commandWords[0];
                 Arguments = new List<string>(commandWords).GetRange(1, commandWords.Length - 1).ToArray();
@@ -61,8 +63,9 @@ namespace DiscordAngryBot.CustomObjects.Parsers
                 }
             }
         }
+
         /// <summary>
-        /// Получение команды
+        /// Get command from parser
         /// </summary>
         /// <returns></returns>
         public string GetCommand()
@@ -76,8 +79,9 @@ namespace DiscordAngryBot.CustomObjects.Parsers
                 throw new Exception("Encountered an empty command.");
             }
         }
+
         /// <summary>
-        /// Получение аргументов команды
+        /// Get arguments from parser
         /// </summary>
         /// <returns></returns>
         public string[] GetCommandArgs()
@@ -86,8 +90,9 @@ namespace DiscordAngryBot.CustomObjects.Parsers
                 return null;
             return Arguments;
         }
+
         /// <summary>
-        /// Получение параметров команды
+        /// Get parameters from parser
         /// </summary>
         /// <returns></returns>
         public string[] GetCommandParams()

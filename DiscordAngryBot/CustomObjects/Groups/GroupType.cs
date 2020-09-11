@@ -1,20 +1,20 @@
 ﻿namespace DiscordAngryBot.CustomObjects.Groups
 {
     /// <summary>
-    /// Тип группы
+    /// Group type
     /// </summary>
     public enum GroupType
     {
         /// <summary>
-        /// Простая группа (сбор людей в пати)
+        /// Simple gather
         /// </summary>
         Simple,
         /// <summary>
-        /// Битва БШ (Пресет, но требует типа для создания)
+        /// Guild fight
         /// </summary>
         GuildFight,
         /// <summary>
-        /// Голосование
+        /// Poll for voting
         /// </summary>
         Poll
     }

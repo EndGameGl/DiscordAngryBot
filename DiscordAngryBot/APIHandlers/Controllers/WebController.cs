@@ -7,15 +7,15 @@ using System.Web.Http;
 namespace DiscordAngryBot.APIHandlers.Controllers
 {
     /// <summary>
-    /// API контроллер для генерации веб страниц
+    /// API controllers for web pages
     /// </summary>
     [RoutePrefix("Web")]
     public class WebController : ApiController
     {
         /// <summary>
-        /// Получение списка групп сервера в виде веб-страницы
+        /// Gets all guild groups as a web page
         /// </summary>
-        /// <param name="guildID"></param>
+        /// <param name="guildID">Guild ID</param>
         /// <returns></returns>
         [HttpGet, Route("{guildID}/Groups")]
         public HttpResponseMessage GetFullGroupsWeb(string guildID)
@@ -40,8 +40,8 @@ namespace DiscordAngryBot.APIHandlers.Controllers
                         new
                         {
                             Type = x.GetType().ToString(),
-                            Username = x.Author.Username,
-                            Destination = x.Destination,
+                            x.Author.Username,
+                            x.Destination,
                             Channel = x.Channel.Name,
                             Users = x.UserLists.Select(x => x.Users.Select(x => x.Username)).ToList(),
                             DateCreated = x.CreatedAt
@@ -51,8 +51,10 @@ namespace DiscordAngryBot.APIHandlers.Controllers
                     .Build();
 
                 response.Content = new StringContent(htmlCode);
-                response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/html");
-                response.Content.Headers.ContentType.CharSet = Encoding.UTF8.HeaderName;
+                response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/html")
+                {
+                    CharSet = Encoding.UTF8.HeaderName
+                };
                 response.Content.Headers.Add("CodePage", Encoding.UTF8.CodePage.ToString());
 
                 return response;
@@ -60,12 +62,13 @@ namespace DiscordAngryBot.APIHandlers.Controllers
             else
                 return null;
         }
+
         /// <summary>
-        /// Получение списка пользователей сервера в виде веб-страницы
+        /// Gets all guild users as a web page
         /// </summary>
-        /// <param name="guildID"></param>
+        /// <param name="guildID">Guild ID</param>
         /// <returns></returns>
-        [HttpGet, Route("{guildID}/Users/Test")]
+        [HttpGet, Route("{guildID}/Users")]
         public HttpResponseMessage GetUsersWebTest(string guildID)
         {
             if (BotCore.TryGetGuildDataCache(ulong.Parse(guildID), out var cache))
@@ -93,24 +96,68 @@ namespace DiscordAngryBot.APIHandlers.Controllers
                         },
                         users.Select(x => new
                         {
-                            Username = x.Username,
-                            Nickname = x.Nickname,
-                            Roles = x.Roles.Select(x => new { Name = x.Name }).ToList(),
-                            JoinedAt = x.JoinedAt
+                            x.Username,
+                            x.Nickname,
+                            Roles = x.Roles.Select(x => new { x.Name }).ToList(),
+                            x.JoinedAt
                         }).ToList(),
                         "table table - stripped")
                     .AddCloseDiv()
                     .Build();
 
                 response.Content = new StringContent(htmlCode);
-                response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/html");
-                response.Content.Headers.ContentType.CharSet = Encoding.UTF8.HeaderName;
+                response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/html")
+                {
+                    CharSet = Encoding.UTF8.HeaderName
+                };
                 response.Content.Headers.Add("CodePage", Encoding.UTF8.CodePage.ToString());
 
                 return response;
             }
             else
                 return null;
+        }
+
+        /// <summary>
+        /// Generated an HTML page with logs
+        /// </summary>
+        /// <returns></returns>
+        [Route("Logs")]
+        public HttpResponseMessage GetLogsPage()
+        {
+            var logs = BotCore.GetDataLogs();
+
+            var response = new HttpResponseMessage();
+
+            string htmlCode =
+                new WebPage()
+                .SetDoctype()
+                .AddHeaderLink("stylesheet", @"https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css", "sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk", "anonymous")
+                .AddStyle("div {padding: 20px;}")
+                .AddOpenDiv("container p-3 my-3 bg-dark text-white")
+                .AddBodyHeader("Логи", 1)
+                .AddCloseDiv()
+                .AddOpenDiv("container")
+                .AddTable(
+                    new string[] { "Событие", "Сообщение", "Время" },
+                    logs.Select(x =>
+                    new {
+                        Type = x.LogInfo,
+                        x.Message,
+                        Time = x.Time.ToString()
+                    }).ToList(),
+                    "table table-stripped")
+                .AddCloseDiv()
+                .Build();
+
+            response.Content = new StringContent(htmlCode);
+            response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/html")
+            {
+                CharSet = Encoding.UTF8.HeaderName
+            };
+            response.Content.Headers.Add("CodePage", Encoding.UTF8.CodePage.ToString());
+
+            return response;
         }
     }
 }

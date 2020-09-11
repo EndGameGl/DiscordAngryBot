@@ -12,21 +12,21 @@ using System.Threading.Tasks;
 namespace DiscordAngryBot.ReactionHandlers
 {
     /// <summary>
-    /// Класс для обработки реакций к сообщениям
+    /// Class for handling added reactions
     /// </summary>
     public static class ReactionHandler
     {
         /// <summary>
-        /// Обработка реакций, связанных со сбором групп
+        /// Group reaction handlers
         /// </summary>
-        public static class PartyReactionHandler
+        public static class GroupReactionHandler
         {
             /// <summary>
-            /// Обработка вступления в группу
+            /// Join specified group with reaction
             /// </summary>
-            /// <param name="groupObject"></param>
-            /// <param name="message"></param>
-            /// <param name="reaction"></param>
+            /// <param name="group">Group</param>
+            /// <param name="reaction">Reaction</param>
+            /// <returns></returns>
             [CustomCommand("JOINGROUP", CommandCategory.User, CommandType.EmojiCommand, "Вступление в группу", CommandScope.User, CommandExecutionScope.Server)]
             public async static Task JoinGroup(Group group, SocketReaction reaction)
             {
@@ -51,11 +51,11 @@ namespace DiscordAngryBot.ReactionHandlers
             }
 
             /// <summary>
-            /// Обработка выхода из группы
+            /// Leave specified group with reaction
             /// </summary>
-            /// <param name="groupObject"></param>
-            /// <param name="message"></param>
-            /// <param name="reaction"></param>
+            /// <param name="group">Group</param>
+            /// <param name="reaction">Reaction</param>
+            /// <returns></returns>
             [CustomCommand("LEAVEGROUP", CommandCategory.User, CommandType.EmojiCommand, "Выход из группы", CommandScope.User, CommandExecutionScope.Server)]
             public async static Task LeaveGroup(Group group, SocketReaction reaction)
             {
@@ -74,11 +74,11 @@ namespace DiscordAngryBot.ReactionHandlers
             }
 
             /// <summary>
-            /// Уничтожение объекта группы
+            /// Terminate specified group with reaction
             /// </summary>
-            /// <param name="groupObject"></param>
-            /// <param name="message"></param>
-            /// <param name="reaction"></param>
+            /// <param name="group">Group</param>
+            /// <param name="reaction">Reaction</param>
+            /// <returns></returns>
             [CustomCommand("TERMINATEGROUP", CommandCategory.User, CommandType.EmojiCommand, "Удаление группы", CommandScope.User, CommandExecutionScope.Server)]
             public async static Task TerminateGroup(Group group, SocketReaction reaction)
             {
@@ -100,10 +100,10 @@ namespace DiscordAngryBot.ReactionHandlers
             }
 
             /// <summary>
-            /// Объявление сбора группы
+            /// Call group with specified reaction
             /// </summary>
-            /// <param name="groupObject"></param>
-            /// <param name="reaction"></param>
+            /// <param name="group">Group</param>
+            /// <param name="reaction">Reaction</param>
             /// <returns></returns>
             [CustomCommand("CALLGROUP", CommandCategory.User, CommandType.EmojiCommand, "Сбор", CommandScope.User, CommandExecutionScope.Server)]
             public async static Task GroupCallout(Group group, SocketReaction reaction)

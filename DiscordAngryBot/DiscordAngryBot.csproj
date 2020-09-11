@@ -43,6 +43,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Debug\DiscordAngryBot.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -83,6 +84,7 @@
     <Compile Include="APIHandlers\Controllers\GroupController.cs" />
     <Compile Include="APIHandlers\Controllers\GuildController.cs" />
     <Compile Include="APIHandlers\Controllers\LogsController.cs" />
+    <Compile Include="APIHandlers\Controllers\ModelsController.cs" />
     <Compile Include="APIHandlers\Controllers\NewsController.cs" />
     <Compile Include="APIHandlers\Controllers\UserController.cs" />
     <Compile Include="APIHandlers\Controllers\WebController.cs" />
@@ -96,6 +98,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>BanResources.resx</DependentUpon>
     </Compile>
+    <Compile Include="CustomObjects\ConsoleOutput\LogInfoType.cs" />
     <Compile Include="Models\BanReference.cs" />
     <Compile Include="CustomObjects\Bans\BanSettings.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -110,7 +113,6 @@
     <Compile Include="CustomObjects\DiscordCommands\CommandScope.cs" />
     <Compile Include="CustomObjects\DiscordCommands\CustomCommandAttribute.cs" />
     <Compile Include="CustomObjects\DiscordCommands\CommandCategory.cs" />
-    <Compile Include="CustomObjects\DiscordCommands\CommandExecutableTask.cs" />
     <Compile Include="CustomObjects\DiscordCommands\CommandType.cs" />
     <Compile Include="CustomObjects\DiscordCommands\DiscordCommand.cs" />
     <Compile Include="CustomObjects\DiscordCommands\DiscordCommandComparer.cs" />
@@ -155,7 +157,6 @@
     <Compile Include="ReactionHandlers\EmojiGetter.cs" />
     <Compile Include="ReactionHandlers\Emojis.cs" />
     <Compile Include="ReactionHandlers\ReactionHandler.cs" />
-    <Compile Include="ReactionHandlers\ReactionValidator.cs" />
     <Compile Include="GatewayEventHandlers\GatewayEventHandlers.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -190,6 +191,9 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Windows.SDK.Contracts">
       <Version>10.0.19041.1</Version>
+    </PackageReference>
+    <PackageReference Include="Newtonsoft.Json.Schema">
+      <Version>3.0.13</Version>
     </PackageReference>
     <PackageReference Include="System.Data.SQLite">
       <Version>1.0.112.2</Version>

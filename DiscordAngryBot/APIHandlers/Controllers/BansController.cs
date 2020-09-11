@@ -6,24 +6,24 @@ using System.Web.Http;
 namespace DiscordAngryBot.APIHandlers.Controllers
 {
     /// <summary>
-    /// API контроллер банов
+    /// API controller for guild bans
     /// </summary>
-    [RoutePrefix("api/Bans")]
+    [RoutePrefix("api/Guilds")]
     public class BansController : ApiController
     {
         /// <summary>
-        /// Возврат списка банов в формате JSON
+        /// Gets list of bans for the guild
         /// </summary>
-        /// <param name="guildID"></param>
+        /// <param name="guildID">Guild ID</param>
         /// <returns></returns>
-        [HttpGet, Route("{guildID}")]
+        [HttpGet, Route("{guildID}/Bans")]
         public List<BanReference> GetBans(string guildID)
         {
             List<DiscordBan> bans = BotCore.GetDiscordGuildBans(ulong.Parse(guildID));
             List<BanReference> returnData = new List<BanReference>();
             foreach (var ban in bans)
             {
-                returnData.Add(new BanReference(ban));
+                returnData.Add(ban.GetReference());
             }
             return returnData;
         }

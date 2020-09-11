@@ -8,35 +8,39 @@ using System.Linq;
 namespace DiscordAngryBot.CustomObjects.Groups
 {
     /// <summary>
-    /// Класс, представляющий пользователей, привязанных к конкретному списку в группе
+    /// Class for specifying which list user attends for
     /// </summary>
     public class UserList : IReferableTo<UserListReference>
     {
         /// <summary>
-        /// Название списка
+        /// List name
         /// </summary>
         public string ListName { get; set; }
         /// <summary>
-        /// Эмодзи, отвечающее за вступление в список
+        /// List emoji
         /// </summary>
         public Emoji ListEmoji { get; set; }
         /// <summary>
-        /// Список пользователей
+        /// List of joined users
         /// </summary>
         public List<SocketGuildUser> Users { get; set; }
         /// <summary>
-        /// Лимит пользователей списка
+        /// List user limit, if any
         /// </summary>
         public int? UserLimit { get; set; }
+        /// <summary>
+        /// Get user list reference
+        /// </summary>
+        /// <returns></returns>
         public UserListReference GetReference()
         {
             return new UserListReference(this);
         }
 
         /// <summary>
-        /// Убирает пользователя из списка, если он в нем находится
+        /// Remove user from list if found any
         /// </summary>
-        /// <param name="ID"></param>
+        /// <param name="ID">User ID</param>
         /// <returns></returns>
         public bool RemoveUserIfExists(ulong ID)
         {
@@ -48,14 +52,14 @@ namespace DiscordAngryBot.CustomObjects.Groups
             }
             else return false;
         }
+
         /// <summary>
-        /// Попытка попасть в список, если юзера там еще нет
+        /// Try to join the list if not yet
         /// </summary>
-        /// <param name="user"></param>
+        /// <param name="user">User object</param>
         /// <returns></returns>
         public bool TryJoin(SocketGuildUser user)
         {
-
             if (Users.FirstOrDefault(x => x.Id == user.Id) == null)
             {
                 Debug.Log($"User is not list: {Users.Count} users in list. Adding to the list.").GetAwaiter().GetResult();
