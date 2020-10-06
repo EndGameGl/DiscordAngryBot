@@ -48,5 +48,9 @@ namespace DiscordAngryBot.CustomObjects.Bans
         {
             return new BanReference(this);
         }
+        /// <summary>
+        /// Whether this ban is permanent
+        /// </summary>
+        public bool IsPermanent => EndsAt == null;
     }
 }

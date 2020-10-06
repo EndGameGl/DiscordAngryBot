@@ -14,6 +14,7 @@ using DiscordAngryBot.ReactionHandlers;
 using DiscordAngryBot.Models;
 using Debug = DiscordAngryBot.CustomObjects.ConsoleOutput.Debug;
 using DiscordAngryBot.CustomObjects.ConsoleOutput;
+using System;
 
 namespace DiscordAngryBot.CustomObjects.Groups
 {
@@ -137,11 +138,18 @@ namespace DiscordAngryBot.CustomObjects.Groups
         /// <returns></returns>
         public static async Task<Group> DeserializeFromJson(string jsonText)
         {
-            using (MemoryStream serializationStream = new MemoryStream(Encoding.UTF8.GetBytes(jsonText)))
+            try
             {
-                var groupDataObject = await JsonSerializer.DeserializeAsync<GroupReference>(serializationStream);
-                var group = groupDataObject.LoadOrigin();
-                return group;
+                using (MemoryStream serializationStream = new MemoryStream(Encoding.UTF8.GetBytes(jsonText)))
+                {
+                    var groupDataObject = await JsonSerializer.DeserializeAsync<GroupReference>(serializationStream);
+                    var group = groupDataObject.LoadOrigin();
+                    return group;
+                }
+            }
+            catch
+            {
+                throw;
             }
         }
 
@@ -154,7 +162,7 @@ namespace DiscordAngryBot.CustomObjects.Groups
         {
             var jsonString = await group.SerializeToJson();
             string query = $"INSERT INTO Groups (GUID, GroupJSON) VALUES('{group.GUID}', '{jsonString}')";
-            await SQLiteDataManager.PushToDB($"locals/Databases/{group.Channel.Guild.Id}/Groups.sqlite", query);
+            await SQLiteExtensions.PushToDB($"locals/Databases/{group.Channel.Guild.Id}/Groups.sqlite", query);
         }
 
         /// <summary>
@@ -166,7 +174,7 @@ namespace DiscordAngryBot.CustomObjects.Groups
         {
             var jsonString = await group.SerializeToJson();
             string query = $"UPDATE Groups SET GroupJSON = '{jsonString}' WHERE GUID = '{group.GUID}'";
-            await SQLiteDataManager.PushToDB($"locals/Databases/{group.Channel.Guild.Id}/Groups.sqlite", query);
+            await SQLiteExtensions.PushToDB($"locals/Databases/{group.Channel.Guild.Id}/Groups.sqlite", query);
         }
 
         /// <summary>
@@ -178,7 +186,7 @@ namespace DiscordAngryBot.CustomObjects.Groups
         {
             var jsonString = await group.SerializeToJson();
             string query = $"DELETE FROM Groups WHERE GUID = '{group.GUID}'";
-            await SQLiteDataManager.PushToDB($"locals/Databases/{group.Channel.Guild.Id}/Groups.sqlite", query);
+            await SQLiteExtensions.PushToDB($"locals/Databases/{group.Channel.Guild.Id}/Groups.sqlite", query);
         }
 
         /// <summary>
@@ -191,14 +199,41 @@ namespace DiscordAngryBot.CustomObjects.Groups
             Stopwatch sw = new Stopwatch();
             sw.Start();
             string query = "SELECT * FROM Groups";
-            DataTable data = await SQLiteDataManager.GetDataFromDB($"locals/Databases/{guildID}/Groups.sqlite", query);
+            DataTable data = await SQLiteExtensions.GetDataFromDB($"locals/Databases/{guildID}/Groups.sqlite", query);
             List<Group> groups = new List<Group>();
             List<Thread> threads = new List<Thread>();
             foreach (DataRow row in data.AsEnumerable())
             {
                 Thread loadThread = new Thread(() =>
                 {
-                    groups.Add(GroupBuilder.BuildLoadedGroup(row["GUID"].ToString(), row["GroupJSON"].ToString()).Result);
+                    try
+                    {
+                        var nextGroup = GroupBuilder.BuildLoadedGroup(row["GUID"].ToString(), row["GroupJSON"].ToString()).GetAwaiter().GetResult();
+                        groups.Add(nextGroup);
+                    }
+                    catch (GroupInvalidTargetException groupInvalidTargetException)
+                    {
+                        Debug.Log("Group is missing target message", LogInfoType.Error).GetAwaiter().GetResult();
+                        SQLiteExtensions.PushToDB($"locals/Databases/{guildID}/Groups.sqlite", $"DELETE FROM Groups WHERE GUID = '{groupInvalidTargetException.GroupGUID}'").GetAwaiter().GetResult();
+                    }
+                    catch (GroupInvalidAuthorException groupInvalidAuthorException)
+                    {
+                        Debug.Log("Group is missing author", LogInfoType.Error).GetAwaiter().GetResult();
+                        SQLiteExtensions.PushToDB($"locals/Databases/{guildID}/Groups.sqlite", $"DELETE FROM Groups WHERE GUID = '{groupInvalidAuthorException.GroupGUID}'").GetAwaiter().GetResult();
+                        if (BotCore.TryGetExtendedDiscordGuildBotData(guildID, out var extendedDiscordGuildData))
+                        {
+                            extendedDiscordGuildData.Guild.GetTextChannel(groupInvalidAuthorException.ChannelID).DeleteMessageAsync(groupInvalidAuthorException.GroupMessageID).GetAwaiter().GetResult();
+                        }
+                    }
+                    catch (GroupInvalidChannelException groupInvalidChannelException)
+                    {
+                        Debug.Log("Group is missing channel", LogInfoType.Error).GetAwaiter().GetResult();
+                        SQLiteExtensions.PushToDB($"locals/Databases/{guildID}/Groups.sqlite", $"DELETE FROM Groups WHERE GUID = '{groupInvalidChannelException.GroupGUID}'").GetAwaiter().GetResult();
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.Log($"Error: {e.Message}", LogInfoType.Error).GetAwaiter().GetResult();
+                    }
                 });
                 loadThread.Start();
                 threads.Add(loadThread);
@@ -217,63 +252,70 @@ namespace DiscordAngryBot.CustomObjects.Groups
         /// </summary>
         /// <param name="guild">Discord guild</param>
         /// <returns></returns>
-        public static async Task ActualizeReactionsOnGroups(SocketGuild guild)
+        public static void ActualizeReactionsOnGroups(SocketGuild guild)
         {
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-            await Debug.Log($"Actualizing group members", LogInfoType.Notice);
-            List<Thread> threadList = new List<Thread>();
             if (BotCore.TryGetDiscordGuildGroups(guild.Id, out List<Group> groups))
             {
                 foreach (var group in groups)
                 {
-                    Thread actThread = new Thread(() =>
+                    if (group.TargetMessage != null)
                     {
-                        if (group.TargetMessage != null)
+                        try
                         {
-                            bool groupHasChanges = false;
-                            foreach (var list in group.UserLists)
+                            bool rewriteRequired = false;
+                            foreach (var userList in group.UserLists)
                             {
-                                var usersReacted = group.TargetMessage.GetReactionUsersAsync(list.ListEmoji, 20).ToEnumerable().FirstOrDefault();
-                                foreach (var user in usersReacted)
+                                if (group.TargetMessage.Reactions.TryGetValue(userList.ListEmoji, out var metaData))
                                 {
-                                    if (group.UserLists.Where(x => x.Users.Where(q => q.Id == user.Id).Count() == 0).Count() == 0)
+                                    var amountOfReactionsInMessage = metaData.ReactionCount;
+                                    var reactedUsers = group.TargetMessage.GetReactionUsersAsync(userList.ListEmoji, amountOfReactionsInMessage).Flatten();
+                                    foreach (var user in reactedUsers.ToEnumerable())
                                     {
-                                        if (list.UserLimit.HasValue)
+                                        if (!user.IsBot)
                                         {
-                                            if (list.Users.Count() < list.UserLimit)
+                                            bool shouldAttemptJoin = false;
+                                            if (userList.UserLimit.HasValue)
                                             {
-                                                list.Users.Add(guild.GetUser(user.Id));
-                                                groupHasChanges = true;
+                                                if (userList.UserLimit.Value <= userList.Users.Count)
+                                                    shouldAttemptJoin = false;
+                                                else
+                                                    shouldAttemptJoin = true;
                                             }
-                                        }
-                                        else
-                                        {
-                                            list.Users.Add(guild.GetUser(user.Id));
-                                            groupHasChanges = true;
+                                            else
+                                                shouldAttemptJoin = true;
+
+                                            if (shouldAttemptJoin)
+                                            {
+                                                if (!group.IsUserInGroup(user.Id))
+                                                {
+                                                    if (userList.TryJoin(guild.GetUser(user.Id)))
+                                                    {
+                                                        rewriteRequired = true;
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }
                             }
-                            if (groupHasChanges)
+                            if (rewriteRequired)
+                            {
+                                group.UpdateAtDB().GetAwaiter().GetResult();
                                 group.RewriteMessage().GetAwaiter().GetResult();
+                            }
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            Debug.Log("Found broken party, deleting entry...", LogInfoType.Error).GetAwaiter().GetResult();
-                            SQLiteDataManager.PushToDB($"locals/Databases/{group.Channel.Guild.Id}/Groups.sqlite", $"DELETE FROM Groups WHERE GUID = '{group.GUID}'").GetAwaiter().GetResult();
+                            Debug.Log(ex.Message, LogInfoType.Error).GetAwaiter().GetResult();
                         }
-                    });
-                    actThread.Start();
-                    threadList.Add(actThread);
+                    }
+                    else
+                    {
+                        Debug.Log("Found broken party, deleting entry...", LogInfoType.Error).GetAwaiter().GetResult();
+                        SQLiteExtensions.PushToDB($"locals/Databases/{group.Channel.Guild.Id}/Groups.sqlite", $"DELETE FROM Groups WHERE GUID = '{group.GUID}'").GetAwaiter().GetResult();
+                    }
                 }
             }
-            foreach (var thread in threadList)
-            {
-                thread.Join();
-            }
-            sw.Stop();
-            await ConsoleOutput.Debug.Log($"Actualizing group members took {sw.Elapsed.Milliseconds} ms", LogInfoType.Notice);
         }
 
         /// <summary>
@@ -306,6 +348,25 @@ namespace DiscordAngryBot.CustomObjects.Groups
                 return true;
             else
                 return false;
+        }
+
+        /// <summary>
+        /// Checks whether user with given ID is present is this group
+        /// </summary>
+        /// <param name="group">Target group</param>
+        /// <param name="userID">Socket user ID</param>
+        /// <returns></returns>
+        public static bool IsUserInGroup(this Group group, ulong userID)
+        {
+            var groupLists = group.UserLists;
+            foreach (var list in groupLists)
+            {
+                if (list.IsInList(userID))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
     }   
 }

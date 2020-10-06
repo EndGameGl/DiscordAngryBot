@@ -23,6 +23,7 @@ using DiscordAngryBot.CustomObjects.DiscordCommands;
 using static DiscordAngryBot.MessageHandlers.CommandHandler;
 using static DiscordAngryBot.ReactionHandlers.ReactionHandler;
 using System.Reflection;
+using Debug = DiscordAngryBot.CustomObjects.ConsoleOutput.Debug;
 
 namespace DiscordAngryBot
 {
@@ -39,7 +40,7 @@ namespace DiscordAngryBot
         /// <summary>
         /// Guild caches
         /// </summary>
-        private static List<CustomGuildDataCache> customGuildDataCaches = new List<CustomGuildDataCache>();
+        private static List<ExtendedDiscordGuildData> customGuildDataCaches = new List<ExtendedDiscordGuildData>();
 
         /// <summary>
         /// API server
@@ -69,7 +70,11 @@ namespace DiscordAngryBot
         {
             Console.Clear();
             Console.BackgroundColor = ConsoleColor.White;
-            apiServer = new APIServer("http://192.168.1.56:20001", new MediaTypeHeaderValue("text/html"));
+
+            apiServer = new APIServer(
+                serverAddress: "http://192.168.1.56:20001", 
+                mediaTypeHeaderValue: new MediaTypeHeaderValue("text/html"));
+
             RegisterCommands();
             MainAsync().GetAwaiter().GetResult(); 
         }
@@ -109,15 +114,17 @@ namespace DiscordAngryBot
         /// <summary>
         /// Loads all data for current guild
         /// </summary>
-        /// <param name="guildCache">Guild cache</param>
+        /// <param name="guildData">Guild cache</param>
         /// <returns></returns>
-        private static async Task RunGuildLoaders(CustomGuildDataCache guildCache)
+        private static async Task RunGuildLoaders(ExtendedDiscordGuildData guildData)
         {
-            guildCache.Settings = await LoadGuildSettings(guildCache.Guild.Id);
-            guildCache.Bans = await LoadGuildBans(guildCache.Guild);
-            guildCache.Groups = await LoadGuildGroups(guildCache.Guild);
-            GroupHandler.ActualizeReactionsOnGroups(guildCache.Guild).GetAwaiter().GetResult();
-            File.WriteAllText($"locals/Databases/{guildCache.Guild.Id}/GuildInfo.txt", await CollectGuildInfo(guildCache.Guild));
+            guildData.UseSettings(await LoadGuildSettings(guildData.Guild.Id));
+            guildData.UseExistingListOfBans(await LoadGuildBans(guildData.Guild));
+            guildData.UseExistingListOfGroups(await LoadGuildGroups(guildData.Guild));
+            GroupHandler.ActualizeReactionsOnGroups(guildData.Guild);
+            File.WriteAllText(
+                path: $"locals/Databases/{guildData.Guild.Id}/GuildInfo.txt", 
+                contents: await CollectGuildInfo(guildData.Guild));
         }
 
         /// <summary>
@@ -132,7 +139,7 @@ namespace DiscordAngryBot
             List<Group> groups = new List<Group>();           
             groups = GroupHandler.LoadAllGroupsFromDB(guild.Id).GetAwaiter().GetResult();             
             stopwatch.Stop();
-            await CustomObjects.ConsoleOutput.Debug.WriteDivideMessage($"LoadGroups() finished: took {stopwatch.ElapsedMilliseconds} ms");
+            await Debug.WriteDivideMessage($"LoadGroups() finished: took {stopwatch.ElapsedMilliseconds} ms");
             return groups;
         }
 
@@ -201,7 +208,7 @@ namespace DiscordAngryBot
         /// <param name="guildID">Guild ID</param>
         /// <param name="guildCache">Guild cache, if found any</param>
         /// <returns></returns>
-        public static bool TryGetGuildDataCache(ulong guildID, out CustomGuildDataCache guildCache)
+        public static bool TryGetExtendedDiscordGuildBotData(ulong guildID, out ExtendedDiscordGuildData guildCache)
         {
             guildCache = customGuildDataCaches.Where(x => x.Guild.Id == guildID).FirstOrDefault();
             if (guildCache != null)
@@ -216,10 +223,10 @@ namespace DiscordAngryBot
         /// <param name="guildID">Guild ID</param>
         /// <param name="settings">Guild settings, if found any</param>
         /// <returns></returns>
-        public static bool TryGetDiscordGuildSettings(ulong guildID, out DiscordGuildSettings settings)
+        public static bool TryGetDiscordGuildSettings(ulong guildID, out DiscordGuildBotSettings settings)
         {
             settings = null;
-            if (TryGetGuildDataCache(guildID, out CustomGuildDataCache cache))
+            if (TryGetExtendedDiscordGuildBotData(guildID, out ExtendedDiscordGuildData cache))
             {
                 settings = cache.Settings;
                 if (settings != null)
@@ -241,7 +248,7 @@ namespace DiscordAngryBot
         public static bool TryGetDiscordGuildGroups(ulong guildID, out List<Group> groups)
         {
             groups = null;
-            if (TryGetGuildDataCache(guildID, out CustomGuildDataCache cache))
+            if (TryGetExtendedDiscordGuildBotData(guildID, out ExtendedDiscordGuildData cache))
             {
                 groups = cache.Groups;
                 return true;
@@ -335,11 +342,11 @@ namespace DiscordAngryBot
         /// </summary>
         /// <param name="guildID"></param>
         /// <returns></returns>
-        private static async Task<DiscordGuildSettings> LoadGuildSettings(ulong guildID)
+        private static async Task<DiscordGuildBotSettings> LoadGuildSettings(ulong guildID)
         {
-            var data = await SQLiteDataManager.GetDataFromDB("locals/GuildSettings.sqlite", $"SELECT * FROM Settings WHERE GuildID = '{guildID}'");
+            var data = await SQLiteExtensions.GetDataFromDB("locals/GuildSettings.sqlite", $"SELECT * FROM Settings WHERE GuildID = '{guildID}'");
             var settingsJSON = data.Rows[0]["SettingsJSON"].ToString();
-            return JsonConvert.DeserializeObject<DiscordGuildSettings>(settingsJSON);
+            return JsonConvert.DeserializeObject<DiscordGuildBotSettings>(settingsJSON);
         }
 
         /// <summary>
@@ -350,36 +357,19 @@ namespace DiscordAngryBot
         public static async Task CreateGuildCache(SocketGuild guild)
         {
             await Task.Run(async () =>
-            {
-                CustomGuildDataCache cache = null;
-                if (customGuildDataCaches.Where(x=> x.Guild.Id == guild.Id).Count() == 0)
+            {               
+                if (!customGuildDataCaches.Any(x => x.Guild.Id == guild.Id))
                 {
-                    cache = new CustomGuildDataCache()
-                    {
-                        Guild = guild,
-                        Bans = new List<DiscordBan>(),
-                        Groups = new List<Group>(),
-                        SwearCounters = new List<SwearCounter>(),
-                        Settings = new DiscordGuildSettings()
-                        {
-                            AdminsID = new List<ulong>() { 261497385274966026 },
-                            APIToken = null,
-                            BanRoleID = null,
-                            CommandPrefix = '_',
-                            NewsChannelID = null,
-                            IsSwearFilterEnabled = null
-                        },
-                        IsAvailable = true
-                    };
+                    ExtendedDiscordGuildData cache = new ExtendedDiscordGuildData(guild: guild, isAvailable: true);
                     customGuildDataCaches.Add(cache);
                     await PrepareGuildCache(cache);
-                    await SQLiteDataManager.PushToDB("locals/GuildSettings.sqlite", $"INSERT OR IGNORE INTO Settings (GuildID, SettingsJSON) VALUES ('{cache.Guild.Id}', '{JsonConvert.SerializeObject(cache.Settings)}')");
+                    await SQLiteExtensions.PushToDB("locals/GuildSettings.sqlite", $"INSERT OR IGNORE INTO Settings (GuildID, SettingsJSON) VALUES ('{cache.Guild.Id}', '{JsonConvert.SerializeObject(cache.Settings)}')");
                 }
                 else
                 {
-                    if (TryGetGuildDataCache(guild.Id, out var guildCache))
+                    if (TryGetExtendedDiscordGuildBotData(guild.Id, out var guildCache))
                     {
-                        guildCache.IsAvailable = true;
+                        guildCache.SetAvailable();
                     }
                 }                              
             });
@@ -394,7 +384,7 @@ namespace DiscordAngryBot
         {
             await Task.Run(() =>
             {
-                customGuildDataCaches.Where(x => x.Guild.Id == guild.Id).FirstOrDefault().IsAvailable = false;
+                customGuildDataCaches.FirstOrDefault(x => x.Guild.Id == guild.Id)?.SetUnavailable();
             });
         }
 
@@ -411,8 +401,8 @@ namespace DiscordAngryBot
 
             if (!File.Exists("locals/GuildSettings.sqlite"))
             {
-                await SQLiteDataManager.CreateDataBase("locals/GuildSettings.sqlite");
-                await SQLiteDataManager.PushToDB("locals/GuildSettings.sqlite", "CREATE TABLE IF NOT EXISTS Settings(GuildID INTEGER PRIMARY KEY, SettingsJSON TEXT)");
+                await SQLiteExtensions.CreateDataBase("locals/GuildSettings.sqlite");
+                await SQLiteExtensions.PushToDB("locals/GuildSettings.sqlite", "CREATE TABLE IF NOT EXISTS Settings(GuildID INTEGER PRIMARY KEY, SettingsJSON TEXT)");
             }
             if (!Directory.Exists("locals/Databases"))
             {
@@ -425,7 +415,7 @@ namespace DiscordAngryBot
         /// </summary>
         /// <param name="cache">Guild cache</param>
         /// <returns></returns>
-        private static async Task PrepareGuildCache(CustomGuildDataCache cache)
+        private static async Task PrepareGuildCache(ExtendedDiscordGuildData cache)
         {
             await Task.Run(async () =>
             {
@@ -435,13 +425,13 @@ namespace DiscordAngryBot
                 }
                 if (!File.Exists($"locals/Databases/{cache.Guild.Id}/Bans.sqlite"))
                 {
-                    await SQLiteDataManager.CreateDataBase($"locals/Databases/{cache.Guild.Id}/Bans.sqlite");
-                    await SQLiteDataManager.PushToDB($"locals/Databases/{cache.Guild.Id}/Bans.sqlite", "CREATE TABLE IF NOT EXISTS Bans(GUID TEXT PRIMARY KEY, BanJSON TEXT)");
+                    await SQLiteExtensions.CreateDataBase($"locals/Databases/{cache.Guild.Id}/Bans.sqlite");
+                    await SQLiteExtensions.PushToDB($"locals/Databases/{cache.Guild.Id}/Bans.sqlite", "CREATE TABLE IF NOT EXISTS Bans(GUID TEXT PRIMARY KEY, BanJSON TEXT)");
                 }
                 if (!File.Exists($"locals/Databases/{cache.Guild.Id}/Groups.sqlite"))
                 {
-                    await SQLiteDataManager.CreateDataBase($"locals/Databases/{cache.Guild.Id}/Groups.sqlite");
-                    await SQLiteDataManager.PushToDB($"locals/Databases/{cache.Guild.Id}/Groups.sqlite", "CREATE TABLE IF NOT EXISTS Groups(GUID TEXT PRIMARY KEY, GroupJSON TEXT)");
+                    await SQLiteExtensions.CreateDataBase($"locals/Databases/{cache.Guild.Id}/Groups.sqlite");
+                    await SQLiteExtensions.PushToDB($"locals/Databases/{cache.Guild.Id}/Groups.sqlite", "CREATE TABLE IF NOT EXISTS Groups(GUID TEXT PRIMARY KEY, GroupJSON TEXT)");
                 }
 
             });

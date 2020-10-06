@@ -55,7 +55,7 @@ namespace DiscordAngryBot.Models
         /// <returns></returns>
         public DiscordBan LoadOrigin()
         {
-            if (BotCore.TryGetGuildDataCache(GuildID, out var cache))
+            if (BotCore.TryGetExtendedDiscordGuildBotData(GuildID, out var cache))
             {
                 DiscordBan ban = new DiscordBan()
                 {

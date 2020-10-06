@@ -45,7 +45,7 @@ namespace DiscordAngryBot.CustomObjects.DiscordCommands
                             BotCore.GetDataLogs().Add(new DataLog(null, CommandMetadata.CommandName, $"{Method.Name} was called to execute task for {((SocketMessage)methodParameters[0]).Author.Username}"));
                             break;
                         case CommandType.EmojiCommand:
-                            BotCore.GetDataLogs().Add(new DataLog(null, CommandMetadata.CommandName, $"{Method.Name} was called to execute task for {((SocketReaction)methodParameters[0]).User.Value}"));
+                            BotCore.GetDataLogs().Add(new DataLog(null, CommandMetadata.CommandName, $"{Method.Name} was called to execute task for {((SocketReaction)methodParameters[1]).User.Value}"));
                             break;
                     }               
                     Method.Invoke(null, methodParameters);

@@ -19,7 +19,7 @@ namespace DiscordAngryBot.APIHandlers.Controllers
         [HttpGet, Route("{guildID}/Users")]
         public List<object> GetSimpleUsers(string guildID)
         {
-            if (BotCore.TryGetGuildDataCache(ulong.Parse(guildID), out var cache))
+            if (BotCore.TryGetExtendedDiscordGuildBotData(ulong.Parse(guildID), out var cache))
             {
                 var userList = cache.Guild.Users;
                 List<object> userReturnList = new List<object>();

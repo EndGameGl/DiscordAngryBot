@@ -36,7 +36,7 @@ namespace DiscordAngryBot.APIHandlers.Controllers
                         var apiToken = guildSettings.APIToken;
                         if (newsID != null && apiToken != null)
                         {
-                            if (BotCore.TryGetGuildDataCache(guild, out var cache)) 
+                            if (BotCore.TryGetExtendedDiscordGuildBotData(guild, out var cache)) 
                             {
                                 channelsList.Add(apiToken, cache.Guild.GetTextChannel(newsID.Value)); 
                             }

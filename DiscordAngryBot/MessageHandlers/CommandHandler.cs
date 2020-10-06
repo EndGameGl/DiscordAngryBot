@@ -47,7 +47,7 @@ namespace DiscordAngryBot.MessageHandlers
                                 string callbackMessage = string.Format(CommandResources.AdminAddedLine, message.MentionedUsers.FirstOrDefault().Mention);
                                 await message.Channel.SendMessageAsync(callbackMessage);
                                 string updateQuery = string.Format(SQLiteResources.UpdateSettingsByGuildID, JsonConvert.SerializeObject(settings), guildID);
-                                await SQLiteDataManager.PushToDB(SQLiteResources.GuildSettingsDBPath, updateQuery);
+                                await SQLiteExtensions.PushToDB(SQLiteResources.GuildSettingsDBPath, updateQuery);
                             }
                             else
                             {
@@ -80,7 +80,7 @@ namespace DiscordAngryBot.MessageHandlers
                                 string callbackMessage = string.Format(CommandResources.AdminRemovedLine, message.MentionedUsers.FirstOrDefault().Mention);
                                 await message.Channel.SendMessageAsync(callbackMessage);
                                 string updateQuery = string.Format(SQLiteResources.UpdateSettingsByGuildID, JsonConvert.SerializeObject(settings), guildID);
-                                await SQLiteDataManager.PushToDB(SQLiteResources.GuildSettingsDBPath, updateQuery);
+                                await SQLiteExtensions.PushToDB(SQLiteResources.GuildSettingsDBPath, updateQuery);
                             }
                             else
                             {
@@ -108,11 +108,11 @@ namespace DiscordAngryBot.MessageHandlers
                             ulong guildID = ((SocketGuildChannel)message.Channel).Guild.Id;
                             if (BotCore.TryGetDiscordGuildSettings(guildID, out var settings))
                             {
-                                settings.CommandPrefix = args[0][0];
+                                settings.ChangeCommandPrefix(args[0][0]);
                                 string callbackMessage = string.Format(CommandResources.CommandPrefixChangedLine, settings.CommandPrefix);
                                 await message.Channel.SendMessageAsync(callbackMessage);
                                 string updateQuery = string.Format(SQLiteResources.UpdateSettingsByGuildID, JsonConvert.SerializeObject(settings), guildID);
-                                await SQLiteDataManager.PushToDB(SQLiteResources.GuildSettingsDBPath, updateQuery);
+                                await SQLiteExtensions.PushToDB(SQLiteResources.GuildSettingsDBPath, updateQuery);
                             }
                         }
                     });
@@ -131,10 +131,10 @@ namespace DiscordAngryBot.MessageHandlers
                     ulong guildID = ((SocketGuildChannel)message.Channel).Guild.Id;
                     if (BotCore.TryGetDiscordGuildSettings(guildID, out var settings))
                     {
-                        settings.NewsChannelID = message.Channel.Id;
+                        settings.ChangeNewsChannelID(message.Channel.Id);
                         await message.Channel.SendMessageAsync(CommandResources.NewsChannelSetLine);
                         string updateQuery = string.Format(SQLiteResources.UpdateSettingsByGuildID, JsonConvert.SerializeObject(settings), guildID);
-                        await SQLiteDataManager.PushToDB(SQLiteResources.GuildSettingsDBPath, updateQuery);
+                        await SQLiteExtensions.PushToDB(SQLiteResources.GuildSettingsDBPath, updateQuery);
                     }
                 });
             }
@@ -155,11 +155,11 @@ namespace DiscordAngryBot.MessageHandlers
                         var banRole = message.MentionedRoles.FirstOrDefault();
                         if (banRole != null)
                         {
-                            settings.BanRoleID = banRole.Id;
-                            string callbackMessage = string.Format(CommandResources.BanRoleSetLine, banRole.Name);
+                            settings.ChangeBanRoleID(banRole.Id);
+                            var callbackMessage = string.Format(CommandResources.BanRoleSetLine, banRole.Name);
                             await message.Channel.SendMessageAsync(callbackMessage);
-                            string updateQuery = string.Format(SQLiteResources.UpdateSettingsByGuildID, JsonConvert.SerializeObject(settings), guildID);
-                            await SQLiteDataManager.PushToDB(SQLiteResources.GuildSettingsDBPath, updateQuery);
+                            var updateQuery = string.Format(SQLiteResources.UpdateSettingsByGuildID, JsonConvert.SerializeObject(settings), guildID);
+                            await SQLiteExtensions.PushToDB(SQLiteResources.GuildSettingsDBPath, updateQuery);
                         }
                     }
                 });
@@ -276,7 +276,7 @@ namespace DiscordAngryBot.MessageHandlers
                     var channel = (SocketGuildChannel)message.Channel;
                     if (BotCore.TryGetDiscordGuildSettings(channel.Guild.Id, out var settings))
                     {
-                        settings.IsSwearFilterEnabled = true;
+                        settings.EnableSwearFilter();
                         await message.Channel.SendMessageAsync(CommandResources.SwearFilterEnabledLine);
                     }
                 }
@@ -299,7 +299,7 @@ namespace DiscordAngryBot.MessageHandlers
                     var channel = (SocketGuildChannel)message.Channel;
                     if (BotCore.TryGetDiscordGuildSettings(channel.Guild.Id, out var settings))
                     {
-                        settings.IsSwearFilterEnabled = false;
+                        settings.DisableSwearFilter();
                         await message.Channel.SendMessageAsync(CommandResources.SwearFilterDisabledLine);
                     }
                 }
@@ -430,7 +430,7 @@ namespace DiscordAngryBot.MessageHandlers
             /// <param name="message">Command message</param>
             /// <param name="args">Command arguments</param>
             /// <returns></returns>
-            [CustomCommand("HELP", CommandCategory.User, CommandType.StringCommand, "Вывод для пользователя всех доступных комманд бота", CommandScope.User, CommandExecutionScope.All)]
+            [CustomCommand("HELP", CommandCategory.User, CommandType.StringCommand, "Вывод для пользователя всех доступных команд бота", CommandScope.User, CommandExecutionScope.All)]
             public static async Task HelpUser(SocketMessage message, string[] args)
             {
                 await Debug.Log("Entered HelpUser method.");
@@ -445,31 +445,22 @@ namespace DiscordAngryBot.MessageHandlers
                         var globalCommands = stringCommands.Where(x => x.CommandMetadata.CommandExecutionScope == CommandExecutionScope.All);
                         if (globalCommands.Count() > 0)
                         {
-                            stringBuilder.AppendLine($"Комманды, применяемые в любом месте:");
-                            foreach (var command in globalCommands)
-                            {
-                                stringBuilder.AppendLine($"    {command.CommandMetadata.CommandName}: {command.CommandMetadata.Description}");
-                            }
+                            stringBuilder.AppendLine($"Команды, применяемые в любом месте:");
+                            WriteCommandInfo(stringBuilder, globalCommands);
                         }
 
                         var serverCommands = stringCommands.Where(x => x.CommandMetadata.CommandExecutionScope == CommandExecutionScope.Server);
                         if (serverCommands.Count() > 0)
                         {
-                            stringBuilder.AppendLine($"Комманды для применения на сервере:");
-                            foreach (var command in serverCommands)
-                            {
-                                stringBuilder.AppendLine($"    {command.CommandMetadata.CommandName}: {command.CommandMetadata.Description}");
-                            }
+                            stringBuilder.AppendLine($"Команды для применения на сервере:");
+                            WriteCommandInfo(stringBuilder, serverCommands);
                         }
 
                         var dmCommands = stringCommands.Where(x => x.CommandMetadata.CommandExecutionScope == CommandExecutionScope.DM);
                         if (dmCommands.Count() > 0)
                         {
-                            stringBuilder.AppendLine($"Комманды для применения в личном канале:");
-                            foreach (var command in dmCommands)
-                            {
-                                stringBuilder.AppendLine($"    {command.CommandMetadata.CommandName}: {command.CommandMetadata.Description}");
-                            }
+                            stringBuilder.AppendLine($"Команды для применения в личном канале:");
+                            WriteCommandInfo(stringBuilder, dmCommands);
                         }
                     }
                 }
@@ -532,7 +523,7 @@ namespace DiscordAngryBot.MessageHandlers
             /// <param name="message">Command message</param>
             /// <param name="args">Command arguments</param>
             /// <returns></returns>
-            [CustomCommand("POLL", CommandCategory.User, CommandType.StringCommand, "Команда для бана пользователя самим себя", CommandScope.Admin, CommandExecutionScope.Server)]
+            [CustomCommand("POLL", CommandCategory.User, CommandType.StringCommand, "Запустить голосование", CommandScope.Admin, CommandExecutionScope.Server)]
             public static async Task StartPoll(SocketMessage message, string[] args)
             {
                 var group = await GroupBuilder.BuildPoll(message, args);
@@ -541,6 +532,28 @@ namespace DiscordAngryBot.MessageHandlers
                     groups.Add(group);
                     await group.SendMessage();
                     await group.SaveToDB();
+                }
+            }
+
+            private static void WriteCommandInfo(StringBuilder builder, IEnumerable<DiscordCommand> discordCommands)
+            {
+                var userCommands = discordCommands.Where(x => x.CommandMetadata.Scope == CommandScope.User);
+                var adminCommands = discordCommands.Where(x => x.CommandMetadata.Scope == CommandScope.Admin);
+                if (adminCommands.Count() > 0)
+                {
+                    builder.AppendLine("    Администраторские команды:");
+                    foreach (var command in adminCommands)
+                    {
+                        builder.AppendLine($"        {command.CommandMetadata.CommandName}: {command.CommandMetadata.Description}");
+                    }
+                }
+                if (userCommands.Count() > 0)
+                {
+                    builder.AppendLine("    Пользовательские команды:");
+                    foreach (var command in userCommands)
+                    {
+                        builder.AppendLine($"        {command.CommandMetadata.CommandName}: {command.CommandMetadata.Description}");
+                    }
                 }
             }
         }

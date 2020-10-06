@@ -12,7 +12,7 @@ namespace DiscordAngryBot.CustomObjects.ConsoleOutput
         /// <summary>
         /// Whether debug mode is on
         /// </summary>
-        private static readonly bool IsDegugEnabled = true;
+        private static readonly bool IsDegugEnabled = false;
         /// <summary>
         /// Whether should write logs to file
         /// </summary>

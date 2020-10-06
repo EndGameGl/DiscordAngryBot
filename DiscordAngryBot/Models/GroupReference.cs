@@ -2,10 +2,12 @@
 using Discord.Rest;
 using Discord.WebSocket;
 using DiscordAngryBot.CustomObjects;
+using DiscordAngryBot.CustomObjects.ConsoleOutput;
 using DiscordAngryBot.CustomObjects.Groups;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DiscordAngryBot.Models
 {
@@ -112,19 +114,31 @@ namespace DiscordAngryBot.Models
         public Group LoadOrigin()
         {
             Group loadedGroup = null;
-            if (BotCore.TryGetGuildDataCache(serverID, out var customGuildDataCache))
+            if (BotCore.TryGetExtendedDiscordGuildBotData(serverID, out var customGuildDataCache))
             {
                 var guild = customGuildDataCache.Guild;
                 var channel = guild.GetTextChannel(channelID);
-                var message = (RestUserMessage)channel.GetMessageAsync(targetMessageID).GetAwaiter().GetResult();
+                if (channel == null)
+                    throw new GroupInvalidChannelException(GUID, channelID);
+                var downloadedMessage = channel.GetMessageAsync(targetMessageID).GetAwaiter().GetResult();
+                if (downloadedMessage == null)
+                    throw new GroupInvalidTargetException(GUID, targetMessageID);
+                var message = (RestUserMessage)downloadedMessage;
                 var author = guild.GetUser(authorID);
+                if (author == null)
+                    throw new GroupInvalidAuthorException(GUID, authorID, targetMessageID, channelID);
                 List<UserList> userLists = new List<UserList>();
                 foreach (var listReference in userListReferences)
                 {
                     List<SocketGuildUser> users = new List<SocketGuildUser>();
                     foreach (var id in listReference.UserIDs)
                     {
-                        users.Add(guild.GetUser(id));
+                        if (guild.Users.Any(x => x.Id == id))
+                        {
+                            var nextUser = guild.GetUser(id);
+                            if (nextUser != null)
+                                users.Add(nextUser);
+                        }
                     }
                     userLists.Add(new UserList()
                     {

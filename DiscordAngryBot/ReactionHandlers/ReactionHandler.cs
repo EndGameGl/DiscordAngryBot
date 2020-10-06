@@ -84,7 +84,7 @@ namespace DiscordAngryBot.ReactionHandlers
             {
                 if (group != null)
                 {
-                    if (BotCore.TryGetDiscordGuildSettings(group.Channel.Guild.Id, out DiscordGuildSettings settings))
+                    if (BotCore.TryGetDiscordGuildSettings(group.Channel.Guild.Id, out DiscordGuildBotSettings settings))
                     {
                         if (settings.IsAdmin(reaction.UserId) || (group.Author.Id == reaction.UserId))
                         {

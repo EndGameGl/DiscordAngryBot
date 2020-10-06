@@ -99,6 +99,13 @@
       <DependentUpon>BanResources.resx</DependentUpon>
     </Compile>
     <Compile Include="CustomObjects\ConsoleOutput\LogInfoType.cs" />
+    <Compile Include="CustomObjects\Groups\GroupInvalidAuthorException.cs" />
+    <Compile Include="CustomObjects\Groups\GroupInvalidChannelException.cs" />
+    <Compile Include="CustomObjects\Groups\GroupInvalidTargetException.cs" />
+    <Compile Include="CustomObjects\Groups\GroupInvalidUserException.cs" />
+    <Compile Include="CustomObjects\IDatabaseStorable.cs" />
+    <Compile Include="CustomObjects\SQLIteHandler\SQLiteDataHandler.cs" />
+    <Compile Include="CustomObjects\SQLIteHandler\SQLiteGuildDBEntry.cs" />
     <Compile Include="Models\BanReference.cs" />
     <Compile Include="CustomObjects\Bans\BanSettings.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -106,8 +113,8 @@
       <DependentUpon>BanSettings.settings</DependentUpon>
     </Compile>
     <Compile Include="CustomObjects\Bans\DiscordBan.cs" />
-    <Compile Include="CustomObjects\Caches\CustomGuildDataCache.cs" />
-    <Compile Include="CustomObjects\Caches\DiscordGuildSettings.cs" />
+    <Compile Include="CustomObjects\Caches\ExtendedDiscordGuildData.cs" />
+    <Compile Include="CustomObjects\Caches\DiscordGuildBotSettings.cs" />
     <Compile Include="CustomObjects\ConsoleOutput\Debug.cs" />
     <Compile Include="CustomObjects\DiscordCommands\CommandExecutionScope.cs" />
     <Compile Include="CustomObjects\DiscordCommands\CommandScope.cs" />
@@ -135,7 +142,7 @@
     <Compile Include="CustomObjects\News\NewsData.cs" />
     <Compile Include="CustomObjects\Notifications\PushNotificator.cs" />
     <Compile Include="CustomObjects\Parsers\CommandParser.cs" />
-    <Compile Include="CustomObjects\SQLIteHandler\SQLiteDataManager.cs" />
+    <Compile Include="CustomObjects\SQLIteHandler\SQLiteExtensions.cs" />
     <Compile Include="CustomObjects\SQLIteHandler\SQLiteResources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

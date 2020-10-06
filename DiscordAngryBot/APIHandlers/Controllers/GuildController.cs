@@ -34,7 +34,7 @@ namespace DiscordAngryBot.APIHandlers.Controllers
         [HttpGet, Route("{guildID}")]
         public object GetGuildForAPI(string guildID)
         {
-            if (BotCore.TryGetGuildDataCache(ulong.Parse(guildID), out var cache))
+            if (BotCore.TryGetExtendedDiscordGuildBotData(ulong.Parse(guildID), out var cache))
             {
                 var guild = cache.Guild;
                 return new { GuildName = guild.Name, GuildID = guild.Id, Channels = guild.Channels.Select(x => new { x.Name, ID = x.Id }).ToList() };

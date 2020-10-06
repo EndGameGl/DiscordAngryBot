@@ -73,5 +73,25 @@ namespace DiscordAngryBot.CustomObjects.Groups
                 return false;
             }
         }
+
+        public bool IsInList(ulong userID)
+        {
+            return Users.FirstOrDefault(x => x.Id == userID) != null;
+        }
+
+        public void RemoveUserCopies(ulong userID)
+        {
+            bool alreadyMet = false;
+            foreach (var us in Users)
+            {
+                if (us.Id == userID)
+                {
+                    if (alreadyMet)
+                        Users.Remove(us);
+                    else
+                        alreadyMet = true;
+                }
+            }
+        }
     }
 }

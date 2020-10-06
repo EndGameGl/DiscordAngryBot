@@ -8,7 +8,7 @@ namespace DiscordAngryBot.CustomObjects.SQLIteHandler
     /// <summary>
     /// Class for handling SQLite DB operations
     /// </summary>
-    public static class SQLiteDataManager
+    public static class SQLiteExtensions
     {
         /// <summary>
         /// Push query to DB

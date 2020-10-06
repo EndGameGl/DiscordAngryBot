@@ -174,18 +174,16 @@ namespace DiscordAngryBot.CustomObjects.Groups
         /// <returns></returns>
         public async static Task<Group> BuildLoadedGroup(string GUID, string json)
         {
-            await Debug.Log($"Building group {GUID}", LogInfoType.Notice);
-            Group group = await GroupHandler.DeserializeFromJson(json);
-            if (group != null)
+            try
             {
-                group.GUID = GUID;
-                if (group is GuildFight)
-                    return group as GuildFight;
-                else
-                    return group;
-            }
-            else
+                await Debug.Log($"Building group {GUID}", LogInfoType.Notice);
+                Group group = await GroupHandler.DeserializeFromJson(json);
                 return group;
+            }
+            catch
+            {
+                throw;
+            }
         }
 
         /// <summary>

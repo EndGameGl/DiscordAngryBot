@@ -71,7 +71,7 @@ namespace DiscordAngryBot.APIHandlers.Controllers
         [HttpGet, Route("{guildID}/Users")]
         public HttpResponseMessage GetUsersWebTest(string guildID)
         {
-            if (BotCore.TryGetGuildDataCache(ulong.Parse(guildID), out var cache))
+            if (BotCore.TryGetExtendedDiscordGuildBotData(ulong.Parse(guildID), out var cache))
             {
                 var users = cache.Guild.Users;
 
