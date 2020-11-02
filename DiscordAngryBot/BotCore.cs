@@ -85,7 +85,7 @@ namespace DiscordAngryBot
         /// <returns></returns>
         private async static Task MainAsync()
         {          
-            await apiServer.RunAPIServer();
+            //await apiServer.RunAPIServer();
             await ValidateLocalFiles();
             discordSocketClient = new DiscordSocketClient(
                 new DiscordSocketConfig 

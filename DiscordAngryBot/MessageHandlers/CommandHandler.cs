@@ -350,7 +350,7 @@ namespace DiscordAngryBot.MessageHandlers
             [CustomCommand("RAID", CommandCategory.User, CommandType.StringCommand, "Операция создания рейда", CommandScope.User, CommandExecutionScope.Server)]
             public static async Task CreateRaidTemplate(SocketMessage message, string[] destination)
             {
-                Group group = await GroupBuilder.BuildRaidTemplate(message, destination);
+                Group group = GroupBuilder.BuildRaidTemplate(message, destination);
                 if (BotCore.TryGetDiscordGuildGroups(group.Channel.Guild.Id, out List<Group> groups))
                 {
                     groups.Add(group);

@@ -49,7 +49,7 @@ namespace DiscordAngryBot.CustomObjects.Groups
         /// <param name="sourceMessage">Source message</param>
         /// <param name="args">Creation parameters</param>
         /// <returns></returns>
-        public async static Task<Group> BuildRaidTemplate(SocketMessage sourceMessage, string[] args)
+        public static Group BuildRaidTemplate(SocketMessage sourceMessage, string[] args)
         {
             Group raidGroup = new Group()
             {
@@ -70,7 +70,6 @@ namespace DiscordAngryBot.CustomObjects.Groups
                 },
                 Type = GroupType.Simple
             };
-            await sourceMessage.DeleteAsync();
             return raidGroup;
         }
 
